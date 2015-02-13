@@ -1,7 +1,6 @@
-## @class Gtk2::Ex::Geo::TreeDumper
-# @brief The 'inspect' dialog
-#
-# From http://www.asofyet.org/muppet/software/gtk2-perl/treedumper.pl-txt
+#** @file TreeDumper.pm
+# Based on http://www.asofyet.org/muppet/software/gtk2-perl/treedumper.pl-txt
+#*
 package Gtk2::Ex::Geo::TreeDumper;
 
 use strict;
@@ -11,6 +10,8 @@ use Gtk2;
 
 use base 'Gtk2::TreeView';
 
+#** @method new(%params)
+#*
 sub new {
     my $class = shift;
     my %args = (data => undef, @_);

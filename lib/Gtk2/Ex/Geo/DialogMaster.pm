@@ -1,10 +1,5 @@
-## @class Gtk2::Ex::Geo::DialogMaster
-# @brief A helper module for managing Glade XML dialogs
-# @author Copyright (c) Ari Jolma
-# @author This library is free software; you can redistribute it and/or modify
-# it under the same terms as Perl itself, either Perl version 5.8.5 or,
-# at your option, any later version of Perl 5 you may have available.
-
+#** @file DialogMaster.pm
+#*
 package Gtk2::Ex::Geo::DialogMaster;
 
 use strict;
@@ -18,18 +13,9 @@ BEGIN {
     our %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
 }
 
-=pod
-
-=head1 NAME
-
-Gtk2::Ex::Geo::DialogMaster - A class which maintains a set of glade dialogs
-
-The documentation of Gtk2::Ex::Geo(1) is written in doxygen format.
-
-1) http://geoinformatics.aalto.fi/doc/Geoinformatica/html/
-
-=cut
-
+#** @method new(%params)
+# Constructor to be used by the subclasses.
+#*
 sub new {
     my($class, %params) = @_;
     my $self = {};

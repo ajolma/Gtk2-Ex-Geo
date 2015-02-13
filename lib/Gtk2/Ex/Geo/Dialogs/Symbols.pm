@@ -1,5 +1,5 @@
 package Gtk2::Ex::Geo::Dialogs::Symbols;
-# @brief 
+
 
 use strict;
 use warnings;
@@ -50,7 +50,6 @@ sub open {
     return $self->{symbols_dialog}->get_widget('symbols_dialog');
 }
 
-##@ignore
 sub apply_symbols {
     my($self, $gui, $close) = @{$_[1]};
     my $dialog = $self->{symbols_dialog};
@@ -72,7 +71,6 @@ sub apply_symbols {
     $gui->{overlay}->render;
 }
 
-##@ignore
 sub cancel_symbols {
     my($self, $gui);
     for (@_) {
@@ -91,7 +89,6 @@ sub cancel_symbols {
     1;
 }
 
-##@ignore
 sub fill_symbol_type_combo {
     my($self, $symbol_type) = @_;
     $symbol_type = '' unless defined $symbol_type;
@@ -111,14 +108,12 @@ sub fill_symbol_type_combo {
     $combo->set_active($active);
 }
 
-##@ignore
 sub get_selected_symbol_type {
     my $self = shift;
     my $combo = $self->{symbols_dialog}->get_widget('symbols_type_combobox');
     ($self->{index2symbol_type}{$combo->get_active()} or '');
 }
 
-##@ignore
 sub fill_symbol_field_combo {
     my($self, $symbol_field) = @_;
     my $combo = $self->{symbols_dialog}->get_widget('symbols_field_combobox');
@@ -144,14 +139,12 @@ sub fill_symbol_field_combo {
     $combo->set_active($active);
 }
 
-##@ignore
 sub get_selected_symbol_field {
     my $self = shift;
     my $combo = $self->{symbols_dialog}->get_widget('symbols_field_combobox');
     ($self->{index2symbol_field}{$combo->get_active()} or '');
 }
 
-##@ignore
 sub fill_symbol_scale_fields {
     my($self, $gui) = @{$_[1]};
     my @range;
@@ -170,7 +163,6 @@ sub fill_symbol_scale_fields {
     $self->{symbols_dialog}->get_widget('symbols_scale_max_entry')->set_text($range[1]);
 }
 
-##@ignore
 sub symbol_field_changed {
     my($self, $gui) = @{$_[1]};
     my $type = get_selected_symbol_type($self);

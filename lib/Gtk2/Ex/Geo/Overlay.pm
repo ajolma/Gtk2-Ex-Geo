@@ -1,10 +1,5 @@
-## @class Gtk2::Ex::Geo::Overlay
-# @todo Implement select linestring
-# @brief A geocanvas widget
-# @author Copyright (c) Ari Jolma
-# @author This library is free software; you can redistribute it and/or modify
-# it under the same terms as Perl itself, either Perl version 5.8.5 or,
-# at your option, any later version of Perl 5 you may have available.
+#** @file Overlay.pm
+#*
 package Gtk2::Ex::Geo::Overlay;
 
 use strict;
@@ -17,18 +12,6 @@ use Geo::OGC::Geometry;
 use vars qw / $EDIT_SNAP_DISTANCE /;
 
 our $VERSION = '0.62'; # same as Geo.pm
-
-=pod
-
-=head1 NAME
-
-Gtk2::Ex::Geo::Overlay - A Gtk2 widget for a visual overlay of geospatial data
-
-The documentation of Gtk2::Ex::Geo(1) is written in doxygen format.
-
-1) http://geoinformatics.aalto.fi/doc/Geoinformatica/html/
-
-=cut
 
 $EDIT_SNAP_DISTANCE = 5;
 
@@ -62,7 +45,6 @@ use Glib::Object::Subclass
      ]
     ;
 
-## @ignore
 sub INIT_INSTANCE {
     my $self = shift;
 
@@ -113,7 +95,6 @@ sub close {
     }
 }
 
-## @ignore
 sub size_allocate {
     my($image, $allocation, $self) = @_;
     my @old_v = (0, 0);
@@ -353,7 +334,6 @@ sub zoom_to_all {
     $self->zoom_to(@size) if @size;
 }
 
-## @ignore
 sub value_changed {
     my(undef, $self) = @_;
     push @{$self->{zoom_stack}}, [@{$self->{offset}}, $self->{pixel_size}];
@@ -400,7 +380,7 @@ sub get_focus {
 		round(($self->{maxY} - $p[1])/$self->{pixel_size} - 0.5));
     }
     package Gtk2::Ex::Geo::Canvas;
-    our @ISA = qw(Gtk2::Gdk::Pixbuf);
+    use base qw(Gtk2::Gdk::Pixbuf);
  
     sub new {
 	my($class, $layers, 
@@ -416,22 +396,22 @@ sub get_focus {
 	$viewport[2] = $viewport[0]+$pixel_size*$width;
 	$viewport[1] = $viewport[3]-$pixel_size*$height;
 	
-	my $pb = &Gtk2::Ex::Geo::gtk2_ex_geo_pixbuf_create($width, $height,
-							   $viewport[0], $viewport[3],
-							   $pixel_size, 
-							   $bg_r, $bg_g, $bg_b, $bg_a);
+	my $pb = Gtk2::Ex::Geo::Pixbuf::create($width, $height,
+                                               $viewport[0], $viewport[3],
+                                               $pixel_size, 
+                                               $bg_r, $bg_g, $bg_b, $bg_a);
 	
-	my $surface = &Gtk2::Ex::Geo::gtk2_ex_geo_pixbuf_get_cairo_surface($pb);
+	my $surface = $pb->get_cairo_surface();
 	my $cr = Cairo::Context->create($surface);
 	
 	for my $layer (@$layers) {
-	    $layer->render($pb, $cr, $overlay, \@viewport);
+	    $layer->render($pb, $cr, $overlay, \@viewport) if $layer->{VISIBLE};
 	}
 	
 	undef $cr;
 	undef $surface;
-	my $self = &Gtk2::Ex::Geo::gtk2_ex_geo_pixbuf_get_pixbuf($pb);
-	&Gtk2::Ex::Geo::gtk2_ex_geo_pixbuf_destroy($pb); # does not delete the real pixbuf
+	my $self = $pb->get_pixbuf();
+	$pb->destroy(); # does not delete the real pixbuf
 	
 	bless($self, $class); 
     }
@@ -597,7 +577,6 @@ sub zoom {
     }
 }
 
-## @ignore
 sub _zoom { 
     my($self, $in, $event, $center_x, $center_y, $zoomed_in) = @_;
 
@@ -773,7 +752,6 @@ sub scroll_event {
     }
 }
 
-## @ignore
 sub draw_mode {
     my($self) = @_;
     return ($self->{rubberband_mode} eq 'select' or $self->{rubberband_mode} eq 'draw');
@@ -1188,19 +1166,33 @@ sub point2surface {
 	    (($self->{maxY} - $p[1])/$self->{pixel_size} - $self->{offset}[1]));
 }
 
-## @ignore
 sub min {
     $_[0] > $_[1] ? $_[1] : $_[0];
 }
 
-## @ignore
 sub max {
     $_[0] > $_[1] ? $_[0] : $_[1];
 }
 
-## @ignore
 sub round {
     return int($_[0] + .5 * ($_[0] <=> 0));
 }
+
+=head1 NAME
+
+Gtk2::Ex::Geo::Overlay
+
+Gtk2::Ex::Geo::Schema
+
+=head1 DESCRIPTION
+
+An overlay is a widget, subclassed from Gtk2::ScrolledWindow. An
+overlay contains a list of layers, which it renders on a canvas, which
+it puts into its window.
+
+Rubberbanding and keyboard zoom-in (with + key), zoom-out (with -
+key), and panning (with arrow keys) is built-in.
+
+=cut
 
 1;

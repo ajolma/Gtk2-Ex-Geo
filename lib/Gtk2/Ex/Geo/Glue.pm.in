@@ -1,23 +1,15 @@
-## @class Gtk2::Ex::Geo::Glue
-# @brief A class for managing geospatial layers
-# @author Copyright (c) Ari Jolma
-# @author This library is free software; you can redistribute it and/or modify
-# it under the same terms as Perl itself, either Perl version 5.8.5 or,
-# at your option, any later version of Perl 5 you may have available.
+#** @file Glue.pm.in
+#*
 
+#** @class Gtk2::Ex::Geo::Glue
+# Glue is a intended as a singleton object, which manages the widgets
+# of the main application windows. The widgets are tree_view with an
+# associated model (for the layer list), toolbar (for menu), statusbar
+# (for information), entry (for command line), overlay (for map
+# view). Glue maintains layer class dialogs and toolbar commands. Glue
+# maintains entry history and application resources.
+#*
 package Gtk2::Ex::Geo::Glue;
-
-=pod
-
-=head1 NAME
-
-Gtk2::Ex::Geo::Glue - A class for managing geospatial layers
-
-The documentation of Gtk2::Ex::Geo(1) is written in doxygen format.
-
-1) http://geoinformatics.aalto.fi/doc/Geoinformatica/html/
-
-=cut
 
 #use strict; # causes "Variable not imported in some cases" ??
 use warnings;
@@ -30,20 +22,14 @@ use Gtk2::Ex::Geo::Layer;
 use Gtk2::Ex::Geo::Dialogs qw/:all/;
 use Gtk2::Ex::Geo::TreeDumper;
 
-BEGIN {
-    use Exporter 'import';
-    our @EXPORT = qw();
-    our @EXPORT_OK = qw();
-    our %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
-}
-
-## @cmethod object new(%params)
-# @brief Constructor
-#
+#** @method scalar new(%params)
+# 
 # @param params named parameters:
+# - <i>first_file_open_folder</i> [optional] default folder for the file open dialog
 # - <i>history</i> [optional] a history file of user input
 # - <i>resources</i> [optional] a user preferences file
 # @return a new Glue object
+#*
 sub new {
     my $class = shift;
     my %params = @_;
@@ -53,11 +39,9 @@ sub new {
 
     $self->{folder} = $params{first_file_open_folder} if $params{first_file_open_folder};
 
-    ($self->{tree_view}, $self->{model}) =
-	$self->create_layer_tree_view;
+    ($self->{tree_view}, $self->{model}) = $self->create_layer_tree_view;
     
-    ($self->{toolbar}, $self->{mode_button}, $self->{geometry_button}) = 
-	$self->create_toolbar;
+    ($self->{toolbar}, $self->{mode_button}, $self->{geometry_button}) = $self->create_toolbar;
 
     $self->{statusbar} = Gtk2::Statusbar->new();
 
@@ -71,7 +55,7 @@ sub new {
     ($self->{history}, $self->{history_file}) = $self->open_history($params{history});
     ($self->{resources}, $self->{resources_file}) = $self->open_resources($params{resources});
 
-    my @buffer = <Gtk2::Ex::Geo::History::DATA>;
+    my @buffer = <Gtk2::Ex::Geo::Glue::DATA>;
     pop @buffer unless $buffer[$#buffer] =~ /^\</; # remove the extra content
     shift @buffer if $buffer[0] =~ /^\s*$/;
     register_dialogs($self, Gtk2::Ex::Geo::DialogMaster->new(buffer => \@buffer));  
@@ -79,6 +63,9 @@ sub new {
     return $self;
 }
 
+#** @method private create_layer_tree_view()
+# Creates the tree view and associated model to manage the layers.
+#*
 sub create_layer_tree_view {
     my($self) = @_;
     my @columns = qw /name type v a/;
@@ -112,8 +99,7 @@ sub create_layer_tree_view {
     my $selection = $view->get_selection;
     $selection->set_mode('multiple');
     $view->signal_connect
-	( cursor_changed => 
-	  sub {
+	( cursor_changed => sub {
 	      my(undef, $self) = @_;
 	      my $layer = $self->get_selected_layer();
 	      return if $self->{focused} and $self->{focused}->name eq $layer->name;
@@ -122,8 +108,7 @@ sub create_layer_tree_view {
 	      $self->{focused} = $layer;
 	  }, $self);
     $view->signal_connect
-	( motion_notify_event => 
-	  sub {
+	( motion_notify_event => sub {
 	      my($self, $event, $gis) = @_;
 	      $self->set_has_tooltip(0);
 	      my @res = $self->get_path_at_pos($event->x, $event->y);
@@ -142,8 +127,7 @@ sub create_layer_tree_view {
 	      $self->set_has_tooltip(1);
 	  }, $self) if Gtk2->CHECK_VERSION(2,12,0);
     $view->signal_connect
-	( leave_notify_event => 
-	  sub {
+	( leave_notify_event => sub {
 	      my($self) = @_;
 	      $self->set_has_tooltip(0);
 	  }) if Gtk2->CHECK_VERSION(2,12,0);
@@ -345,6 +329,72 @@ sub create_overlay {
     return $overlay;
 }
 
+## @class Gtk2::Ex::Geo::History
+# @brief Input history a'la (at least attempting) GNU history
+package Gtk2::Ex::Geo::History;
+
+sub new {
+    my ($class, $history) = @_;
+    push @$history,'' unless defined($history->[$#$history]) and $history->[$#$history] eq '';
+    my $self = { index => $#$history,
+		 history => $history,
+		 edit_index => -1,
+		 edit_text => '',
+	     };
+    bless($self, $class); 
+}
+
+sub arrow_up {
+    my $self = shift;
+    if ($self->{edit_index} >= 0) {
+	$self->{history}->[$self->{edit_index}] = $self->{edit_text};
+    }
+    $self->{index} = max(0, $self->{index}-1);
+    return $self->{edit_text} if $self->{edit_index} == $self->{index};
+    return $self->{history}->[$self->{index}];
+}
+
+sub arrow_down {
+    my $self = shift;
+    if ($self->{edit_index} >= 0) {
+	$self->{history}->[$self->{edit_index}] = $self->{edit_text};
+    }
+    $self->{index} = min($#{$self->{history}}, $self->{index}+1);
+    return $self->{edit_text} if $self->{edit_index} == $self->{index};
+    return $self->{history}->[$self->{index}];
+}
+
+sub editing {
+    my ($self, $text) = @_;
+    $self->{edit_index} = $self->{index};
+    $self->{edit_text} = $text;
+}
+
+sub enter {
+    my ($self, $text) = @_;
+    $self->{edit_text} = $text if defined $text;
+    my $history = $self->{history};
+    if ($#$history >= 0) {
+	unless ($#$history > 0 and $history->[$#$history-1] eq $self->{edit_text}) {
+	    $history->[$#$history] = $self->{edit_text};
+	    push @$history,'' unless $self->{edit_text} eq '';
+	}
+	$self->{index} = $#$history;
+	$self->{edit_index} = -1;
+	$self->{edit_text} = '';
+    }
+}
+
+sub min {
+    $_[0] > $_[1] ? $_[1] : $_[0];
+}
+
+sub max {
+    $_[0] > $_[1] ? $_[0] : $_[1];
+}
+
+package Gtk2::Ex::Geo::Glue;
+
 sub open_history {
     my($self, $filename) = @_;
     my $history;
@@ -395,8 +445,9 @@ sub open_resources {
     return (\%resources, $filename);
 }
 
-## @method register_dialogs($dialogs)
+#** @method register_dialogs($dialogs)
 # @brief Extend the capabilities by adding new dialogs
+#*
 sub register_dialogs {
     my($self, $dialogs) = @_;
     croak "$dialogs is not a DialogMaster" unless $dialogs->isa('Gtk2::Ex::Geo::DialogMaster');
@@ -436,8 +487,9 @@ sub unregister_command {
     delete $self->{commands}{$tag};
 }
 
-## @method register_commands($commands)
+#** @method register_commands($commands)
 # @brief Extend the capabilities by adding new commands
+#*
 sub register_commands {
     my($self, $commands) = @_;
     unless (ref $commands->[0]) {
@@ -493,14 +545,15 @@ sub run_command {
     $self->{commands}{$command}->(undef, $self);
 }
 
-## @method object register_function(%params)
+#** @method object register_function(%params)
 # @brief Extend the capabilities by adding a new function
+#*
 sub register_function {
     my($self, %params) = @_;
     $self->{functions}{$params{name}} = \%params;
 }
 
-## @method register_class(%params)
+#** @method register_class(%params)
 # @brief Extend the capabilities
 #
 # @param params named parameters:
@@ -515,6 +568,7 @@ sub register_function {
 #   - <i>text</i> the text for the command button
 #   - <i>tip</i> the tip for the command button
 #   - <i>sub</i> a reference to a subroutine to be executed
+#*
 sub register_class {
     my $self = shift;
     my %params;
@@ -534,7 +588,6 @@ sub register_class {
     $self->register_commands($params{commands}) if $params{commands};
 }
 
-## @ignore
 sub register_feature_class {
     my($self) = shift;
     for my $class (@_) {
@@ -542,10 +595,12 @@ sub register_feature_class {
     }
 }
 
-## @method close
+#** @method close()
 # @brief Attempt to destroy all widgets in the GUI.
+#*
 sub close {
     my($self) = @_;
+    my $resources = $self->{resources};
     if ($self->{history_file}) {
 	my $history = $self->{history}->{history};
 	if (open TMP,">$self->{history_file}") {
@@ -558,8 +613,7 @@ sub close {
 	}
     }
     if ($self->{resources_file}) {
-	my $resources = $self->{resources};
-	if (open TMP,">$self->{resources_file}") {
+        if (open TMP,">$self->{resources_file}") {
 	    for my $key (keys %$resources) {
 		print TMP "$key\n";
 		for my $value (keys %{$resources->{$key}}) {
@@ -589,8 +643,9 @@ sub close {
     }
 }
 
-## @method scalar get_dialog(name)
+#** @method scalar get_dialog(name)
 # @brief Retrieve a dialog by its name.
+#*
 sub get_dialog {
     my($self, $dialog_name) = @_;
     for my $dialogs (@{$self->{dialogs}}) {
@@ -600,8 +655,9 @@ sub get_dialog {
     croak "can't find dialog $dialog_name";
 }
 
-## @method message($message)
+#** @method message($message)
 # @brief Display a short information message to the user.
+#*
 sub message {
     my($self, $message) = @_;
     my $dialog = Gtk2::MessageDialog->new(undef,
@@ -613,8 +669,9 @@ sub message {
     $dialog->show_all;
 }
 
-## @fn overlay_menu()
+#** @method overlay_menu()
 # @brief Construct a menu for an overlay object.
+#*
 sub overlay_menu {
     my @menu = 
 	('Zoom to pre_vious' => sub {
@@ -718,8 +775,9 @@ sub overlay_menu {
     return (\@menu, $item_setup);
 }
 
-## @fn layer_menu()
+#** @fn layer_menu()
 # @brief The callback for button_press_event in the layer list tree view.
+#*
 sub layer_menu {
     my($tree_view, $event, $self) = @_;
 
@@ -854,7 +912,6 @@ sub layer_menu {
     return 0;
 }
 
-## @ignore
 sub show_information {
     my($overlay, $self) = @_;
     my($x, $y) = $overlay->event_pixel2point;
@@ -862,19 +919,9 @@ sub show_information {
     my $layer = $self->get_selected_layer();
 
     my $location = sprintf("(x,y) = (%.4f, %.4f)", $x, $y);
-    my $value = '';
-    if ($layer and $layer->isa('Geo::Raster')) {
-	my @ij = $layer->w2g($x, $y);
-	$location .= sprintf(", (i,j) = (%i, %i)",@ij);
-	$value = $layer->point($x, $y);
-	if (defined $value and $value ne 'nodata' and $layer->{INFO}) {
-	    $value = $layer->{TABLE}->{DATA}->[$value]->[$layer->{INFO}-1];
-	}
-    }
+    my $layer_info = $layer ? $layer->statusbar_info($x, $y) : '';
 
     $self->{statusbar}->pop(0);
-
-    $value = '' unless defined $value;
 
     # additional info, based on mode
     my($dim, $val) = $self->{overlay}->rubberband_value();
@@ -899,10 +946,9 @@ sub show_information {
 
     my $mode = $self->{overlay}->rubberband_mode();
  
-    $self->{statusbar}->push(0, "$mode $location $value$val");
+    $self->{statusbar}->push(0, "$mode $location $layer_info$val");
 }
 
-## @ignore
 sub inspect {
     my($self, $data, $name) = @_;
 
@@ -935,7 +981,6 @@ sub inspect {
     $scroller->show_all;
 }
 
-##@ignore
 sub close_inspect {
     my $self;
     for (@_) {
@@ -946,8 +991,9 @@ sub close_inspect {
     1;
 }
 
-## @method set_layer
+#** @method set_layer
 # update the layer data in the layer list
+#*
 sub set_layer {
     my($self, $layer) = @_;
     return unless defined $layer->{_tree_index}; # a sublayer
@@ -967,7 +1013,7 @@ sub set_layer {
 			 );
 }
 
-## @method Gtk2::Ex::Geo::Layer add_layer($object, $name, $do_not_zoom_to)
+#** @method Gtk2::Ex::Geo::Layer add_layer($object, $name, $do_not_zoom_to)
 # @brief Add a layer to the overlay and the tree store
 #
 # The default behavior is to zoom to the new layer. The layer is
@@ -981,6 +1027,7 @@ sub set_layer {
 # @param do_not_zoom_to (optional) Whether to not to zoom the overlay
 # to this layer. Forwarded to Gtk2::Ex::Geo::Overlay::add_layer.
 # @return
+#*
 sub add_layer {
     my($self, $object, $name, $do_not_zoom_to) = @_;
     return unless $object;
@@ -1009,7 +1056,7 @@ sub add_layer {
     return $layer;
 }
 
-## @method Gtk2::Ex::Geo::Layer layer($name)
+#** @method Gtk2::Ex::Geo::Layer layer($name)
 # @param name
 # @return
 sub layer {
@@ -1017,17 +1064,19 @@ sub layer {
     return $self->{overlay}->get_layer_by_name($name);
 }
 
-## @method layers
+#** @method layers
 # @return a list of all layers (not the internal list but a copy)
+#*
 sub layers {
     my($self) = @_;
     my @a = @{$self->{overlay}->{layers}};
     return @a;
 }
 
-## @method get_focal($name)
+#** @method get_focal($name)
 # @brief Returns a selected (or visible) part of a raster layer by its name.
 # @deprecated Selected and clip are implemented elsewhere.
+#*
 sub get_focal {
     my($self, $name) = @_;
     my $gd = $self->{overlay}->get_layer_by_name($name);
@@ -1041,8 +1090,9 @@ sub get_focal {
     }
 }
 
-## @method update
+#** @method update
 # @brief Updates the whole layer list.
+#*
 sub update {
     my($self) = @_;
     for my $layer (@{$self->{overlay}->{layers}}) {
@@ -1050,7 +1100,6 @@ sub update {
     }
 }
 
-## @ignore
 sub swap {
     my($array,$i1,$i2) = @_;
     my $e1 = $array->[$i1];
@@ -1060,8 +1109,9 @@ sub swap {
     return ($e1,$e2);
 }
 
-## @method move_down
+#** @method move_down
 # @brief Moves the selected layer down in the list.
+#*
 sub move_down {
     my($self) = @_;
 
@@ -1077,8 +1127,9 @@ sub move_down {
 
 }
 
-## @method move_up
+#** @method move_up
 # @brief Moves the selected layer up in the list.
+#*
 sub move_up {
     my($self) = @_;
 
@@ -1094,9 +1145,10 @@ sub move_up {
 
 }
 
-## @method remove_layer
+#** @method remove_layer
 # @brief Removes the selected layer.
 # @return Success or failure
+#*
 sub remove_layer {
     my($self, $name, $do_not_render) = @_;
     my $layer = $self->{overlay}->get_layer_by_name($name);
@@ -1109,9 +1161,10 @@ sub remove_layer {
     return 1;
 }
 
-## @method delete_selected
+#** @method delete_selected
 # @brief Removes the selected layer and destroys it.
 # @return Success or failure
+#*
 sub delete_selected {
     my($self, $do_not_render) = @_;
     my $n = $#{$self->{overlay}->{layers}};
@@ -1132,8 +1185,9 @@ sub delete_selected {
     return 1;
 }
 
-## @method get_selected
+#** @method get_selected
 # @brief Returns the selected layer.
+#*
 sub get_selected_layer {
     my($self) = @_;
     my($path, $focus_column) = $self->{tree_view}->get_cursor;
@@ -1142,8 +1196,9 @@ sub get_selected_layer {
     return $self->{overlay}->get_layer_by_index($index);
 }
 
-## @method select_layer($name)
+#** @method select_layer($name)
 # @brief Selects a layer.
+#*
 sub select_layer {
     my($self, $name) = @_;
     my $index = $self->{overlay}->index_of_layer($name);
@@ -1152,8 +1207,6 @@ sub select_layer {
     }
 }
 
-## @ignore
-# explain this in some dox file
 sub eval_entry {
     my($entry, $event, $self) = @_;
     my $key = $event->keyval;
@@ -1240,69 +1293,36 @@ sub max {
     $_[0] > $_[1] ? $_[0] : $_[1];
 }
 
-## @class Gtk2::Ex::Geo::History
-# @brief Input history a'la (at least attempting) GNU history
-package Gtk2::Ex::Geo::History;
+=head1 NAME
 
-sub new {
-    my ($class, $history) = @_;
-    push @$history,'' unless defined($history->[$#$history]) and $history->[$#$history] eq '';
-    my $self = { index => $#$history,
-		 history => $history,
-		 edit_index => -1,
-		 edit_text => '',
-	     };
-    bless($self, $class); 
-}
+Gtk2::Ex::Geo::Glue
 
-sub arrow_up {
-    my $self = shift;
-    if ($self->{edit_index} >= 0) {
-	$self->{history}->[$self->{edit_index}] = $self->{edit_text};
-    }
-    $self->{index} = max(0, $self->{index}-1);
-    return $self->{edit_text} if $self->{edit_index} == $self->{index};
-    return $self->{history}->[$self->{index}];
-}
+Gtk2::Ex::Geo::History
 
-sub arrow_down {
-    my $self = shift;
-    if ($self->{edit_index} >= 0) {
-	$self->{history}->[$self->{edit_index}] = $self->{edit_text};
-    }
-    $self->{index} = min($#{$self->{history}}, $self->{index}+1);
-    return $self->{edit_text} if $self->{edit_index} == $self->{index};
-    return $self->{history}->[$self->{index}];
-}
+=head1 DESCRIPTION
 
-sub editing {
-    my ($self, $text) = @_;
-    $self->{edit_index} = $self->{index};
-    $self->{edit_text} = $text;
-}
+Glue is a glue object that manages the GUI. The dialog boxes of the
+registered layer classes can be obtained from it. It maintains an
+overlay.
 
-sub enter {
-    my ($self, $text) = @_;
-    $self->{edit_text} = $text if defined $text;
-    my $history = $self->{history};
-    if ($#$history >= 0) {
-	unless ($#$history > 0 and $history->[$#$history-1] eq $self->{edit_text}) {
-	    $history->[$#$history] = $self->{edit_text};
-	    push @$history,'' unless $self->{edit_text} eq '';
-	}
-	$self->{index} = $#$history;
-	$self->{edit_index} = -1;
-	$self->{edit_text} = '';
-    }
-}
+The entry widget that is managed by a glue object is used for getting
+commands from the user. The glue object maintains a history of the
+objects. Old commands can be browsed with the arrow up and arrow down
+keys. The user command is given to Perl's eval function.
 
-sub min {
-    $_[0] > $_[1] ? $_[1] : $_[0];
-}
+1) the variable names are inspected and found layer names are replaced
+with pointers to real layers
 
-sub max {
-    $_[0] > $_[1] ? $_[0] : $_[1];
-}
+2) keyword "focal:" in the beginning of an entry is removed and all
+references to layers are replaced with clipped versions
+
+3) commands p, plot, and inspect are recognized without explicit
+reference to the Gtk2::Ex::Geo::Glue package
+
+History is the history of the command line entry. It is stored
+persistently in the user's home directory in file .rash_history.
+
+=cut
 
 1;
 __DATA__

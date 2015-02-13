@@ -1,12 +1,8 @@
-## @class Gtk2::Ex::Geo::Scale
-# @brief A simple scale for the geocanvas
-# @author Copyright (c) Ari Jolma
-# @author This library is free software; you can redistribute it and/or modify
-# it under the same terms as Perl itself, either Perl version 5.8.5 or,
-# at your option, any later version of Perl 5 you may have available.
+#** @file Scale.pm
+#*
 package Gtk2::Ex::Geo::Scale;
 use strict;
-our @ISA = qw(Gtk2::Ex::Geo::Layer);
+use base qw(Gtk2::Ex::Geo::Layer);
 sub new {
     my($package, %param) = @_;
     my $self = Gtk2::Ex::Geo::Layer::new($package);

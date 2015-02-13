@@ -1,93 +1,7 @@
-## @namespace Gtk2::Ex::Geo
-# @brief A framework of widgets for geospatial applications
+#** @file Geo.pm
+#*
 
 package Gtk2::Ex::Geo;
-
-# @brief A framework of widgets for geospatial applications
-# @author Copyright (c) Ari Jolma
-# @author This library is free software; you can redistribute it and/or modify
-# it under the same terms as Perl itself, either Perl version 5.8.5 or,
-# at your option, any later version of Perl 5 you may have available.
-
-=pod
-
-=head1 NAME
-
-Gtk2::Ex::Geo - The main module to use for geospatial applications
-
-Gtk2::Ex::Geo is a namespace for modules, classes, and widgets for
-geospatial applications. This package contains the modules:
-
-=head2 Gtk2::Ex::Geo
-
-The main module to 'use'.
-
-=head2 Gtk2::Ex::Geo::Canvas
-
-A subclass of Gtk2::Gdk::Pixbuf. Constructs a pixbuf from a stack of
-geospatial layer objects by calling the 'render' method for each
-$layer. Embedded in Gtk2::Ex::Geo::Overlay.
-
-=head2 Gtk2::Ex::Geo::Overlay
-
-A subclass of Gtk2::ScrolledWindow. A canvas in a scrolled
-window. Contains a list of layer objects. Functionality includes
-redraw, support for selections (point, line, path, rectangle, polygon,
-or many of them), zoom, pan, and conversion between event and world
-(layer) coordinates.
-
-=head2 Gtk2::Ex::Geo::Layer
-
-The root class for geospatial layers. A geospatial layer is a
-typically a subclass of a geospatial data (raster, vector features, or
-something else) and of this class. The idea is that this class
-contains visualization information (transparency, palette, colors,
-symbology, label placement, etc) for the data. Contains many callbacks
-that are fired as a result of user using context menu, making a
-selection, etc. Uses layer dialogs.
-
-=head2 Gtk2::Ex::Geo::DialogMaster
-
-A class which maintains a set of Glade dialogs taken from XML in DATA
-section.
-
-=head2 Gtk2::Ex::Geo::Dialogs
-
-A subclass of Gtk2::Ex::Geo::DialogMaster. Contains dialogs for
-Gtk2::Ex::Geo::Layer.
-
-=head2 Gtk2::Ex::Geo::Glue
-
-Typically a singleton class for an object, which manages a
-Gtk2::Ex::Geo::Overlay widget, a Gtk2::TreeView widgets, and other
-widgets of a geospatial application. The object also takes care of
-popping up context menus and other things.
-
-=head2 Gtk2::Ex::Geo::History
-
-Embedded in Gtk2::Ex::Geo::Glue. Input history a'la (at least
-attempting) GNU history that is used by Glue object with Gtk2::Entry.
-
-=head2 Gtk2::Ex::Geo::TreeDumper
-
-From http://www.asofyet.org/muppet/software/gtk2-perl/treedumper.pl-txt
-For inspecting layer and other objects.
-
-=head1 DOCUMENTATION
-
-The documentation of Gtk2::Ex::Geo is included into the source code in
-doxygen(1) format. The documentation can be generated in HTML, LaTeX,
-and other formats using the doxygen executable and the perl doxygen
-filter(2).
-
-The documentation is of this framework is available as a part of the
-documentation for Geoinformatica(3).
-
-1) http://www.stack.nl/~dimitri/doxygen
-2) http://www.bigsister.ch/doxygenfilter and http://geoinformatics.aalto.fi/trac/browser/doxygenfilter
-3) http://geoinformatics.aalto.fi/doc/Geoinformatica/html/
-
-=cut
 
 use strict;
 use warnings;
@@ -116,5 +30,138 @@ sub exception_handler {
     my($msg) = @_;
     print STDERR "$msg\n";
 }
+
+=head1 NAME
+
+Gtk2::Ex::Geo - The main module to use for geospatial applications
+
+=head1 USAGE
+
+ use Glib qw/TRUE FALSE/;
+ use Gtk2;
+ use Gtk2::Ex::Geo;
+ # use any layer classes you may need/have
+ 
+ Gtk2->init;
+ 
+ # construct the main window
+ my $window = Gtk2::Window->new;
+ 
+ # construct the glue object (contains some widgets)
+ my $gis = Gtk2::Ex::Geo::Glue->new( main_window => $window );
+ 
+ # register layer classes
+ $gis->register_class('Gtk2::Ex::Geo::Layer');
+ 
+ # continue with the main window
+ # the layer list and the map will be next to each other
+ my $hbox = Gtk2::HBox->new(FALSE, 0);
+ 
+ # layer list
+ my $list = Gtk2::ScrolledWindow->new();
+ $list->set_policy("never", "automatic");
+ $list->add($gis->{tree_view});
+ $hbox->pack_start($list, FALSE, FALSE, 0);
+ 
+ # add the map    
+ $hbox->pack_start($gis->{overlay}, TRUE, TRUE, 0);
+     
+ # the toolbar (menu), the layer list + map, the command line entry, 
+ # and the statusbar will be on top of each other
+ my $vbox = Gtk2::VBox->new(FALSE, 0);
+ $vbox->pack_start($gis->{toolbar}, FALSE, FALSE, 0);
+ $vbox->pack_start($hbox, TRUE, TRUE, 0);
+ $vbox->pack_start($gis->{entry}, FALSE, FALSE, 0);
+ $vbox->pack_start($gis->{statusbar}, FALSE, FALSE, 0);
+ 
+ $window->add($vbox);
+ $window->signal_connect("destroy", \&close_the_app, [$window, $gis]);
+ $window->set_default_size(600,600);
+ $window->show_all;
+ 
+ Gtk2->main;
+ 
+ sub close_the_app {
+     my($window, $gis) = @{$_[1]};
+     $gis->close();
+     Gtk2->main_quit;
+     exit(0);
+ }
+
+=head1 DESCRIPTION
+
+Gtk2::Ex::Geo is a namespace for modules, classes, and widgets for
+geospatial applications. The idea is to provide a canvas for
+geospatial data, a set of dialogs, and glue code. This package
+contains the modules:
+
+B<Gtk2::Ex::Geo> 
+
+The main module to 'use'.
+
+B<Gtk2::Ex::Geo::Canvas>
+
+A subclass of Gtk2::Gdk::Pixbuf. Constructs a pixbuf with a map from a
+stack of geospatial layer objects by calling the 'render' method for
+each $layer.
+
+B<Gtk2::Ex::Geo::Overlay>
+
+A subclass of Gtk2::ScrolledWindow. A canvas in a scrolled
+window. Contains a list of layer objects. Functionality includes
+redraw, support for selections (point, line, path, rectangle, polygon,
+or many of them), zoom, pan, and conversion between event and world
+(layer) coordinates.
+
+B<Gtk2::Ex::Geo::Layer>
+
+The root class for geospatial layers. A geospatial layer is a
+typically a subclass of a geospatial data (raster, vector features, or
+something else) and of this class. The idea is that this class
+contains visualization information (transparency, palette, colors,
+symbology, label placement, etc) for the data. Contains many callbacks
+that are fired as a result of user using context menu, making a
+selection, etc. Uses layer dialogs.
+
+B<Gtk2::Ex::Geo::DialogMaster>
+
+A class which maintains a set of Glade dialogs taken from XML in DATA
+section.
+
+B<Gtk2::Ex::Geo::Dialogs>
+
+A subclass of Gtk2::Ex::Geo::DialogMaster. Contains dialogs for
+Gtk2::Ex::Geo::Layer.
+
+B<Gtk2::Ex::Geo::Glue>
+
+Typically a singleton class for an object, which manages a
+Gtk2::Ex::Geo::Overlay widget, a Gtk2::TreeView widgets, and other
+widgets of a geospatial application. The object also takes care of
+popping up context menus and other things.
+
+B<Gtk2::Ex::Geo::History>
+
+Input history for the command line entry a'la (at least attempting)
+GNU history. The command line entry is managed by Glue object with
+Gtk2::Entry.
+
+B<Gtk2::Ex::Geo::TreeDumper>
+
+From http://www.asofyet.org/muppet/software/gtk2-perl/treedumper.pl-txt
+For inspecting layer and other objects.
+
+=head1 DOCUMENTATION
+
+The documentation of Gtk2::Ex::Geo is included into the source code in
+doxygen format. The documentation can be generated in HTML, LaTeX, and
+other formats using the doxygen executable and the perl doxygen
+filter.
+
+1) http://www.stack.nl/~dimitri/doxygen
+2) http://search.cpan.org/~jordan/Doxygen-Filter-Perl/
+3) http://ajolma.net/
+
+=cut
 
 1;

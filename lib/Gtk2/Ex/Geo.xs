@@ -24,7 +24,7 @@ gtk2_ex_geo_pixbuf_destroy_notify (guchar * pixels,
 	free(pixels);
 }
 
-MODULE = Gtk2::Ex::Geo		PACKAGE = Gtk2::Ex::Geo
+MODULE = Gtk2::Ex::Geo          PACKAGE = Gtk2::Ex::Geo::Pixbuf         PREFIX = gtk2_ex_geo_pixbuf_
 
 gtk2_ex_geo_pixbuf *
 gtk2_ex_geo_pixbuf_create(int width, int height, double minX, double maxY, double pixel_size, int bgc1, int bgc2, int bgc3, int bga)

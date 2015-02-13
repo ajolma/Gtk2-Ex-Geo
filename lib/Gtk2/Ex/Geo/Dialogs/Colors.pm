@@ -1,5 +1,4 @@
 package Gtk2::Ex::Geo::Dialogs::Colors;
-# @brief 
 
 use strict;
 use warnings;
@@ -158,7 +157,6 @@ sub open {
 
 # set ups
 
-##@ignore
 sub fill_color_field_combo {
     my($self) = @_;
     my $palette_type = $self->palette_type;
@@ -193,7 +191,6 @@ sub fill_color_field_combo {
 
 # callbacks for edits
 
-##@ignore
 sub palette_type_changed {
     my($self, $gui) = @{$_[1]};
     my $dialog = $self->{colors_dialog};
@@ -272,7 +269,6 @@ sub palette_type_changed {
     }
 }
 
-##@ignore
 sub color_field_changed {
     my($self, $gui) = @{$_[1]};
     my $field = get_value_from_combo($self->{colors_dialog}, 'color_field_combobox');
@@ -285,7 +281,6 @@ sub color_field_changed {
     }
 }
 
-## @ignore
 sub color_scale_changed {
     my($self, $gui) = @{$_[1]};
     my $d = $self->{colors_dialog};
@@ -294,7 +289,6 @@ sub color_scale_changed {
     $self->color_scale($min, $max);
 }
 
-## @ignore
 sub hue_changed {
     my(undef, $self) = @_;
     my $d = $self->{colors_dialog};
@@ -305,7 +299,6 @@ sub hue_changed {
     create_colors_treeview($self);
 }
 
-## @ignore
 sub grayscale_color_changed {
     my(undef, $self) = @_;
     my $d = $self->{colors_dialog};
@@ -325,7 +318,6 @@ sub grayscale_color_changed {
 
 # button callbacks
 
-##@ignore
 sub apply_colors {
     my($self, $gui, $close) = @{$_[1]};
     my @color = split(/ /, $self->{colors_dialog}->get_widget('border_color_label')->get_text);
@@ -336,7 +328,6 @@ sub apply_colors {
     $gui->{overlay}->render;
 }
 
-##@ignore
 sub cancel_colors {
     my($self, $gui);
     for (@_) {
@@ -363,7 +354,6 @@ sub cancel_colors {
     1;
 }
 
-##@ignore
 sub copy_colors {
     my($self, $gui) = @{$_[1]};
     my $table = copy_colors_dialog($self, $gui);
@@ -378,7 +368,6 @@ sub copy_colors {
     }
 }
 
-##@ignore
 sub open_colors_file {
     my($self, $gui) = @{$_[1]};
     my $palette_type = $self->palette_type;
@@ -401,7 +390,6 @@ sub open_colors_file {
     }
 }
 
-##@ignore
 sub save_colors_file {
     my($self, $gui) = @{$_[1]};
     my $palette_type = $self->palette_type;
@@ -422,7 +410,6 @@ sub save_colors_file {
     }
 }
 
-##@ignore
 sub edit_color {
     my($self, $gui) = @{$_[1]};
     my $palette_type = $self->palette_type;
@@ -474,7 +461,6 @@ sub edit_color {
     }
 }
 
-##@ignore
 sub delete_color {
     my($self, $gui) = @{$_[1]};
     my $palette_type = $self->palette_type;
@@ -501,7 +487,6 @@ sub delete_color {
     $treeview->set_cursor(Gtk2::TreePath->new($at));
 }
 
-##@ignore
 sub add_color {
     my($self, $gui) = @{$_[1]};
     my $treeview = $self->{colors_dialog}->get_widget('colors_treeview');
@@ -559,7 +544,6 @@ sub add_color {
     $treeview->set_cursor(Gtk2::TreePath->new($index));
 }
 
-##@ignore
 sub set_hue_range {
     my($self, $gui, $dir) = @{$_[1]};
     my $dialog = $self->{colors_dialog};
@@ -579,7 +563,6 @@ sub set_hue_range {
     hue_changed(undef, $self);
 }
 
-##@ignore
 sub set_grayscale_color {
     my($self, $gui) = @{$_[1]};
     my $dialog = $self->{colors_dialog};
@@ -606,7 +589,6 @@ sub set_grayscale_color {
     grayscale_color_changed(undef, $self);
 }
 
-##@ignore
 sub border_color_dialog {
     my($self) = @{$_[1]};
     my $dialog = $self->{colors_dialog};
@@ -626,7 +608,6 @@ sub border_color_dialog {
     $color_chooser->destroy;
 }
 
-##@ignore
 sub fill_color_scale_fields {
     my($self, $gui) = @{$_[1]};
     my @range;
@@ -642,7 +623,6 @@ sub fill_color_scale_fields {
     $self->{colors_dialog}->get_widget('scale_max_entry')->set_text($range[1]) if defined $range[1];
 }
 
-##@ignore
 sub make_color_legend {
     my($self, $gui) = @{$_[1]};
     put_scale_in_treeview($self);
@@ -650,7 +630,6 @@ sub make_color_legend {
 
 # color treeview subs
 
-##@ignore
 sub cell_in_colors_treeview_changed {
     my($cell, $path, $new_value, $data) = @_;
     my($self, $column) = @$data;
@@ -670,7 +649,6 @@ sub cell_in_colors_treeview_changed {
     fill_colors_treeview($self);
 }
 
-##@ignore
 sub create_colors_treeview {
     my($self) = @_;
 
@@ -731,7 +709,6 @@ sub create_colors_treeview {
     return 1;
 }
 
-##@ignore
 sub current_coloring_type {
     my($self) = @_;
     my $field = $self->color_field;
@@ -744,7 +721,6 @@ sub current_coloring_type {
     return '';
 }
 
-##@ignore
 sub fill_colors_treeview {
     my($self) = @_;
 
@@ -781,7 +757,6 @@ sub fill_colors_treeview {
 
 }
 
-##@ignore
 sub set_color {
     my($model, $iter, $value, @color) = @_;
     my @set = ($iter);
@@ -797,7 +772,6 @@ sub set_color {
 }
 
 
-##@ignore
 sub put_scale_in_treeview {
     my($self) = @_;
     my $palette_type = $self->palette_type;
@@ -887,7 +861,6 @@ sub put_scale_in_treeview {
     }
 }
 
-##@ignore
 sub copy_colors_dialog {
     my($self, $gui) = @_;
 

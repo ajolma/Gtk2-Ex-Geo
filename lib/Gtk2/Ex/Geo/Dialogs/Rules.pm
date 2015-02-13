@@ -1,5 +1,4 @@
 package Gtk2::Ex::Geo::Dialogs::Rules;
-# @brief 
 
 use strict;
 use warnings;

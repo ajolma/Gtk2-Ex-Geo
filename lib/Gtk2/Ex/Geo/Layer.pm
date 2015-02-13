@@ -1,22 +1,6 @@
-## @class Gtk2::Ex::Geo::Layer
-# @brief A root class for visual geospatial layers
-# @author Copyright (c) Ari Jolma
-# @author This library is free software; you can redistribute it and/or modify
-# it under the same terms as Perl itself, either Perl version 5.8.5 or,
-# at your option, any later version of Perl 5 you may have available.
+#** @file Layer.pm
+#*
 package Gtk2::Ex::Geo::Layer;
-
-=pod
-
-=head1 NAME
-
-Gtk2::Ex::Geo::Layer - A root class for visual geospatial layers
-
-The documentation of Gtk2::Ex::Geo(1) is written in doxygen format.
-
-1) http://geoinformatics.aalto.fi/doc/Geoinformatica/html/
-
-=cut
 
 use strict;
 use warnings;
@@ -79,8 +63,8 @@ $SINGLE_COLOR = [0, 0, 0, 255];
 		     'Bottom right' => 8,
     );
 
-## @cmethod registration()
-# @brief Returns the dialogs and commands implemented by this layer
+#** @method registration()
+# @brief A class method. Returns the dialogs and commands implemented by this layer
 # class.
 #
 # The dialogs is an object of a subclass of
@@ -103,23 +87,23 @@ sub registration {
     return { dialogs => $dialogs };
 }
 
-## @cmethod @palette_types()
+## @method @palette_types()
 #
-# @brief Returns a list of valid palette types (strings).
+# @brief A class method. Returns a list of valid palette types (strings).
 # @return a list of valid palette types (strings).
 sub palette_types {
     return sort {$PALETTE_TYPE{$a} <=> $PALETTE_TYPE{$b}} keys %PALETTE_TYPE;
 }
 
-## @cmethod @symbol_types()
+## @method @symbol_types()
 #
-# @brief Returns a list of valid symbol types (strings).
+# @brief A class method. Returns a list of valid symbol types (strings).
 # @return a list of valid symbol types (strings).
 sub symbol_types {
     return sort {$SYMBOL_TYPE{$a} <=> $SYMBOL_TYPE{$b}} keys %SYMBOL_TYPE;
 }
 
-## @cmethod @label_placements()
+## @method @label_placements()
 #
 # @brief Returns a list of valid label_placements (strings).
 # @return a list of valid label_placements (strings).
@@ -127,9 +111,9 @@ sub label_placements {
     return sort {$LABEL_PLACEMENT{$a} <=> $LABEL_PLACEMENT{$b}} keys %LABEL_PLACEMENT;
 }
 
-## @cmethod $upgrade($object) 
+## @method $upgrade($object) 
 #
-# @brief Upgrade a known data object to a layer object.
+# @brief A class method. Upgrade a known data object to a layer object.
 #
 # @return true (either 1 or a new object) if object is known (no need
 # to look further) and false otherwise.
@@ -138,8 +122,8 @@ sub upgrade {
     return 0;
 }
 
-## @cmethod new(%params)
-# @brief constructs a new layer object or blesses an object into a layer class
+## @method new(%params)
+# @brief A class method. Constructs a new layer object or blesses an object into a layer class.
 # Calls defaults with the given parameters.
 sub new {
     my($class, %params) = @_;
@@ -239,7 +223,6 @@ sub defaults {
 
 }
 
-##@ignore
 sub DESTROY {
     my $self = shift;
     while (my($key, $widget) = each %$self) {
@@ -937,7 +920,6 @@ sub new {
     bless $self => (ref($package) or $package);
 }
 
-## @ignore
 sub fields {
     my $schema = shift;
     my @fields = (
@@ -949,7 +931,6 @@ sub fields {
     return @fields;
 }
 
-## @ignore
 sub field_names {
     my $schema = shift;
     my @names = ('.FID', '.GeometryType');
@@ -960,7 +941,6 @@ sub field_names {
     return @names;
 }
 
-## @ignore
 sub field {
     my($schema, $field_name) = @_;
     if ($field_name eq '.FID') {
@@ -979,7 +959,6 @@ sub field {
     }
 }
 
-## @ignore
 sub field_index {
     my($schema, $field_name) = @_;
     my $i = 0;
@@ -1029,6 +1008,19 @@ sub render_selection {
 # max_x, max_y] of the surface in world coordinates.
 sub render {
     my($self, $pb, $cr, $overlay, $viewport) = @_;
+}
+
+## @method $string statusbar_info()
+#
+# @brief A request for an information string for the statusbar.
+#
+# @param[in] x The x location of the mouse.
+# @param[in] y The y location of the mouse.
+#
+# @return A short information string for the statusbar.
+sub statusbar_info {
+    my($self, $x, $y) = @_;
+    return '';
 }
 
 ## @method $bootstrap_dialog($gui, $dialog, $title, $connects)
@@ -1110,5 +1102,22 @@ sub dialog_visible {
     return 0 unless $d;
     return $d->get_widget($dialog)->get('visible');
 }
+
+=head1 NAME
+
+Gtk2::Ex::Geo::Layer
+
+Gtk2::Ex::Geo::Schema
+
+=head1 DESCRIPTION
+
+The root class of all layer classes.
+
+Layer classes should be registered with the glue object. The
+registration information comprises a dialogs object (an instance of
+DialogMaster or its subclass), and class methods it offers (typically
+a subset of 'new', 'open', 'save', etc.).
+
+=cut
 
 1;

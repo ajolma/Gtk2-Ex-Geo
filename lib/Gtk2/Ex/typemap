@@ -1,2 +1,18 @@
 TYPEMAP
-	gtk2_ex_geo_pixbuf * T_PTROBJ
+	gtk2_ex_geo_pixbuf * GTK2_EX_GEO_PIXBUF
+
+INPUT
+
+GTK2_EX_GEO_PIXBUF
+        if (!SvOK($arg))
+            $var = NULL;
+        else if (sv_derived_from($arg, \"Gtk2::Ex::Geo::Pixbuf\")) {
+	    IV tmp = SvIV((SV*)SvRV($arg));
+	    $var = INT2PTR($type, tmp);
+	} else
+            croak(\"$var is not of type Gtk2::Ex::Geo::Pixbuf\")
+
+OUTPUT
+
+GTK2_EX_GEO_PIXBUF
+	sv_setref_pv($arg, \"Gtk2::Ex::Geo::Pixbuf\", (void*)$var);

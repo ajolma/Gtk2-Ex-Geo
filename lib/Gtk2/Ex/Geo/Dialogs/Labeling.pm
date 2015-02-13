@@ -66,7 +66,6 @@ sub open {
     return $dialog->get_widget('labels_dialog');
 }
 
-##@ignore
 sub apply_labels {
     my($self, $gui, $close) = @{$_[1]};
     my $dialog = $self->{labels_dialog};
@@ -96,7 +95,6 @@ sub apply_labels {
     $gui->{overlay}->render;
 }
 
-##@ignore
 sub cancel_labels {
     my($self, $gui);
     for (@_) {
@@ -111,7 +109,6 @@ sub cancel_labels {
     1;
 }
 
-##@ignore
 sub labels_font {
     my($self, $gui) = @{$_[1]};
     my $font_chooser = Gtk2::FontSelectionDialog->new ("Select font for the labels");
@@ -124,7 +121,6 @@ sub labels_font {
     $font_chooser->destroy;
 }
 
-##@ignore
 sub labels_color {
     my($self, $gui) = @{$_[1]};
     my @color = split(/ /, $self->{labels_dialog}->get_widget('labels_color_label')->get_text);
