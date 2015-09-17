@@ -75,6 +75,18 @@ $SINGLE_COLOR = [0, 0, 0, 255];
 # reference to a subroutine, which is executed when the user executes
 # the command. The commands are currently implemented as buttons in
 # Gtk2::Ex::Geo::Glue.
+
+# - <i>dialogs</i> [optional] an object containing dialogs (a dialog master object)
+# - <i>commands</i> [optional] an anonymous hash of commands for the GUI
+# A command is defined in an anonymous hash with parameters:
+#   - <i>nr</i> a visual order of the commands
+#   - <i>pos</i> the pos parameter in toolbar->insert
+#   - <i>text</i> the text for the command button
+#   - <i>tip</i> the tip for the command button
+#   - <i>sub</i> a reference to a subroutine to be executed
+#*
+
+
 #
 # @return an anonymous hash containing the dialogs (key: 'dialogs')
 # and commands (key: 'commands')

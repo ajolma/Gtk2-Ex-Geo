@@ -1,5 +1,105 @@
-#** @file Overlay.pm
-#*
+=pod
+
+=head1 NAME
+
+Gtk2::Ex::Geo::Overlay - A map widget
+
+This module is a part of the Gtk2::Ex::Geo toolkit.
+
+=head1 SYNOPSIS
+
+    my $gis = Gtk2::Ex::Geo::Glue->new();
+
+    # now an overlay object is available as $gis->{overlay}
+
+=head1 DESCRIPTION
+
+Gtk2::Ex::Geo::Overlay is a subclass of Gtk2::ScrolledWindow. An
+overlay object contains a list of geospatial data layer objects, which
+must behave like a Gtk2::Ex::Geo::Layer. The overlay object renders
+the layers on a canvas, which it puts into its window.
+
+The overlay object supports the following modes for interactive graphics.
+
+=over
+
+=item Zoom in and out
+
+Zoom in happens when the user draws a rectangle with a mouse
+(rubberbanding) or presses the + key. Zoom out happens when the user
+presses the - key.
+
+=item Panning
+
+The viewport of the map can be panned by moving the mouse with left
+button pressed or with the arrow keys.
+
+=item Selecting
+
+The user can draw and edit points, lines, paths (line strings),
+rectangles, polygons, or collections of any of those.
+
+The selection ($overlay->{selection}) is a Geo::OGC::Geometry object.
+
+=item Measuring
+
+The user can measure line or path length or rectangle or polygon
+area. The length and area is computed simply without considering
+possible spatial reference system.
+
+=item Drawing
+
+The user can draw and edit points, lines, paths (line strings),
+rectangles, polygons, or collections of any of those.
+
+The drawing ($overlay->{drawing}) is a Geo::OGC::Geometry object.
+
+=back
+
+Adding a geometry to a selection or drawing is by pressing the Ctrl
+key. Drawing a hole to a rectangle or polygon is by pressing the Shift
+key.
+
+The interaction mode is set by changing the properties rubberband_mode
+and rubberband_geometry but this is usually handled by the glue
+object through two comboboxes in the toolbar. (to do: document
+the API to do that prgrammatically)
+
+=head1 SIGNALS
+
+=over
+
+=item update_layers
+
+Sent just before the layers are rendered.
+
+=item new_selection
+
+Sent after the user has changed the selection.
+
+=item drawing_changed
+
+Sent after the user has changed the drawing.
+
+=item motion_notify
+
+Sent when the mouse has a new location on the map.
+
+=item pixmap_ready
+
+Sent just after rendering is ready, but selection and drawing haven't
+been rendered.
+
+=back
+
+=head1 GRAPHICS PIPELINE
+
+to do: describe the graphics pipeline
+
+=head1 METHODS
+
+=cut
+
 package Gtk2::Ex::Geo::Overlay;
 
 use strict;
@@ -85,8 +185,7 @@ sub INIT_INSTANCE {
     $self->{layers} = [];
 }
 
-## @method
-# @brief Attempt to delete all widgets within this widget.
+# Attempt to delete all widgets within this widget.
 sub close {
     my $self = shift;
     while (my($key, $widget) = each %$self) {
@@ -105,9 +204,7 @@ sub size_allocate {
     return 0;
 }
 
-## @method my_inits
-# @brief call after new
-# @todo merge into new
+# call after new, todo merge into new
 sub my_inits {
     my($self, %params) = @_;
     $self->{inited} = 1;
@@ -126,8 +223,7 @@ sub my_inits {
     }
 }
 
-## @method add_layer($layer, $do_not_zoom_to)
-# @brief Add a layer to the list and by default zoom to it.
+# Add a layer to the list and by default zoom to it.
 # Always zooms to the first layer added.
 sub add_layer {
     my($self, $layer, $do_not_zoom_to) = @_;
@@ -143,16 +239,14 @@ sub add_layer {
     return $#{$self->{layers}};
 }
 
-## @method layer_count()
-# @brief Get the number of layers in the list.
+# Get the number of layers in the list.
 sub layer_count {
     my($self) = @_;
     my $count = @{$self->{layers}};
     return $count;
 }
 
-## @method layer_count($layer)
-# @brief Return true if given layer object is in the list.
+# Return true if given layer object is in the list.
 sub has_layer {
     my($self, $layer) = @_;
     for (@{$self->{layers}}) {
@@ -162,8 +256,7 @@ sub has_layer {
     return 0;
 }
 
-## @method layer_count($name)
-# @brief Get the index of the given layer in the list.
+# Get the index of the given layer in the list.
 sub index_of_layer {
     my($self, $name) = @_;
     my $i = $#{$self->{layers}};
@@ -174,14 +267,12 @@ sub index_of_layer {
     return undef;
 }
 
-## @method get_layer_by_index($index)
 sub get_layer_by_index {
     my($self, $index) = @_;
     return unless $index >= 0 and $index <= $#{$self->{layers}};
     return $self->{layers}->[$#{$self->{layers}} - $index];
 }
 
-## @method get_layer_by_name($name)
 sub get_layer_by_name {
     my($self, $name) = @_;
     for my $layer (@{$self->{layers}}) {
@@ -189,7 +280,6 @@ sub get_layer_by_name {
     }
 }
 
-## @method remove_layer_by_index($index)
 sub remove_layer_by_index {
     my($self, $index) = @_;
     my $n = $#{$self->{layers}};
@@ -198,7 +288,6 @@ sub remove_layer_by_index {
     return 1;
 }
 
-## @method remove_layer_by_name($index)
 sub remove_layer_by_name {
     my($self, $name) = @_;
     for my $index (0..$#{$self->{layers}}) {
@@ -210,11 +299,15 @@ sub remove_layer_by_name {
     return 0;
 }
 
-## @method zoom_to($layer)
-# @brief Tries to set the given bounding box as the world.
+=pod
 
-## @method zoom_to($minx, $miny, $maxx, $maxy)
-# @brief Tries to set the given bounding box as the world.
+=head2 zoom_to($layer | $minx, $miny, $maxx, $maxy)
+
+Sets the bounding box (world) and the viewport (visible area) of the
+map at least to the bounding box (world) of the layer or to the given.
+
+=cut
+
 sub zoom_to {
     my $self = shift;
 
@@ -271,17 +364,27 @@ sub zoom_to {
     }
 }
 
-## @method get_world()
-# @brief Get the total area of the canvas.
-# @return (min_x, min_y, max_x, max_y)
+=pod
+
+=head2 get_world()
+
+Get the bounding box (min x, min y, max x, max y) of the map.
+
+=cut
+
 sub get_world {
     my $self = shift;
     return ($self->{minX}, $self->{minY}, $self->{maxX}, $self->{maxY});
 }
 
-## @method get_viewport()
-# @brief Get the visible area of the canvas.
-# @return (min_x, min_y, max_x, max_y)
+=pod
+
+=head2 get_viewport()
+
+Get the bounding box (min x, min y, max x, max y) of the visible area of the map.
+
+=cut
+
 sub get_viewport {
     my $self = shift;
     return () unless defined $self->{minX};
@@ -291,9 +394,14 @@ sub get_viewport {
 	     $minX+$self->{viewport_size}->[0]*$self->{pixel_size}, $maxY );
 }
 
-## @method get_viewport_of_selection()
-# @brief Get the visible area of the canvas.
-# @return (min_x, min_y, max_x, max_y)
+=pod
+
+=head2 get_viewport_of_selection()
+
+Get the bounding box of the selection geometry.
+
+=cut
+
 sub get_viewport_of_selection {
     my $self = shift;
     return unless $self->{selection};
@@ -303,15 +411,27 @@ sub get_viewport_of_selection {
     return ($ll->X, $ll->Y, $ur->X, $ur->Y);
 }
 
-## @method size()
-# @brief The size of the viewport in pixels (height, width)
+=pod
+
+=head2 size()
+
+The size of the viewport in pixels (height, width)
+
+=cut
+
 sub size {
     my $self = shift;
     return ($self->{viewport_size}->[1], $self->{viewport_size}->[0]);
 }
 
-## @method zoom_to_all()
-# @brief Sets the world as the bounding box for all layers
+=pod
+
+=head2 zoom_to_all()
+
+Sets the world as the bounding box for all layers.
+
+=cut
+
 sub zoom_to_all {
     my($self) = @_;
     return unless $self->{layers} and @{$self->{layers}};
@@ -343,9 +463,8 @@ sub value_changed {
     return 1;
 }
 
-## @method get_focus()
-# @deprecated use get_viewport_of_selection or get_viewport
-# @returns the visible area or the selection, if one exists, as ($minx, $miny, $maxx, $maxy).
+# deprecated use get_viewport_of_selection or get_viewport
+# returns the visible area or the selection, if one exists
 sub get_focus {
     my($self) = @_;
     if ($self->{selection}) {
@@ -419,18 +538,22 @@ sub get_focus {
 
 package Gtk2::Ex::Geo::Overlay;
 
-## @method render(%params)
-# @brief Render the layers on the canvas.
-# Each layer's render method is called:
-# @code
-# $layer->render($pixbuf_struct, $cairo_context, $self, \@viewport);
-# @endcode
-# If named parameter filename is set, the generated pixbuf is saved to it:
-# @code
-# $pixbuf->save($params{filename}, $params{type});
-# @endcode
-# The generated pixmap that is shown is annotated with selection and
-# user defined annotation function.
+=pod
+
+=head2 render(%params)
+
+Render the layers on the canvas by calling the render method of each
+layer in the order bottom up.
+
+The rendering can be saved to a file by setting named parameters
+filename and type, which are forwarded to the Gtk2::Gdk::Pixbuf
+object.
+
+The generated pixmap is annotated with the selection and drawing
+geometries.
+
+=cut
+
 sub render {
     my $self = shift;
     my %opt = @_;
@@ -472,13 +595,12 @@ sub render {
 
 }
 
-## @method render_geometry($gc, $geom)
-# @brief Render a geometry on the overlay.
+# Render a geometry on the overlay.
 #
-# @note this should be called annotate or made detect the context (gdk vs cairo)
+# note this should be called annotate or made detect the context (gdk vs cairo)
 # Call update_image after you are finished with drawing on the pixmap.
-# @param gc A gdk graphics context (Gtk2::Gdk::GC object)
-# @param geom A Geo::OGC::Geometry object.
+# gc = A gdk graphics context (Gtk2::Gdk::GC object)
+# geom = A Geo::OGC::Geometry object.
 sub render_geometry {
     my($self, $gc, $geom, %param) = @_;
     if ($geom->isa('Geo::OGC::GeometryCollection')) 
@@ -520,11 +642,10 @@ sub render_geometry {
     }
 }
 
-## @method update_image($annotations, $user_param)
-# @param annotations A subroutine for user annotations. Called like
+# Update the image on the screen to show the changes in pixmap.
+# annotations = A subroutine for user annotations. Called like
 # this: $annotations->($overlay, $pixmap, $gc, $user_param).
-# @param user_param User parameter for the annotations.
-# @brief Updates the image on the screen to show the changes in pixmap.
+# user_param = User parameter for the annotations.
 sub update_image {
     my($self, $annotations, $user_param) = @_;
     return unless $self->{pixbuf};
@@ -551,8 +672,7 @@ sub update_image {
     $self->{image}->set_from_pixmap($self->{pixmap}, undef);
 }
 
-## @method zoom($w_offset, $h_offset, $pixel_size)
-# @brief Select a part of the world into the visible area.
+# Select a part of the world into the visible area.
 sub zoom {
     my($self, $w_offset, $h_offset, $pixel_size, $zoomed_in, $not_to_stack) = @_;
 
@@ -605,16 +725,28 @@ sub _zoom {
     }
 }
 
-## @method zoom_in($event, $center_x, $center_y)
-# @brief Zooms in an amount determined by the zoom_factor.
+=pod
+
+=head2 zoom_in($event, $center_x, $center_y)
+
+Zoom in an amount determined by the zoom_factor.
+
+=cut
+
 sub zoom_in { 
     my($self, $event, $center_x, $center_y) = @_;
     $self->_zoom(1, $event, $center_x, $center_y, 1);
 }
 
-## @method zoom_out($event, $center_x, $center_y)
-# @brief Zooms out an amount determined by the zoom_factor.
-# Note: : may enlarge the world.
+=pod
+
+=head2 zoom_out($event, $center_x, $center_y)
+
+Zooms out an amount determined by the zoom_factor.
+Note: may enlarge the world.
+
+=cut
+
 sub zoom_out { 
     my($self, $event, $center_x, $center_y) = @_;
     if ($self->{offset}[0] == 0 and $self->{offset}[1] == 0) {
@@ -626,8 +758,14 @@ sub zoom_out {
     }
 }
 
-## @method pan($w_move, $h_move, $event)
-# @brief Pans the viewport.
+=pod
+
+=head2 pan($w_move, $h_move, $event)
+
+Pan the viewport.
+
+=cut
+
 sub pan {
     my($self, $w_move, $h_move, $event) = @_;
 
@@ -645,8 +783,7 @@ sub pan {
     $self->signal_emit('extent-changed');
 }
 
-## @method key_press_event($event)
-# @brief Handling of key press events.
+# Handle key press events.
 #
 # Tied to key_press_event and key_release_event. Ties "+" to zoom_in,
 # "-" to zoom_out,and arrow keysto pan. Also ties "Enter" to finishing
@@ -757,8 +894,7 @@ sub draw_mode {
     return ($self->{rubberband_mode} eq 'select' or $self->{rubberband_mode} eq 'draw');
 }
 
-## @method key_release_event($event)
-# @brief Handling of key release events.
+# Handle key release events.
 #
 # Unsets object attribute "_control_down" if "Ctrl" released.
 sub key_release_event {
@@ -799,8 +935,8 @@ sub add_to_selection {
     $self->signal_emit('drawing-changed') if $self->{rubberband_mode} eq 'draw';
 }
 
-## @method button_press_event()
-# @brief Pops up a context menu or (optionally) does rubberbanding.
+# Handle a button press event
+# Pop up a context menu or (optionally) do rubberbanding.
 sub button_press_event {
     my(undef, $event, $self) = @_;
 
@@ -864,9 +1000,8 @@ sub button_press_event {
     return $handled;
 }
 
-## @method motion_notify()
-# @brief Updates the rubberband if rubberbanding.
-# @todo Use more visible rubberband, there's no need to use XOR.
+# Update the rubberband if rubberbanding.
+# todo: Use more visible rubberband, there's no need to use XOR.
 sub motion_notify {
     my(undef, $event, $self) = @_;
 
@@ -985,9 +1120,8 @@ sub rubberband_mode {
     return $mode;
 }
 
-## @method @rubberband_value()
-# @brief Computes a value relevant to current rubberband (length or area) in world coordinates.
-# @return ($dimension, $value) $dimension is either 1 or 2
+# Compute a value relevant to current rubberband (length or area) in world coordinates.
+# return ($dimension, $value) $dimension is either 1 or 2
 sub rubberband_value {
     my($self) = @_;
 
@@ -1023,8 +1157,7 @@ sub rubberband_value {
     }
 }
 
-## @method delete_rubberband()
-# @brief Escapes from rubberbanding.
+# Escape from rubberbanding.
 sub delete_rubberband {
     my $self = shift;
     delete $self->{path};
@@ -1032,8 +1165,7 @@ sub delete_rubberband {
     $self->update_image;
 }
 
-## @method button_release_event()
-# @brief Finishes rubberbanding.
+# Finish rubberbanding.
 sub button_release_event {
     my(undef, $event, $self) = @_;
     
@@ -1136,9 +1268,14 @@ sub button_release_event {
     return $handled;
 }
 
-## @method @pixel2point(@pixel)
-# @brief Conversion from pixmap (event) coordinates to world
-# coordinates. Alternative name: event_pixel2point:
+=pod
+
+=head2 pixel2point(@pixel)
+
+Convert from pixmap (event) coordinates to world coordinates.
+
+=cut
+
 sub event_pixel2point {
     my($self, @pixel) = @_;
     return unless $self->{layers} and @{$self->{layers}};
@@ -1148,9 +1285,14 @@ sub event_pixel2point {
 }
 *pixel2point = *event_pixel2point;
 
-## @method @point2pixel(@point)
-# @brief Conversion from world coordinates to pixmap
-# coordinates. Alternative name: point2pixmap_pixel.
+=pod
+
+=head2 point2pixel(@point)
+
+Convert from world coordinates to pixmap coordinates.
+
+=cut
+
 sub point2pixmap_pixel {
     my($self, @p) = @_;
     return (round(($p[0] - $self->{minX})/$self->{pixel_size} - 0.5 - $self->{offset}[0]),
@@ -1158,8 +1300,14 @@ sub point2pixmap_pixel {
 }
 *point2pixel = *point2pixmap_pixel;
 
-## @method @point2surface(@point)
-# @brief Conversion from world coordinates to surface coordinates (as used in Cairo).
+=pod
+
+=head2 point2surface(@point)
+
+Convert world coordinates to surface coordinates (as used in Cairo).
+
+=cut
+
 sub point2surface {
     my($self, @p) = @_;
     return ((($p[0] - $self->{minX})/$self->{pixel_size} - $self->{offset}[0]),
@@ -1177,22 +1325,5 @@ sub max {
 sub round {
     return int($_[0] + .5 * ($_[0] <=> 0));
 }
-
-=head1 NAME
-
-Gtk2::Ex::Geo::Overlay
-
-Gtk2::Ex::Geo::Schema
-
-=head1 DESCRIPTION
-
-An overlay is a widget, subclassed from Gtk2::ScrolledWindow. An
-overlay contains a list of layers, which it renders on a canvas, which
-it puts into its window.
-
-Rubberbanding and keyboard zoom-in (with + key), zoom-out (with -
-key), and panning (with arrow keys) is built-in.
-
-=cut
 
 1;

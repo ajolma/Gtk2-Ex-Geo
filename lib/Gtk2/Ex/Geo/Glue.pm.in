@@ -1,14 +1,42 @@
-#** @file Glue.pm.in
-#*
+=pod
 
-#** @class Gtk2::Ex::Geo::Glue
-# Glue is a intended as a singleton object, which manages the widgets
-# of the main application windows. The widgets are tree_view with an
-# associated model (for the layer list), toolbar (for menu), statusbar
-# (for information), entry (for command line), overlay (for map
-# view). Glue maintains layer class dialogs and toolbar commands. Glue
-# maintains entry history and application resources.
-#*
+=head1 NAME
+
+Gtk2::Ex::Geo::Glue - Geospatial GUI application manager
+
+This module is a part of the Gtk2::Ex::Geo toolkit.
+
+=head1 SYNOPSIS
+
+    use Gtk2::Ex::Geo;
+
+    my $gis = Gtk2::Ex::Geo::Glue->new();
+
+=head1 DESCRIPTION
+
+Glue is a intended as a singleton object which manages the widgets of
+the main application window. The widgets are a tree_view with an
+associated model for the list of layers, a toolbar for menu, a
+statusbar for displaying interaction information, a text entry for a
+command line, and an overlay for a map view. Glue also maintains layer
+class dialogs, toolbar commands, entry history and application
+resources.
+
+=head1 THE COMMAND LINE
+
+Old commands can be browsed with the arrow up and arrow down
+keys. The user command is given to Perl's eval function.
+
+1) the variable names are inspected and found layer names are replaced
+with pointers to real layers
+
+2) keyword "focal:" in the beginning of an entry is removed and all
+references to layers are replaced with clipped versions
+
+=head1 METHODS
+
+=cut
+
 package Gtk2::Ex::Geo::Glue;
 
 #use strict; # causes "Variable not imported in some cases" ??
@@ -22,14 +50,32 @@ use Gtk2::Ex::Geo::Layer;
 use Gtk2::Ex::Geo::Dialogs qw/:all/;
 use Gtk2::Ex::Geo::TreeDumper;
 
-#** @method scalar new(%params)
-# 
-# @param params named parameters:
-# - <i>first_file_open_folder</i> [optional] default folder for the file open dialog
-# - <i>history</i> [optional] a history file of user input
-# - <i>resources</i> [optional] a user preferences file
-# @return a new Glue object
-#*
+=pod
+
+=head2 new(%params)
+
+%param is a hash containing named parameters. The keywords are:
+
+=over
+
+=item first_file_open_folder
+
+Path, which to use for the file open dialog, when it is opened first time.
+
+=item history
+
+The name of the file, which contains the command line history for the
+command entry text box.
+
+=item resources
+
+The name of the file, which contains various resources, like user
+preferences, predefined data sources, etc.
+
+=back
+
+=cut
+
 sub new {
     my $class = shift;
     my %params = @_;
@@ -63,9 +109,7 @@ sub new {
     return $self;
 }
 
-#** @method private create_layer_tree_view()
 # Creates the tree view and associated model to manage the layers.
-#*
 sub create_layer_tree_view {
     my($self) = @_;
     my @columns = qw /name type v a/;
@@ -329,8 +373,6 @@ sub create_overlay {
     return $overlay;
 }
 
-## @class Gtk2::Ex::Geo::History
-# @brief Input history a'la (at least attempting) GNU history
 package Gtk2::Ex::Geo::History;
 
 sub new {
@@ -445,9 +487,7 @@ sub open_resources {
     return (\%resources, $filename);
 }
 
-#** @method register_dialogs($dialogs)
-# @brief Extend the capabilities by adding new dialogs
-#*
+# Extend the capabilities by adding new dialogs
 sub register_dialogs {
     my($self, $dialogs) = @_;
     croak "$dialogs is not a DialogMaster" unless $dialogs->isa('Gtk2::Ex::Geo::DialogMaster');
@@ -487,9 +527,7 @@ sub unregister_command {
     delete $self->{commands}{$tag};
 }
 
-#** @method register_commands($commands)
-# @brief Extend the capabilities by adding new commands
-#*
+# Extend the capabilities by adding new commands
 sub register_commands {
     my($self, $commands) = @_;
     unless (ref $commands->[0]) {
@@ -545,30 +583,24 @@ sub run_command {
     $self->{commands}{$command}->(undef, $self);
 }
 
-#** @method object register_function(%params)
-# @brief Extend the capabilities by adding a new function
-#*
+# Extend the capabilities by adding a new function
 sub register_function {
     my($self, %params) = @_;
     $self->{functions}{$params{name}} = \%params;
 }
 
-#** @method register_class(%params)
-# @brief Extend the capabilities
-#
-# @param params named parameters:
-# - <i>class</i> [optional] the name of the layer class. If this is
-# given, dialogs and commands are retrieved from the class with method
-# Gtk2::Ex::Geo::Layer::registration
-# - <i>dialogs</i> [optional] an object containing dialogs (a dialog master object)
-# - <i>commands</i> [optional] an anonymous hash of commands for the GUI
-# A command is defined in an anonymous hash with parameters:
-#   - <i>nr</i> a visual order of the commands
-#   - <i>pos</i> the pos parameter in toolbar->insert
-#   - <i>text</i> the text for the command button
-#   - <i>tip</i> the tip for the command button
-#   - <i>sub</i> a reference to a subroutine to be executed
-#*
+=pod
+
+=head2 register_class($class)
+
+Add class to the list of known data layer classes,
+which must be a subclass of Gtk2::Ex::Geo::Layer.
+
+$class is a name of a class. This method will retrieve
+information from the class using the class method registration().
+
+=cut
+
 sub register_class {
     my $self = shift;
     my %params;
@@ -595,9 +627,16 @@ sub register_feature_class {
     }
 }
 
-#** @method close()
-# @brief Attempt to destroy all widgets in the GUI.
-#*
+=pod
+
+=head2 close()
+
+This should be called before exit. Appends the command line history
+and changes to resources to the respective files. Attempts to destroy
+all widgets in the GUI.
+
+=cut
+
 sub close {
     my($self) = @_;
     my $resources = $self->{resources};
@@ -643,9 +682,14 @@ sub close {
     }
 }
 
-#** @method scalar get_dialog(name)
-# @brief Retrieve a dialog by its name.
-#*
+=pod
+
+=head2 get_dialog($name)
+
+Retrieve a dialog from those defined by the layer classes.
+
+=cut
+
 sub get_dialog {
     my($self, $dialog_name) = @_;
     for my $dialogs (@{$self->{dialogs}}) {
@@ -655,9 +699,14 @@ sub get_dialog {
     croak "can't find dialog $dialog_name";
 }
 
-#** @method message($message)
-# @brief Display a short information message to the user.
-#*
+=pod
+
+=head2 message($message)
+
+Display a short information message to the user in a Gtk2::MessageDialog.
+
+=cut
+
 sub message {
     my($self, $message) = @_;
     my $dialog = Gtk2::MessageDialog->new(undef,
@@ -669,9 +718,7 @@ sub message {
     $dialog->show_all;
 }
 
-#** @method overlay_menu()
-# @brief Construct a menu for an overlay object.
-#*
+# Construct a menu for an overlay object.
 sub overlay_menu {
     my @menu = 
 	('Zoom to pre_vious' => sub {
@@ -775,9 +822,7 @@ sub overlay_menu {
     return (\@menu, $item_setup);
 }
 
-#** @fn layer_menu()
-# @brief The callback for button_press_event in the layer list tree view.
-#*
+# The callback for button_press_event in the layer list tree view.
 sub layer_menu {
     my($tree_view, $event, $self) = @_;
 
@@ -991,9 +1036,7 @@ sub close_inspect {
     1;
 }
 
-#** @method set_layer
 # update the layer data in the layer list
-#*
 sub set_layer {
     my($self, $layer) = @_;
     return unless defined $layer->{_tree_index}; # a sublayer
@@ -1013,21 +1056,21 @@ sub set_layer {
 			 );
 }
 
-#** @method Gtk2::Ex::Geo::Layer add_layer($object, $name, $do_not_zoom_to)
-# @brief Add a layer to the overlay and the tree store
-#
-# The default behavior is to zoom to the new layer. The layer is
-# upgraded using the upgrade method of the registered layer classes.
-#
-# @param object A geospatial data object. Must be either an object of
-# a subclass of Gtk2::Ex::Geo::Layer or a data object that is
-# recognized by such. It is the responsibility of the upgrade method
-# of the layer class to upgrade the data object to a layer object.
-# @param name (optional) Name for the new layer.
-# @param do_not_zoom_to (optional) Whether to not to zoom the overlay
-# to this layer. Forwarded to Gtk2::Ex::Geo::Overlay::add_layer.
-# @return
-#*
+=pod
+
+=head2 add_layer($object, $name, $do_not_zoom_to)
+
+Add a layer object to the list of data layers with a given name.
+
+The default behavior is to zoom to the new layer. The given
+object may be of any class as long as one of the layer classes
+recognizes it and can upgrade it to a proper layer object.
+The makes it possible to write layer classes as wrappers
+to data classes, which can then in turn be created and used
+in the command line.
+
+=cut
+
 sub add_layer {
     my($self, $object, $name, $do_not_zoom_to) = @_;
     return unless $object;
@@ -1056,27 +1099,35 @@ sub add_layer {
     return $layer;
 }
 
-#** @method Gtk2::Ex::Geo::Layer layer($name)
-# @param name
-# @return
+=pod
+
+=head2 layer($name)
+
+Get a layer by name.
+
+=cut
+
 sub layer {
     my($self, $name) = @_;
     return $self->{overlay}->get_layer_by_name($name);
 }
 
-#** @method layers
-# @return a list of all layers (not the internal list but a copy)
-#*
+=pod
+
+=head2 layers()
+
+Get the list of layers. The list is a copy.
+
+=cut
+
 sub layers {
     my($self) = @_;
     my @a = @{$self->{overlay}->{layers}};
     return @a;
 }
 
-#** @method get_focal($name)
-# @brief Returns a selected (or visible) part of a raster layer by its name.
-# @deprecated Selected and clip are implemented elsewhere.
-#*
+# Returns a selected (or visible) part of a raster layer by its name.
+# Selected and clip are implemented elsewhere.
 sub get_focal {
     my($self, $name) = @_;
     my $gd = $self->{overlay}->get_layer_by_name($name);
@@ -1090,9 +1141,7 @@ sub get_focal {
     }
 }
 
-#** @method update
-# @brief Updates the whole layer list.
-#*
+# Updates the whole layer list.
 sub update {
     my($self) = @_;
     for my $layer (@{$self->{overlay}->{layers}}) {
@@ -1109,9 +1158,7 @@ sub swap {
     return ($e1,$e2);
 }
 
-#** @method move_down
-# @brief Moves the selected layer down in the list.
-#*
+# Moves the selected layer down in the list.
 sub move_down {
     my($self) = @_;
 
@@ -1127,9 +1174,7 @@ sub move_down {
 
 }
 
-#** @method move_up
-# @brief Moves the selected layer up in the list.
-#*
+# Moves the selected layer up in the list.
 sub move_up {
     my($self) = @_;
 
@@ -1145,10 +1190,15 @@ sub move_up {
 
 }
 
-#** @method remove_layer
-# @brief Removes the selected layer.
-# @return Success or failure
-#*
+=pod
+
+=head2 remove_layer($name, $do_not_redraw)
+
+Remove the given layer. The default is to redraw the map after
+removing the layer.w
+
+=cut
+
 sub remove_layer {
     my($self, $name, $do_not_render) = @_;
     my $layer = $self->{overlay}->get_layer_by_name($name);
@@ -1161,10 +1211,7 @@ sub remove_layer {
     return 1;
 }
 
-#** @method delete_selected
-# @brief Removes the selected layer and destroys it.
-# @return Success or failure
-#*
+# Removes the selected layer and destroys it.
 sub delete_selected {
     my($self, $do_not_render) = @_;
     my $n = $#{$self->{overlay}->{layers}};
@@ -1185,9 +1232,14 @@ sub delete_selected {
     return 1;
 }
 
-#** @method get_selected
-# @brief Returns the selected layer.
-#*
+=pod
+
+=head2 get_selected_layer()
+
+Return the selected layer.
+
+=cut
+
 sub get_selected_layer {
     my($self) = @_;
     my($path, $focus_column) = $self->{tree_view}->get_cursor;
@@ -1196,9 +1248,14 @@ sub get_selected_layer {
     return $self->{overlay}->get_layer_by_index($index);
 }
 
-#** @method select_layer($name)
-# @brief Selects a layer.
-#*
+=pod
+
+=head2 select_layer($name)
+
+Select a layer.
+
+=cut
+
 sub select_layer {
     my($self, $name) = @_;
     my $index = $self->{overlay}->index_of_layer($name);
@@ -1292,37 +1349,6 @@ sub min {
 sub max {
     $_[0] > $_[1] ? $_[0] : $_[1];
 }
-
-=head1 NAME
-
-Gtk2::Ex::Geo::Glue
-
-Gtk2::Ex::Geo::History
-
-=head1 DESCRIPTION
-
-Glue is a glue object that manages the GUI. The dialog boxes of the
-registered layer classes can be obtained from it. It maintains an
-overlay.
-
-The entry widget that is managed by a glue object is used for getting
-commands from the user. The glue object maintains a history of the
-objects. Old commands can be browsed with the arrow up and arrow down
-keys. The user command is given to Perl's eval function.
-
-1) the variable names are inspected and found layer names are replaced
-with pointers to real layers
-
-2) keyword "focal:" in the beginning of an entry is removed and all
-references to layers are replaced with clipped versions
-
-3) commands p, plot, and inspect are recognized without explicit
-reference to the Gtk2::Ex::Geo::Glue package
-
-History is the history of the command line entry. It is stored
-persistently in the user's home directory in file .rash_history.
-
-=cut
 
 1;
 __DATA__

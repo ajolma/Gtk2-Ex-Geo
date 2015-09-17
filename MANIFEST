@@ -2,7 +2,6 @@ LICENSE
 MANIFEST
 README.md
 Makefile.PL
-index.dox
 t/00.t
 t/01.t
 t/02.t
@@ -22,4 +21,3 @@ lib/Gtk2/Ex/Geo/Dialogs/Rules.pm
 lib/Gtk2/Ex/Geo/Dialogs/Colors.pm
 lib/Gtk2/Ex/Geo/Dialogs/Symbols.pm
 lib/Gtk2/Ex/Geo/Dialogs/Labeling.pm
-META.yml                                 Module meta-data (added by MakeMaker)
