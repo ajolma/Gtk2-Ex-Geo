@@ -382,12 +382,11 @@ sub create_overlay {
 	      my $layer = $gis->get_selected_layer();
 	      if ($layer) {
 		  if ($overlay->{selection}) {
-		      $layer->select($overlay->{selecting} => $overlay->{selection});
+		      $layer->select($overlay->{selecting} => $overlay->{selection}, glue => $self);
 		  } else {
-		      $layer->select();
+		      $layer->select(glue => $self);
 		  }
 		  $overlay->update_image;
-		  $layer->open_features_dialog($self, 1);
 	      }
 	  }, $self);
 
@@ -623,6 +622,11 @@ should implement the interface Gtk2::Ex::Geo::Layer.
 $class is a name of a class. This method will retrieve
 information from the class using the class method registration().
 
+Note: super classes of the $class are not automatically registered
+except for the purpose of recognizing layer objects. (Maybe this needs
+to change to automatically retrieve commands and dialog classes from
+layer classes?)
+
 =cut
 
 sub register_class {
@@ -634,8 +638,7 @@ sub register_class {
 	$params{class} = shift;
     }
     if ($params{class}) {
-	my $sub = $params{class}.'::upgrade';
-	push @{$self->{upgrades}}, \&$sub if defined &$sub;
+        push @{$self->{classes}}, $params{class};
 	$sub = $params{class}.'::registration';
 	my $registration = &$sub($self);
 	%params = %$registration;
@@ -1106,18 +1109,20 @@ sub add_layer {
     return unless $object;
 
     my $layer;
-    for $upgrade (@{$self->{upgrades}}) {
-	$layer = $upgrade->($object);
-	last if $layer;
+    for my $class (@{$self->{classes}}) {
+        # is it an object of a known class?
+        $layer = $object if blessed $object && $object->isa($class);
+        last if $layer;
+        # is it known to known classes?
+        my $upgrade = $class.'::upgrade';
+        $layer = $upgrade->($object) if defined &$upgrade;
+        $layer = $object if defined $layer and $layer == 1; # backwards compatibility
+        last if $layer;
     }
-    if ($layer) {
-	$layer = $object if $layer == 1; # backwards compatibility
-    } else {
-	$layer = $object;
-    }
+    croak "Will not add '$object' as a layer. Don't know what it is." unless $layer;
 
     my $i = $self->{overlay}->index_of_layer($name) if defined $name;
-    croak "layer with name $name already exists" if defined $i;
+    croak "Layer with name '$name' already exists." if defined $i;
 
     $layer->name($name);
     $layer->{_tree_index} = $self->{model}->insert (undef, 0);

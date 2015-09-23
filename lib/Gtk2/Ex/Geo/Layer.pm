@@ -14,26 +14,17 @@ This module is a part of the Gtk2::Ex::Geo toolkit.
 
 =head1 DESCRIPTION
 
-Gtk2::Ex::Geo::Layer defines the interface for layer classes in the
-Gtk2::Ex::Geo toolkit. Layer classes do not have to subclass from the
-Gtk2::Ex::Geo::Layer class but it can be used as a root class to
-exploit the dialogs it provides for defining color palettes etc.
+Gtk2::Ex::Geo::Layer defines the interface and a reference
+implementation of a layer class in the Gtk2::Ex::Geo toolkit. Layer
+classes do not have to subclass from the Gtk2::Ex::Geo::Layer class as
+long as they implement the layer interface but this class can be used
+as a root class to exploit the dialogs it provides for defining color
+palettes etc.
 
 Layer classes should be registered with the $glue object to make
 them available in the GUI.
 
-Layer objects can be added to the GUI using the add_layer method of
-Glue.
-
-=head1 METHODS
-
-The methods of the layer class are called directly by the glue or
-overlay objects, or as callbacks defined for the class in the
-registration method or for the objects of the class in the menu_items
-method.
-
-Note: currently the glue object uses the key _tree_index and assumes
-that the layer object is a hash reference.
+Layer objects are added to the GUI using the add_layer method of Glue.
 
 =cut
 
@@ -102,10 +93,18 @@ $SINGLE_COLOR = [0, 0, 0, 255];
 
 =pod
 
+=head1 LAYER INTERFACE
+
+These subroutines are invoked by the glue or overlay objects on layer
+objects as methods or on the layer class as package subroutines.
+
+Note: currently the glue object uses the key _tree_index and assumes
+that the layer object is a hash reference.
+
 =head2 registration($glue)
 
-A method, which is invoked by the Glue object to obtain information
-about the layer class. The method should return a hash reference.
+Package subroutine to obtain information about the layer class in an
+anonymous hash.
 
 $glue is the glue object (currently not used)
 
@@ -131,8 +130,6 @@ toolbar). Keywords for defining the menu items include label and sub.
 
 To do: explain adding non-menu commands.
 
-Required by the glue object.
-
 =back
 
 =cut
@@ -150,8 +147,8 @@ sub registration {
 
 =head2 menu_items()
 
-Return menu items for a context menu of layer objects of this class as
-a list reference.
+Menu items for a context menu of this layer object as a list
+reference.
 
 A menu item consists of an entry and action. The action may be an
 subroutine reference or FALSE, in which case a separator item is
@@ -161,8 +158,6 @@ glue object and all classes in the layers lineage. The subroutine is
 called with [$self, $glue] as user data.
 
 Tod: add machinery for multiselection.
-
-Required by the glue object.
 
 =cut
 
@@ -177,16 +172,16 @@ sub menu_items {
 	    $self->open_features_dialog($gui, 1);
 	},
 	'_Rules...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->open_rules_dialog($gui);
+             my($self, $gui) = @{$_[1]};
+             $self->open_rules_dialog($gui);
 	},
 	'_Symbol...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->open_symbols_dialog($gui);
+             my($self, $gui) = @{$_[1]};
+             $self->open_symbols_dialog($gui);
 	},
 	'_Colors...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->open_colors_dialog($gui);
+             my($self, $gui) = @{$_[1]};
+             $self->open_colors_dialog($gui);
 	},
 	'_Labeling...' => sub {
 	    my($self, $gui) = @{$_[1]};
@@ -204,30 +199,6 @@ sub menu_items {
     return @items;
 }
 
-## @method @palette_types()
-#
-# @brief A class method. Returns a list of valid palette types (strings).
-# @return a list of valid palette types (strings).
-sub palette_types {
-    return sort {$PALETTE_TYPE{$a} <=> $PALETTE_TYPE{$b}} keys %PALETTE_TYPE;
-}
-
-## @method @symbol_types()
-#
-# @brief A class method. Returns a list of valid symbol types (strings).
-# @return a list of valid symbol types (strings).
-sub symbol_types {
-    return sort {$SYMBOL_TYPE{$a} <=> $SYMBOL_TYPE{$b}} keys %SYMBOL_TYPE;
-}
-
-## @method @label_placements()
-#
-# @brief Returns a list of valid label_placements (strings).
-# @return a list of valid label_placements (strings).
-sub label_placements {
-    return sort {$LABEL_PLACEMENT{$a} <=> $LABEL_PLACEMENT{$b}} keys %LABEL_PLACEMENT;
-}
-
 =pod
 
 =head2 upgrade($object)
@@ -239,117 +210,7 @@ Create a layer object from a data object.
 Return a layer object if upgrade was possible (or the object already
 belongs to this class). Otherwise return false.
 
-Used by the glue object if it exists.
-
-=cut
-
-sub upgrade {
-    my($object) = @_;
-    return 0;
-}
-
-sub new {
-    my($class, %params) = @_;
-    my $self = $params{self} ? $params{self} : {};
-    bless $self => (ref($class) or $class);
-    $self->defaults(%params);
-    return $self;
-}
-
-sub defaults {
-    my($self, %params) = @_;
-
-    # set defaults for all
-
-    $self->{NAME} = '' unless exists $self->{NAME};
-    $self->{ALPHA} = 255 unless exists $self->{ALPHA};
-    $self->{VISIBLE} = 1 unless exists $self->{VISIBLE};
-    $self->{PALETTE_TYPE} = 'Single color' unless exists $self->{PALETTE_TYPE};
-
-    $self->{SYMBOL_TYPE} = 'No symbol' unless exists $self->{SYMBOL_TYPE};
-    # symbol size is also the max size of the symbol, if symbol_scale is used
-    $self->{SYMBOL_SIZE} = 5 unless exists $self->{SYMBOL_SIZE}; 
-    # symbol scale is similar to grayscale scale
-    $self->{SYMBOL_SCALE_MIN} = 0 unless exists $self->{SYMBOL_SCALE_MIN}; 
-    $self->{SYMBOL_SCALE_MAX} = 0 unless exists $self->{SYMBOL_SCALE_MAX};
-
-    $self->{HUE_AT_MIN} = 235 unless exists $self->{HUE_AT_MIN}; # as in libral visual.h
-    $self->{HUE_AT_MAX} = 0 unless exists $self->{HUE_AT_MAX}; # as in libral visual.h
-    $self->{INVERT} = 0 unless exists $self->{HUE_DIR}; # inverted scale or not; RGB is not inverted
-    $self->{GRAYSCALE_SUBTYPE} = 'Gray' unless exists $self->{GRAYSCALE_SUBTYPE}; # grayscale is gray scale
-
-    @{$self->{GRAYSCALE_COLOR}} = @$SINGLE_COLOR unless exists $self->{GRAYSCALE_COLOR};
-
-    @{$self->{SINGLE_COLOR}} = @$SINGLE_COLOR unless exists $self->{SINGLE_COLOR};
-
-    $self->{COLOR_TABLE} = [] unless exists $self->{COLOR_TABLE};
-    $self->{COLOR_BINS} = [] unless exists $self->{COLOR_BINS};
-
-    # scales are used in rendering in some palette types
-    $self->{COLOR_SCALE_MIN} = 0 unless exists $self->{COLOR_SCALE_MIN};
-    $self->{COLOR_SCALE_MAX} = 0 unless exists $self->{COLOR_SCALE_MAX};
-
-    # focus field is used in rendering and rasterization
-    # this is the name of the field
-    $self->{COLOR_FIELD} = '' unless exists $self->{COLOR_FIELD};
-    $self->{SYMBOL_FIELD} = 'Fixed size' unless exists $self->{SYMBOL_FIELD};
-    $self->{LABEL_FIELD} = 'No Labels'  unless exists $self->{LABEL_FIELD};
-
-    $self->{LABEL_PLACEMENT} = 'Center' unless exists $self->{LABEL_PLACEMENT};
-    $self->{LABEL_FONT} = 'sans 12' unless exists $self->{LABEL_FONT};
-    $self->{LABEL_COLOR} = [0, 0, 0, 255] unless exists $self->{LABEL_COLOR};
-    $self->{LABEL_MIN_SIZE} = 0 unless exists $self->{LABEL_MIN_SIZE};
-    $self->{INCREMENTAL_LABELS} = 0 unless exists $self->{INCREMENTAL_LABELS};
-    $self->{LABEL_VERT_NUDGE} = 0.3 unless exists $self->{LABEL_VERT_NUDGE};
-    $self->{LABEL_HORIZ_NUDGE_LEFT} = 6 unless exists $self->{LABEL_HORIZ_NUDGE_LEFT};
-    $self->{LABEL_HORIZ_NUDGE_RIGHT} = 10 unless exists $self->{LABEL_HORIZ_NUDGE_RIGHT};
-
-    $self->{BORDER_COLOR} = [] unless exists $self->{BORDER_COLOR};
-
-    $self->{SELECTED_FEATURES} = [];
-    
-    $self->{RENDERER} = 0; # the default, later 'Cairo' will be implemented fully
-  
-    # set from input
-    
-    $self->{NAME} = $params{name} if exists $params{name};
-    $self->{ALPHA} = $params{alpha} if exists $params{alpha};
-    $self->{VISIBLE} = $params{visible} if exists $params{visible};
-    $self->{PALETTE_TYPE} = $params{palette_type} if exists $params{palette_type};
-    $self->{SYMBOL_TYPE} = $params{symbol_type} if exists $params{symbol_type};
-    $self->{SYMBOL_SIZE} = $params{symbol_size} if exists $params{symbol_size};
-    $self->{SYMBOL_SCALE_MIN} = $params{scale_min} if exists $params{scale_min};
-    $self->{SYMBOL_SCALE_MAX} = $params{scale_max} if exists $params{scale_max};
-    $self->{HUE_AT_MIN} = $params{hue_at_min} if exists $params{hue_at_min};
-    $self->{HUE_AT_MAX} = $params{hue_at_max} if exists $params{hue_at_max};
-    $self->{INVERT} = $params{invert} if exists $params{invert};
-    $self->{SCALE} = $params{scale} if exists $params{scale};
-    @{$self->{GRAYSCALE_COLOR}} = @{$params{grayscale_color}} if exists $params{grayscale_color};
-    @{$self->{SINGLE_COLOR}} = @{$params{single_color}} if exists $params{single_color};
-    $self->{COLOR_TABLE} = $params{color_table} if exists $params{color_table};
-    $self->{COLOR_BINS} = $params{color_bins} if exists $params{color_bins};
-    $self->{COLOR_SCALE_MIN} = $params{color_scale_min} if exists $params{color_scale_min};
-    $self->{COLOR_SCALE_MAX} = $params{color_scale_max} if exists $params{color_scale_max};
-    $self->{COLOR_FIELD} = $params{color_field} if exists $params{color_field};
-    $self->{SYMBOL_FIELD} = $params{symbol_field} if exists $params{symbol_field};
-    $self->{LABEL_FIELD} = $params{label_field} if exists $params{label_field};
-    $self->{LABEL_PLACEMENT} = $params{label_placement} if exists $params{label_placement};
-    $self->{LABEL_FONT} = $params{label_font} if exists $params{label_font};
-    @{$self->{LABEL_COLOR}} = @{$params{label_color}} if exists $params{label_color};
-    $self->{LABEL_MIN_SIZE} = $params{label_min_size} if exists $params{label_min_size};
-    @{$self->{BORDER_COLOR}} = @{$params{border_color}} if exists $params{border_color};
-
-}
-
-sub DESTROY {
-    my $self = shift;
-    while (my($key, $widget) = each %$self) {
-	$widget->destroy if blessed($widget) and $widget->isa("Gtk2::Widget");
-	delete $self->{$key};
-    }
-}
-
-=pod
+Optional, used only if exists.
 
 =head2 close($glue)
 
@@ -483,50 +344,227 @@ sub lost_focus {
     my($self, $gui) = @_;
 }
 
-sub border_color {
-    my($self, @color) = @_;
-    @{$self->{BORDER_COLOR}} = @color if @color;
-    return @{$self->{BORDER_COLOR}} if defined wantarray;
-    @{$self->{BORDER_COLOR}} = () unless @color;
+=pod
+
+=head2 select($selecting => $selection)
+
+Invoked for the selected layer after the user has made a new selection.
+
+$selecting ($glue->{selecting}) is either 'that_are_within',
+'that_contain' or 'that_intersect'.
+
+$selection ($overlay->{selection}) is a Geo::OGC::Geometry object.
+
+If called without parameters, deselect all features.
+
+If the layer has GUI widgets which show selected features, it should
+update those.
+
+=cut
+
+sub select {
+    my($self, %params) = @_;
+    if (@_ > 1) {
+	for my $key (keys %params) {
+	    my $features = $self->features($key => $params{$key});
+	    $self->selected_features($features);
+	}
+    } else {
+	$self->{SELECTED_FEATURES} = [];
+    }
+    $self->open_features_dialog($self, $params{glue}, 1);
+}
+
+=pod
+
+=head2 render_selection($gc, $overlay)
+
+$gc is a Gtk2::Gdk::GC (graphics context) onto which to draw the
+selection.
+
+Todo: document.
+
+=cut
+
+sub render_selection {
+}
+
+=pod
+
+=head2 render($pb, $cr, $overlay, $viewport)
+
+A request to render the data of the layer onto a surface.
+
+$pb is a (XS wrapped) pointer to a gtk2_ex_geo_pixbuf,
+
+$cr is a Cairo::Context object for the surface to draw on,
+
+$overlay is the Gtk2::Ex::Geo::Overlay object which manages the
+surface, and
+
+$viewport is a reference to the bounding box [min_x, min_y, max_x,
+max_y] of the surface in world coordinates.
+
+=cut
+
+sub render {
+    my($self, $pb, $cr, $overlay, $viewport) = @_;
+}
+
+=pod
+
+=head2 statusbar_info($x, $y)
+
+A request for an information string for the statusbar of the GUI.
+
+$x, $y is the location of the mouse.
+
+=cut
+
+sub statusbar_info {
+    my($self, $x, $y) = @_;
+    return '';
+}
+
+=pod
+
+=head1 REFERENCE IMPLEMENTATION
+
+The goal of the reference implementation of a Gtk2::Ex::Geo::Layer is
+to be useful as a root class for common geospatial layer classes. To
+achieve this goal it contains generic symbolization (colors, symbols,
+labels, etc) support.
+
+=cut
+
+sub new {
+    my($class, %params) = @_;
+    my $self = $params{self} ? $params{self} : {};
+    bless $self => (ref($class) or $class);
+    $self->defaults(%params);
+    return $self;
+}
+
+sub defaults {
+    my($self, %params) = @_;
+
+    # set defaults for all
+
+    $self->{NAME} = '' unless exists $self->{NAME};
+    $self->{ALPHA} = 255 unless exists $self->{ALPHA};
+    $self->{VISIBLE} = 1 unless exists $self->{VISIBLE};
+    $self->{PALETTE_TYPE} = 'Single color' unless exists $self->{PALETTE_TYPE};
+
+    $self->{SYMBOL_TYPE} = 'No symbol' unless exists $self->{SYMBOL_TYPE};
+    # symbol size is also the max size of the symbol, if symbol_scale is used
+    $self->{SYMBOL_SIZE} = 5 unless exists $self->{SYMBOL_SIZE}; 
+    # symbol scale is similar to grayscale scale
+    $self->{SYMBOL_SCALE_MIN} = 0 unless exists $self->{SYMBOL_SCALE_MIN}; 
+    $self->{SYMBOL_SCALE_MAX} = 0 unless exists $self->{SYMBOL_SCALE_MAX};
+
+    $self->{HUE_AT_MIN} = 235 unless exists $self->{HUE_AT_MIN}; # as in libral visual.h
+    $self->{HUE_AT_MAX} = 0 unless exists $self->{HUE_AT_MAX}; # as in libral visual.h
+    $self->{INVERT} = 0 unless exists $self->{HUE_DIR}; # inverted scale or not; RGB is not inverted
+    $self->{GRAYSCALE_SUBTYPE} = 'Gray' unless exists $self->{GRAYSCALE_SUBTYPE}; # grayscale is gray scale
+
+    @{$self->{GRAYSCALE_COLOR}} = @$SINGLE_COLOR unless exists $self->{GRAYSCALE_COLOR};
+
+    @{$self->{SINGLE_COLOR}} = @$SINGLE_COLOR unless exists $self->{SINGLE_COLOR};
+
+    $self->{COLOR_TABLE} = [] unless exists $self->{COLOR_TABLE};
+    $self->{COLOR_BINS} = [] unless exists $self->{COLOR_BINS};
+
+    # scales are used in rendering in some palette types
+    $self->{COLOR_SCALE_MIN} = 0 unless exists $self->{COLOR_SCALE_MIN};
+    $self->{COLOR_SCALE_MAX} = 0 unless exists $self->{COLOR_SCALE_MAX};
+
+    # focus field is used in rendering and rasterization
+    # this is the name of the field
+    $self->{COLOR_FIELD} = '' unless exists $self->{COLOR_FIELD};
+    $self->{SYMBOL_FIELD} = 'Fixed size' unless exists $self->{SYMBOL_FIELD};
+    $self->{LABEL_FIELD} = 'No Labels'  unless exists $self->{LABEL_FIELD};
+
+    $self->{LABEL_PLACEMENT} = 'Center' unless exists $self->{LABEL_PLACEMENT};
+    $self->{LABEL_FONT} = 'sans 12' unless exists $self->{LABEL_FONT};
+    $self->{LABEL_COLOR} = [0, 0, 0, 255] unless exists $self->{LABEL_COLOR};
+    $self->{LABEL_MIN_SIZE} = 0 unless exists $self->{LABEL_MIN_SIZE};
+    $self->{INCREMENTAL_LABELS} = 0 unless exists $self->{INCREMENTAL_LABELS};
+    $self->{LABEL_VERT_NUDGE} = 0.3 unless exists $self->{LABEL_VERT_NUDGE};
+    $self->{LABEL_HORIZ_NUDGE_LEFT} = 6 unless exists $self->{LABEL_HORIZ_NUDGE_LEFT};
+    $self->{LABEL_HORIZ_NUDGE_RIGHT} = 10 unless exists $self->{LABEL_HORIZ_NUDGE_RIGHT};
+
+    $self->{BORDER_COLOR} = [] unless exists $self->{BORDER_COLOR};
+
+    $self->{SELECTED_FEATURES} = [];
+    
+    $self->{RENDERER} = 0; # the default, later 'Cairo' will be implemented fully
+  
+    # set from input
+    
+    $self->{NAME} = $params{name} if exists $params{name};
+    $self->{ALPHA} = $params{alpha} if exists $params{alpha};
+    $self->{VISIBLE} = $params{visible} if exists $params{visible};
+    $self->{PALETTE_TYPE} = $params{palette_type} if exists $params{palette_type};
+    $self->{SYMBOL_TYPE} = $params{symbol_type} if exists $params{symbol_type};
+    $self->{SYMBOL_SIZE} = $params{symbol_size} if exists $params{symbol_size};
+    $self->{SYMBOL_SCALE_MIN} = $params{scale_min} if exists $params{scale_min};
+    $self->{SYMBOL_SCALE_MAX} = $params{scale_max} if exists $params{scale_max};
+    $self->{HUE_AT_MIN} = $params{hue_at_min} if exists $params{hue_at_min};
+    $self->{HUE_AT_MAX} = $params{hue_at_max} if exists $params{hue_at_max};
+    $self->{INVERT} = $params{invert} if exists $params{invert};
+    $self->{SCALE} = $params{scale} if exists $params{scale};
+    @{$self->{GRAYSCALE_COLOR}} = @{$params{grayscale_color}} if exists $params{grayscale_color};
+    @{$self->{SINGLE_COLOR}} = @{$params{single_color}} if exists $params{single_color};
+    $self->{COLOR_TABLE} = $params{color_table} if exists $params{color_table};
+    $self->{COLOR_BINS} = $params{color_bins} if exists $params{color_bins};
+    $self->{COLOR_SCALE_MIN} = $params{color_scale_min} if exists $params{color_scale_min};
+    $self->{COLOR_SCALE_MAX} = $params{color_scale_max} if exists $params{color_scale_max};
+    $self->{COLOR_FIELD} = $params{color_field} if exists $params{color_field};
+    $self->{SYMBOL_FIELD} = $params{symbol_field} if exists $params{symbol_field};
+    $self->{LABEL_FIELD} = $params{label_field} if exists $params{label_field};
+    $self->{LABEL_PLACEMENT} = $params{label_placement} if exists $params{label_placement};
+    $self->{LABEL_FONT} = $params{label_font} if exists $params{label_font};
+    @{$self->{LABEL_COLOR}} = @{$params{label_color}} if exists $params{label_color};
+    $self->{LABEL_MIN_SIZE} = $params{label_min_size} if exists $params{label_min_size};
+    @{$self->{BORDER_COLOR}} = @{$params{border_color}} if exists $params{border_color};
+
+}
+
+sub DESTROY {
+    my $self = shift;
+    while (my($key, $widget) = each %$self) {
+	$widget->destroy if blessed($widget) and $widget->isa("Gtk2::Widget");
+	delete $self->{$key};
+    }
+}
+
+## @method @palette_types()
+#
+# @brief A class method. Returns a list of valid palette types (strings).
+# @return a list of valid palette types (strings).
+sub palette_types {
+    return sort {$PALETTE_TYPE{$a} <=> $PALETTE_TYPE{$b}} keys %PALETTE_TYPE;
+}
+
+## @method @symbol_types()
+#
+# @brief A class method. Returns a list of valid symbol types (strings).
+# @return a list of valid symbol types (strings).
+sub symbol_types {
+    return sort {$SYMBOL_TYPE{$a} <=> $SYMBOL_TYPE{$b}} keys %SYMBOL_TYPE;
+}
+
+## @method @label_placements()
+#
+# @brief Returns a list of valid label_placements (strings).
+# @return a list of valid label_placements (strings).
+sub label_placements {
+    return sort {$LABEL_PLACEMENT{$a} <=> $LABEL_PLACEMENT{$b}} keys %LABEL_PLACEMENT;
 }
 
 sub inspect_data {
     my $self = shift;
     return $self;
-}
-
-sub open_properties_dialog {
-    my($self, $gui) = @_;
-}
-
-=pod
-
-=head2 open_features_dialog($glue, $new_selection)
-
-A request to invoke a features dialog for this layer object. If
-$new_selection exists and is true, the dialog should only be refreshed
-if it is open.
-
-Required by the glue object. Called with $new_selection = true for the
-selected layer when the user has made a new selection.
-
-=cut
-
-sub open_features_dialog {
-    my($self, $gui, $soft_open) = @_;
-}
-
-sub open_rules_dialog {
-    Gtk2::Ex::Geo::Dialogs::Rules::open(@_);
-}
-sub open_symbols_dialog {
-    Gtk2::Ex::Geo::Dialogs::Symbols::open(@_);
-}
-sub open_colors_dialog {
-    Gtk2::Ex::Geo::Dialogs::Colors::open(@_);
-}
-sub open_labeling_dialog {
-    Gtk2::Ex::Geo::Dialogs::Labeling::open(@_);
 }
 
 sub palette_type {
@@ -797,6 +835,13 @@ sub save_color_bins {
     CORE::close($fh);
 }
 
+sub border_color {
+    my($self, @color) = @_;
+    @{$self->{BORDER_COLOR}} = @color if @color;
+    return @{$self->{BORDER_COLOR}} if defined wantarray;
+    @{$self->{BORDER_COLOR}} = () unless @color;
+}
+
 sub labeling {
     my($self, $labeling) = @_;
     if ($labeling) {
@@ -816,36 +861,6 @@ sub labeling {
         $labeling->{incremental} = $self->{INCREMENTAL_LABELS};
     }
     return $labeling;
-}
-
-=pod
-
-=head2 select($selecting => $selection)
-
-Invoked for the selected layer in response to a new_selection signal.
-Select features from this object.
-
-$selecting ($glue->{selecting}) is either 'that_are_within',
-'that_contain' or 'that_intersect'.
-
-$selection ($overlay->{selection}) is a Geo::OGC::Geometry object.
-
-If called without parameters, deselect all features.
-
-Required by the glue object.
-
-=cut
-
-sub select {
-    my($self, %params) = @_;
-    if (@_ > 1) {
-	for my $key (keys %params) {
-	    my $features = $self->features($key => $params{$key});
-	    $self->selected_features($features);
-	}
-    } else {
-	$self->{SELECTED_FEATURES} = [];
-    }
 }
 
 sub selected_features {
@@ -868,126 +883,79 @@ sub schema {
     return $schema;
 }
 
-package Gtk2::Ex::Geo::Schema;
-
-sub new {
-    my $package = shift;
-    my $self = { GeometryType => 'Unknown',
-		 Fields => [], };
-    bless $self => (ref($package) or $package);
-}
-
-sub fields {
-    my $schema = shift;
-    my @fields = (
-	{ Name => '.FID', Type => 'Integer' },
-	{ Name => '.GeometryType', Type => $schema->{GeometryType} }
-	);
-    push @fields, { Name => '.Z', Type => 'Real' } if $schema->{GeometryType} =~ /25/;
-    push @fields, @{$schema->{Fields}};
-    return @fields;
-}
-
-sub field_names {
-    my $schema = shift;
-    my @names = ('.FID', '.GeometryType');
-    push @names, '.Z' if $schema->{GeometryType} =~ /25/;
-    for my $f (@{$schema->{Fields}}) {
-	push @names, $f->{Name};
-    }
-    return @names;
-}
-
-sub field {
-    my($schema, $field_name) = @_;
-    if ($field_name eq '.FID') {
-	return { Name => '.FID', Type => 'Integer' };
-    }
-    if ($field_name eq '.GeometryType') {
-	return { Name => '.GeometryType', Type => 'String' };
-    }
-    if ($field_name eq '.Z') {
-	return { Name => '.Z', Type => 'Real' };
-    }
-    my $i = 0;
-    for my $f (@{$schema->{Fields}}) {
-	return $f if $field_name eq $f->{Name};
-	$i++;
-    }
-}
-
-sub field_index {
-    my($schema, $field_name) = @_;
-    my $i = 0;
-    for my $f (@{$schema->{Fields}}) {
-	if ($field_name eq $f->{Name}) {
-	    return $i;
-	}
-	$i++;
-    }
-}
-
-package Gtk2::Ex::Geo::Layer;
-
 sub value_range {
     return (0, 0);
 }
 
 =pod
 
-=head2 render_selection($gc, $overlay)
+=head1 DIALOGS
 
-$gc is a Gtk2::Gdk::GC (graphics context) onto which to draw the
-selection.
+The Gtk2::Ex::Geo::Layer class uses five dialogs: colors, colors_from,
+labels, symbols, and rules. These are stored and managed by the
+Gtk2::Ex::Geo::Dialogs package.
 
-Todo: document.
-
-Required by the glue object.
+=head2 open_properties_dialog($glue)
 
 =cut
 
-sub render_selection {
+
+sub open_properties_dialog {
+    my($self, $gui) = @_;
 }
 
 =pod
 
-=head2 render($pb, $cr, $overlay, $viewport)
+=head2 open_features_dialog($glue, $new_selection)
 
-A request to render the data of the layer onto a surface.
-
-$pb is a (XS wrapped) pointer to a gtk2_ex_geo_pixbuf,
-
-$cr is a Cairo::Context object for the surface to draw on,
-
-$overlay is the Gtk2::Ex::Geo::Overlay object which manages the
-surface, and
-
-$viewport is a reference to the bounding box [min_x, min_y, max_x,
-max_y] of the surface in world coordinates.
-
-Required by the overlay object.
+A request to invoke a features dialog for this layer object. If
+$new_selection exists and is true, the dialog should only be refreshed
+if it is open.
 
 =cut
 
-sub render {
-    my($self, $pb, $cr, $overlay, $viewport) = @_;
+sub open_features_dialog {
+    my($self, $gui, $soft_open) = @_;
 }
 
 =pod
 
-=head2 statusbar_info($x, $y)
-
-A request for an information string for the statusbar of the GUI.
-
-$x, $y is the location of the mouse.
-
-Required by the glue object.
+=head2 open_rules_dialog($glue)
 
 =cut
 
-sub statusbar_info {
-    my($self, $x, $y) = @_;
-    return '';
+sub open_rules_dialog {
+    Gtk2::Ex::Geo::Dialogs::Rules::open(@_);
+}
+
+=pod
+
+=head2 open_symbols_dialog($glue)
+
+=cut
+
+sub open_symbols_dialog {
+    Gtk2::Ex::Geo::Dialogs::Symbols::open(@_);
+}
+
+=pod
+
+=head2 open_colors_dialog($glue)
+
+=cut
+
+sub open_colors_dialog {
+    Gtk2::Ex::Geo::Dialogs::Colors::open(@_);
+}
+
+=pod
+
+=head2 open_labeling_dialog($glue)
+
+=cut
+
+sub open_labeling_dialog {
+    Gtk2::Ex::Geo::Dialogs::Labeling::open(@_);
 }
 
 =pod
@@ -1083,6 +1051,65 @@ sub dialog_visible {
     my $d = $self->{$dialog};
     return 0 unless $d;
     return $d->get_widget($dialog)->get('visible');
+}
+
+package Gtk2::Ex::Geo::Schema;
+
+sub new {
+    my $package = shift;
+    my $self = { GeometryType => 'Unknown',
+		 Fields => [], };
+    bless $self => (ref($package) or $package);
+}
+
+sub fields {
+    my $schema = shift;
+    my @fields = (
+	{ Name => '.FID', Type => 'Integer' },
+	{ Name => '.GeometryType', Type => $schema->{GeometryType} }
+	);
+    push @fields, { Name => '.Z', Type => 'Real' } if $schema->{GeometryType} =~ /25/;
+    push @fields, @{$schema->{Fields}};
+    return @fields;
+}
+
+sub field_names {
+    my $schema = shift;
+    my @names = ('.FID', '.GeometryType');
+    push @names, '.Z' if $schema->{GeometryType} =~ /25/;
+    for my $f (@{$schema->{Fields}}) {
+	push @names, $f->{Name};
+    }
+    return @names;
+}
+
+sub field {
+    my($schema, $field_name) = @_;
+    if ($field_name eq '.FID') {
+	return { Name => '.FID', Type => 'Integer' };
+    }
+    if ($field_name eq '.GeometryType') {
+	return { Name => '.GeometryType', Type => 'String' };
+    }
+    if ($field_name eq '.Z') {
+	return { Name => '.Z', Type => 'Real' };
+    }
+    my $i = 0;
+    for my $f (@{$schema->{Fields}}) {
+	return $f if $field_name eq $f->{Name};
+	$i++;
+    }
+}
+
+sub field_index {
+    my($schema, $field_name) = @_;
+    my $i = 0;
+    for my $f (@{$schema->{Fields}}) {
+	if ($field_name eq $f->{Name}) {
+	    return $i;
+	}
+	$i++;
+    }
 }
 
 1;
