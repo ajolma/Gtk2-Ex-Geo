@@ -22,7 +22,31 @@ command line, and an overlay for a map view. Glue also maintains layer
 class dialogs, toolbar commands, entry history and application
 resources.
 
-=head1 THE COMMAND LINE
+=head1 GUI
+
+During the registration process of a layer class (in the
+register_class method) the class informs the glue object (in its
+registration method) about the class level methods (for example "open
+a layer of this class", etc). This contains information that is used
+to enhance the GUI.
+
+Each layer class is also required to report object level methods (for
+example "save this layer") using the menu_items method.
+
+=head1 DIALOG BOXES
+
+Also during the registration process of a layer class the layer class
+is expected to return an object for creating class and object level
+("open", "save") dialog boxes.
+
+A dialog box in Gtk2::Ex::Geo is a class, which has method "open". The
+method expects a layer object and the glue object as parameters (for
+object level dialogs, class level dialogs expect only the glue object)
+and it returns a new widget object, which represents the dialog box
+and which is stored into the layer object. Thus each layer gets its
+own copy of each dialog type.
+
+=head1 COMMAND LINE
 
 Old commands can be browsed with the arrow up and arrow down
 keys. The user command is given to Perl's eval function.
@@ -593,8 +617,8 @@ sub register_function {
 
 =head2 register_class($class)
 
-Add class to the list of known data layer classes,
-which must be a subclass of Gtk2::Ex::Geo::Layer.
+Add class to the list of known data layer classes. The layer class
+should implement the interface Gtk2::Ex::Geo::Layer.
 
 $class is a name of a class. This method will retrieve
 information from the class using the class method registration().
@@ -684,9 +708,15 @@ sub close {
 
 =pod
 
-=head2 get_dialog($name)
+=head2 get_dialog($dialog_class)
 
-Retrieve a dialog from those defined by the layer classes.
+Retrieve a dialog from those defined by the layer classes. This is
+used by layer objects to retrieve for themselves a new dialog object
+of a specified class.
+
+The glue object attempts to get the dialog from all dialog managers
+obtained from layer classes. Thus the name of the dialog classes must
+be globally unique.
 
 =cut
 
@@ -1085,8 +1115,6 @@ sub add_layer {
     } else {
 	$layer = $object;
     }
-
-    return unless $layer->isa('Gtk2::Ex::Geo::Layer');
 
     my $i = $self->{overlay}->index_of_layer($name) if defined $name;
     croak "layer with name $name already exists" if defined $i;

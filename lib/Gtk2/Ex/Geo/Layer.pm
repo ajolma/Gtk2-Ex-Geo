@@ -1,5 +1,42 @@
-#** @file Layer.pm
-#*
+=pod
+
+=head1 NAME
+
+Gtk2::Ex::Geo::Layer - A root class for geospatial layers
+
+This module is a part of the Gtk2::Ex::Geo toolkit.
+
+=head1 SYNOPSIS
+
+    my $glue = Gtk2::Ex::Geo::Glue->new();
+
+    $glue->register_class('Gtk2::Ex::Geo::Layer');
+
+=head1 DESCRIPTION
+
+Gtk2::Ex::Geo::Layer defines the interface for layer classes in the
+Gtk2::Ex::Geo toolkit. Layer classes do not have to subclass from the
+Gtk2::Ex::Geo::Layer class but it can be used as a root class to
+exploit the dialogs it provides for defining color palettes etc.
+
+Layer classes should be registered with the $glue object to make
+them available in the GUI.
+
+Layer objects can be added to the GUI using the add_layer method of
+Glue.
+
+=head1 METHODS
+
+The methods of the layer class are called directly by the glue or
+overlay objects, or as callbacks defined for the class in the
+registration method or for the objects of the class in the menu_items
+method.
+
+Note: currently the glue object uses the key _tree_index and assumes
+that the layer object is a hash reference.
+
+=cut
+
 package Gtk2::Ex::Geo::Layer;
 
 use strict;
@@ -63,33 +100,43 @@ $SINGLE_COLOR = [0, 0, 0, 255];
 		     'Bottom right' => 8,
     );
 
-#** @method registration()
-# @brief A class method. Returns the dialogs and commands implemented by this layer
-# class.
-#
-# The dialogs is an object of a subclass of
-# Gtk2::Ex::Geo::DialogMaster. The commands is a reference to a
-# command hash. The keys of the command hash are top-level commands
-# for the GUI. The value of the command is a reference to a hash,
-# which has keys: nr, text, tip, pos, and sub. The 'sub' is a
-# reference to a subroutine, which is executed when the user executes
-# the command. The commands are currently implemented as buttons in
-# Gtk2::Ex::Geo::Glue.
+=pod
 
-# - <i>dialogs</i> [optional] an object containing dialogs (a dialog master object)
-# - <i>commands</i> [optional] an anonymous hash of commands for the GUI
-# A command is defined in an anonymous hash with parameters:
-#   - <i>nr</i> a visual order of the commands
-#   - <i>pos</i> the pos parameter in toolbar->insert
-#   - <i>text</i> the text for the command button
-#   - <i>tip</i> the tip for the command button
-#   - <i>sub</i> a reference to a subroutine to be executed
-#*
+=head2 registration($glue)
 
+A method, which is invoked by the Glue object to obtain information
+about the layer class. The method should return a hash reference.
 
-#
-# @return an anonymous hash containing the dialogs (key: 'dialogs')
-# and commands (key: 'commands')
+$glue is the glue object (currently not used)
+
+The returned hash should have the following keywords:
+
+=over
+
+=item dialogs
+
+A dialog manager. Typically a subclass of Gtk2::Ex::Geo::DialogMaster.
+
+=item commands
+
+A reference to a list, which defines a button and its associated
+action to the toolbar in the GUI for this class. Typically this is a
+menu, which opens when the button is pressed.
+
+A menu is defined by a list, which begins with a set of key - value
+pairs defining the button followed by a set of hash references
+defining the menu items. Keywords for defining the button include
+stock_id, label, tip, pos (for the location of the button within the
+toolbar). Keywords for defining the menu items include label and sub.
+
+To do: explain adding non-menu commands.
+
+Required by the glue object.
+
+=back
+
+=cut
+
 sub registration {
     my($glue) = @_;
     if ($glue->{resources}{icons}{dir}) {
@@ -97,6 +144,64 @@ sub registration {
     }
     my $dialogs = Gtk2::Ex::Geo::Dialogs->new();
     return { dialogs => $dialogs };
+}
+
+=pod
+
+=head2 menu_items()
+
+Return menu items for a context menu of layer objects of this class as
+a list reference.
+
+A menu item consists of an entry and action. The action may be an
+subroutine reference or FALSE, in which case a separator item is
+added. A '_' in front of a letter makes that letter a shortcut key for
+the item. The final layer menu is composed of entries added by the
+glue object and all classes in the layers lineage. The subroutine is
+called with [$self, $glue] as user data.
+
+Tod: add machinery for multiselection.
+
+Required by the glue object.
+
+=cut
+
+sub menu_items {
+    my($self) = @_;
+    my @items;
+    push @items, (
+	'_Unselect all' => sub {
+	    my($self, $gui) = @{$_[1]};
+	    $self->select;
+	    $gui->{overlay}->update_image;
+	    $self->open_features_dialog($gui, 1);
+	},
+	'_Rules...' => sub {
+	    my($self, $gui) = @{$_[1]};
+	    $self->open_rules_dialog($gui);
+	},
+	'_Symbol...' => sub {
+	    my($self, $gui) = @{$_[1]};
+	    $self->open_symbols_dialog($gui);
+	},
+	'_Colors...' => sub {
+	    my($self, $gui) = @{$_[1]};
+	    $self->open_colors_dialog($gui);
+	},
+	'_Labeling...' => sub {
+	    my($self, $gui) = @{$_[1]};
+	    $self->open_labeling_dialog($gui);
+	},
+	'_Inspect...' => sub {
+	    my($self, $gui) = @{$_[1]};
+	    $gui->inspect($self->inspect_data, $self->name);
+	},
+	'_Properties...' => sub {
+	    my($self, $gui) = @{$_[1]};
+	    $self->open_properties_dialog($gui);
+	}
+    );
+    return @items;
 }
 
 ## @method @palette_types()
@@ -123,20 +228,26 @@ sub label_placements {
     return sort {$LABEL_PLACEMENT{$a} <=> $LABEL_PLACEMENT{$b}} keys %LABEL_PLACEMENT;
 }
 
-## @method $upgrade($object) 
-#
-# @brief A class method. Upgrade a known data object to a layer object.
-#
-# @return true (either 1 or a new object) if object is known (no need
-# to look further) and false otherwise.
+=pod
+
+=head2 upgrade($object)
+
+Package subroutine.
+
+Create a layer object from a data object.
+
+Return a layer object if upgrade was possible (or the object already
+belongs to this class). Otherwise return false.
+
+Used by the glue object if it exists.
+
+=cut
+
 sub upgrade {
     my($object) = @_;
     return 0;
 }
 
-## @method new(%params)
-# @brief A class method. Constructs a new layer object or blesses an object into a layer class.
-# Calls defaults with the given parameters.
 sub new {
     my($class, %params) = @_;
     my $self = $params{self} ? $params{self} : {};
@@ -145,11 +256,6 @@ sub new {
     return $self;
 }
 
-## @method defaults(%params)
-# @brief assigns default values to attributes
-# The default values are hard-coded, but they can be overridden with
-# given values.  The given values are lower case.
-# @todo: document the attributes
 sub defaults {
     my($self, %params) = @_;
 
@@ -243,14 +349,21 @@ sub DESTROY {
     }
 }
 
-## @method close($gui)
-# @brief Close and destroy all resources of this layer, as it has been
-# removed from the GUI.
-#
-# If you override this, remember to call the super method:
-# @code
-# $self->SUPER::close(@_);
-# @endcode
+=pod
+
+=head2 close($glue)
+
+Close and destroy all resources of this layer, as it has been removed
+from the GUI.
+
+If you override this, remember to call the super method:
+
+    $self->SUPER::close(@_);
+
+Required by the glue object.
+
+=cut
+
 sub close {
     my($self, $gui) = @_;
     for (keys %$self) {
@@ -261,31 +374,59 @@ sub close {
     }
 }
 
-## @method $type($format)
-#
-# @brief Reports the type of the layer class for the GUI (short but human readable code).
-# @param format (optional) If 'tooltip' returns a string suitable for tooltip.
-# @return a string.
+=pod
+
+=head2 type($format)
+
+Return the type of this layer for the GUI (a short but human readable
+code, typically one or two characters). If $format is 'long' you may
+return a longer description.
+
+Required by the glue object.
+
+=cut
+
 sub type {
     my $self = shift;
     return '?';
 }
 
-## @method $name($name)
-#
-# @brief Get or set the name of the layer. Also a callback function. 
-# @param[in] name (optional) Layers name.
-# @return Name of layer, if no name is given to the method.
+=pod
+
+=head2 name($name)
+
+Get or set the name of the layer object.
+
+Required by the glue and overlay objects.
+
+=cut
+
 sub name {
     my($self, $name) = @_;
     defined $name ? $self->{NAME} = $name : $self->{NAME};
 }
 
-## @method $alpha($alpha)
-#
-# @brief Get or set the alpha (transparency) of the layer.
-# @param[in] alpha (optional) Layers alpha channels value (0 ... 255).
-# @return Current alpha value, if no parameter is given.
+=pod
+
+=head2 world()
+
+The bounding box (a list min x, min y, max x, max y) of the layer object.
+
+Required by the overlay object.
+
+=cut
+
+=pod
+
+=head2 alpha($alpha)
+
+Get or set the alpha (transparency) of the layer. Alpha is an integer
+value between 0 and 255.
+
+Required by the glue object.
+
+=cut
+
 sub alpha {
     my($self, $alpha) = @_;
     if (defined $alpha) {
@@ -296,36 +437,52 @@ sub alpha {
     $self->{ALPHA};
 }
 
-## @method visible($visible)
-# 
-# @brief Show or hide the layer.
-# @param visible If true then the layer is made visible, else hidden.
+=pod
+
+=head2 visible($visibility)
+
+Get or set the visibility state of this layer.
+
+Required by the overlay object.
+
+=cut
+
 sub visible {
-    my($self, $visible) = @_;
-    defined $visible ? $self->{VISIBLE} = $visible : $self->{VISIBLE};
+    my $self = shift;
+    $self->{VISIBLE} = shift if @_;
+    return $self->{VISIBLE};
 }
 
-## @method got_focus($gui)
-#
-# @brief Called by the GUI when this layer has received the focus.
+=pod
+
+=head2 got_focus($glue)
+
+A callback, which is invoked when this layer gets the cursor in the
+layer list.
+
+Required by the glue object.
+
+=cut
+
 sub got_focus {
     my($self, $gui) = @_;
 }
 
-## @method lost_focus($gui)
-#
-# @brief Called by the GUI when this layer has lost the focus.
+=pod
+
+=head2 lost_focus($glue)
+
+A callback, which is invoked when the cursor is moved away from this
+layer in the layer list.
+
+Required by the glue object.
+
+=cut
+
 sub lost_focus {
     my($self, $gui) = @_;
 }
 
-## @method border_color($red, $green, $blue)
-# @brief Set or get the border color of the features.
-# @code
-# $self->border_color($red, $green, $blue); # set 
-# $self->border_color(); # clear, no border
-# @color = $self->border_color(); # get
-# @endcode
 sub border_color {
     my($self, @color) = @_;
     @{$self->{BORDER_COLOR}} = @color if @color;
@@ -333,80 +490,30 @@ sub border_color {
     @{$self->{BORDER_COLOR}} = () unless @color;
 }
 
-## @method inspect_data
-# @brief Return data for the inspect window.
 sub inspect_data {
     my $self = shift;
     return $self;
 }
 
-## @method void properties_dialog(Gtk2::Ex::Glue gui)
-# 
-# @brief A request to invoke the properties dialog for this layer object.
-# @param gui A Gtk2::Ex::Glue object (contains predefined dialogs).
 sub open_properties_dialog {
     my($self, $gui) = @_;
 }
 
-## @method void open_features_dialog($gui, $soft_open)
-# 
-# @brief A request to invoke a features dialog for this layer object.
-# @param gui A Gtk2::Ex::Glue object (contains predefined dialogs).
-# @param soft_open Whether to "soft open", i.e., reset an already open dialog.
+=pod
+
+=head2 open_features_dialog($glue, $new_selection)
+
+A request to invoke a features dialog for this layer object. If
+$new_selection exists and is true, the dialog should only be refreshed
+if it is open.
+
+Required by the glue object. Called with $new_selection = true for the
+selected layer when the user has made a new selection.
+
+=cut
+
 sub open_features_dialog {
     my($self, $gui, $soft_open) = @_;
-}
-
-## @method arrayref menu_items()
-#
-# @brief Return menu items for the layer menu.
-#
-# A menu item consists of an entry and action. The action may be an
-# anonymous subroutine or FALSE, in which case a separator item is
-# added. A '_' in front of a letter makes that letter a shortcut key
-# for the item. The final layer menu is composed of entries added by
-# Glue.pm, and all classes in the layers lineage. The subroutine is
-# called with [$self, $gui] as user data.
-#
-# @todo add machinery for multiselection.
-#
-# @return a reference to the items array.
-sub menu_items {
-    my($self) = @_;
-    my @items;
-    push @items, (
-	'_Unselect all' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->select;
-	    $gui->{overlay}->update_image;
-	    $self->open_features_dialog($gui, 1);
-	},
-	'_Rules...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->open_rules_dialog($gui);
-	},
-	'_Symbol...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->open_symbols_dialog($gui);
-	},
-	'_Colors...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->open_colors_dialog($gui);
-	},
-	'_Labeling...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->open_labeling_dialog($gui);
-	},
-	'_Inspect...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $gui->inspect($self->inspect_data, $self->name);
-	},
-	'_Properties...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->open_properties_dialog($gui);
-	}
-    );
-    return @items;
 }
 
 sub open_rules_dialog {
@@ -422,11 +529,6 @@ sub open_labeling_dialog {
     Gtk2::Ex::Geo::Dialogs::Labeling::open(@_);
 }
 
-## @method $palette_type($palette_type)
-#
-# @brief Get or set the palette type.
-# @param[in] palette_type (optional) New palette type to set to the layer.
-# @return The current palette type of the layer.
 sub palette_type {
     my($self, $palette_type) = @_;
     if (defined $palette_type) {
@@ -437,13 +539,6 @@ sub palette_type {
     }
 }
 
-## @method @supported_palette_types()
-#
-# The palette type is set by the user and the layer class is expected
-# to understand its own types in its render method.
-# 
-# @brief Return a list of all by this class supported palette types.
-# @return A list of all by this class supported palette types.
 sub supported_palette_types {
     my($class) = @_;
     my @ret;
@@ -453,11 +548,6 @@ sub supported_palette_types {
     return @ret;
 }
 
-## @method $symbol_type($type)
-#
-# @brief Get or set the symbol type.
-# @param[in] type (optional) New symbol type to set to the layer.
-# @return The current symbol type of the layer.
 sub symbol_type {
     my($self, $symbol_type) = @_;
     if (defined $symbol_type) {
@@ -468,10 +558,6 @@ sub symbol_type {
     }
 }
 
-## @method @supported_symbol_types()
-# 
-# @brief Return a list of all symbol types that this class supports.
-# @return A list of all by this class supported symbol types.
 sub supported_symbol_types {
     my($self) = @_;
     my @ret;
@@ -481,13 +567,6 @@ sub supported_symbol_types {
     return @ret;
 }
 
-## @method $symbol_size($size)
-# 
-# @brief Get or set the symbol size.
-# @param[in] size (optional) The layers symbols new size.
-# @return The current size of the layers symbol.
-# @note Even if the layer has at the moment no symbol, the symbol size can be 
-# defined.
 sub symbol_size {
     my($self, $size) = @_;
     defined $size ?
@@ -495,16 +574,6 @@ sub symbol_size {
 	$self->{SYMBOL_SIZE};
 }
 
-## @method @symbol_scale($scale_min, $scale_max)
-# 
-# @brief Get or set the symbol scale.
-# @param[in] scale_min (optional) The layers symbols new minimum scale. Scale under
-# which the symbol is hidden even if the layer is visible.
-# @param[in] scale_max (optional) The layers symbols new maximum scale. Scale over
-# which the symbol is hidden even if the layer is visible.
-# @return The current scale minimum and maximum of the layers symbol.
-# @note Even if the layer has at the moment no symbol, the symbol scales can be 
-# defined.
 sub symbol_scale {
     my($self, $min, $max) = @_;
     if (defined $min) {
@@ -514,14 +583,6 @@ sub symbol_scale {
     return ($self->{SYMBOL_SCALE_MIN}, $self->{SYMBOL_SCALE_MAX});
 }
 
-## @method @hue_range($min, $max, $dir)
-#
-# @brief Determines the hue range
-# @param min The minimum hue value.
-# @param max The maximum hue value.
-# @param dir (1 or -1) Determines whether the rainbow is from min to
-# max (hue increases, red->green->blue), or from max to min (hue
-# decreases, red->blue->green). Default is increase.
 sub hue_range {
     my($self, $min, $max, $dir) = @_;
     if (defined $min) {
@@ -532,11 +593,6 @@ sub hue_range {
     return ($self->{HUE_AT_MIN}, $self->{HUE_AT_MAX}, $self->{INVERT} ? -1 : 1);
 }
 
-## @method $grayscale_subtype($subtype)
-#
-# @brief Get or set the subtype of grayscale palette.
-# @param subtype (optional) The subtype (one of %GRAYSCALE_SUBTYPE).
-# @return Returns the subtype.
 sub grayscale_subtype {
     my($self, $scale) = @_;
     if (defined $scale) {
@@ -547,11 +603,6 @@ sub grayscale_subtype {
     }
 }
 
-## @method $invert_scale($invert)
-#
-# @brief Get or set the invertedness attribute of grayscale palette.
-# @param invert (optional) True or false.
-# @return Returns the invertedness.
 sub invert_scale {
     my($self, $invert) = @_;
     if (defined $invert) {
@@ -561,12 +612,6 @@ sub invert_scale {
     }
 }
 
-## @method @grayscale_color(@rgba)
-#
-# @brief Get or set the color, which is used as the base color for grayscale palette.
-# @param[in] rgba (optional) A list of channels defining the RGBA color.
-# @return The current color.
-# @exception Croaks unless exactly all four channels are specified.
 sub grayscale_color {
     my $self = shift;
     croak "@_ is not a RGBA color" if @_ and @_ != 4;
@@ -574,14 +619,6 @@ sub grayscale_color {
     return @{$self->{GRAYSCALE_COLOR}};
 }
 
-## @method $symbol_field($field_name)
-#
-# @brief Get or set the field, which is used for determining the size of the 
-# symbol.
-# @param[in] field_name (optional) Name of the field determining symbol size.
-# @return Name of the field determining symbol size.
-# @exception If field name is given as a parameter, but the field does not 
-# exist in the layer.
 sub symbol_field {
     my($self, $field_name) = @_;
     if (defined $field_name) {
@@ -594,12 +631,6 @@ sub symbol_field {
     return $self->{SYMBOL_FIELD};
 }
 
-## @method @single_color(@rgba)
-#
-# @brief Get or set the color, which is used if palette is 'single color'
-# @param[in] rgba (optional) A list of channels defining the RGBA color.
-# @return The current color.
-# @exception Croaks unless exactly all four channels are specified.
 sub single_color {
     my $self = shift;
     croak "@_ is not a RGBA color" if @_ and @_ != 4;
@@ -607,15 +638,6 @@ sub single_color {
     return @{$self->{SINGLE_COLOR}};
 }
 
-## @method @color_scale($scale_min, $scale_max)
-# 
-# @brief Get or set the range, which is used for coloring in continuous palette 
-# types.
-# @param[in] scale_min (optional) The layers colors new minimum scale. Scale under
-# which the color is not shown even if the layer is visible.
-# @param[in] scale_max (optional) The layers colors new maximum scale. Scale over
-# which the color is not shown even if the layer is visible.
-# @return The current scale minimum and maximum of the layers color.
 sub color_scale {
     my($self, $min, $max) = @_;
     if (defined $min) {
@@ -627,13 +649,6 @@ sub color_scale {
     return ($self->{COLOR_SCALE_MIN}, $self->{COLOR_SCALE_MAX});
 }
 
-## @method $color_field($field_name)
-#
-# @brief Get or set the field, which is used for determining the color.
-# @param[in] field_name (optional) Name of the field determining color.
-# @return Name of the field determining color.
-# @exception If field name is given as a parameter, but the field does not 
-# exist in the layer.
 sub color_field {
     my($self, $field_name) = @_;
     if (defined $field_name) {
@@ -646,26 +661,6 @@ sub color_field {
     return $self->{COLOR_FIELD};
 }
 
-## @method @color_table($color_table)
-#
-# @brief Get or set the color table.
-# @param[in] color_table (optional) Name of file from where the color table can be 
-# read.
-# @return Current color table, if no parameter is given.
-# @exception A filename is given, which can't be opened/read or does not have a 
-# color table.
-
-## @method @color_table(Geo::GDAL::ColorTable color_table)
-#
-# @brief Get or set the color table.
-# @param[in] color_table (optional) Geo::GDAL::ColorTable.
-# @return Current color table, if no parameter is given.
-
-## @method @color_table(listref color_table)
-#
-# @brief Get or set the color table.
-# @param[in] color_table (optional) Reference to an array having the color table.
-# @return Current color table, if no parameter is given.
 sub color_table {
     my($self, $color_table) = @_;
     unless (defined $color_table) 
@@ -711,12 +706,6 @@ sub color_table {
     }
 }
 
-## @method color($index, @XRGBA)
-#
-# @brief Get or set the single color or a color in a color table or
-# bins. The index is an index to the table and not a color table index
-# or upper limit of a bin (the X is) and is not to be given to set the
-# single color.
 sub color {
     my $self = shift;
     my $index = shift unless $self->{PALETTE_TYPE} eq 'Single color';
@@ -741,8 +730,6 @@ sub color {
     return @color;
 }
 
-## @method add_color($index, @XRGBA)
-# @brief Add color to color table or color bins at given index.
 sub add_color {
     my($self, $index, @XRGBA) = @_;
     if ($self->{PALETTE_TYPE} eq 'Color table') {
@@ -752,8 +739,6 @@ sub add_color {
     }
 }
 
-## @method remove_color($index)
-# @brief Remove color from color table or color bins at given index.
 sub remove_color {
     my($self, $index) = @_;
     if ($self->{PALETTE_TYPE} eq 'Color table') {
@@ -764,12 +749,6 @@ sub remove_color {
 }
 
 
-## @method save_color_table($filename)
-#
-# @brief Saves the layers color table into the file, which name is given as 
-# parameter.
-# @param[in] filename Name of file where the color table is saved.
-# @exception A filename is given, which can't be written to.
 sub save_color_table {
     my($self, $filename) = @_;
     open(my $fh, '>', $filename) or croak "can't write to $filename: $!";
@@ -779,20 +758,6 @@ sub save_color_table {
     CORE::close($fh);
 }
 
-## @method @color_bins($color_bins)
-#
-# @brief Get or set the color bins.
-# @param[in] color_bins (optional) Name of file from where the color bins can be 
-# read.
-# @return The current color bins if no parameter is given.
-# @exception A filename is given, which can't be opened/read or does not have 
-# the color bins.
-
-## @method @color_bins(listref color_bins)
-#
-# @brief Get or set the color bins.
-# @param[in] color_bins (optional) Array including the color bins.
-# @return The current color bins if no parameter is given.
 sub color_bins {
     my($self, $color_bins) = @_;
     unless (defined $color_bins) {
@@ -823,12 +788,6 @@ sub color_bins {
     }
 }
 
-## @method save_color_bins($filename)
-#
-# @brief Saves the layers color bins into the file, which name is given as 
-# parameter.
-# @param[in] filename Name of file where the color bins are saved.
-# @exception A filename is given, which can't be written to.
 sub save_color_bins {
     my($self, $filename) = @_;
     open(my $fh, '>', $filename) or croak "can't write to $filename: $!";
@@ -838,12 +797,6 @@ sub save_color_bins {
     CORE::close($fh);
 }
 
-## @method hashref labeling($labeling)
-#
-# @brief Sets the labeling for the layer.
-# @param[in] labeling An anonymous hash containing the labeling: 
-# { field => , font => , color => [r, g, b, a], min_size => }
-# @return labeling in an anonymous hash
 sub labeling {
     my($self, $labeling) = @_;
     if ($labeling) {
@@ -865,14 +818,24 @@ sub labeling {
     return $labeling;
 }
 
-## @method select(%params)
-#
-# @brief Select features based on user input.
-# @param params named params, the key is something that is recognized by the features method
-# and the value is a geometry the user has defined
-# - <I>key</I> A Geo::OGR::Geometry object representing the point or area the user has selected
-# The key, value pair is fed as such to features subroutine. 
-# A call without parameters deselects all features.
+=pod
+
+=head2 select($selecting => $selection)
+
+Invoked for the selected layer in response to a new_selection signal.
+Select features from this object.
+
+$selecting ($glue->{selecting}) is either 'that_are_within',
+'that_contain' or 'that_intersect'.
+
+$selection ($overlay->{selection}) is a Geo::OGC::Geometry object.
+
+If called without parameters, deselect all features.
+
+Required by the glue object.
+
+=cut
+
 sub select {
     my($self, %params) = @_;
     if (@_ > 1) {
@@ -885,12 +848,6 @@ sub select {
     }
 }
 
-## @method $select($selected)
-# @brief Get or set the selected features.
-#
-# @param selected Reference to an array of features that will be the
-# array of selected features.
-# @return Reference to the array of selected features.
 sub selected_features {
     my($self, $selected) = @_;
     if (@_ > 1) {
@@ -899,11 +856,6 @@ sub selected_features {
     return $self->{SELECTED_FEATURES};
 }
 
-## @method $features(%params)
-# @brief Virtual method called from select.
-#
-# @param params As in select.
-# @return A reference to an array of matching features.
 sub features {
 }
 
@@ -911,18 +863,11 @@ sub has_features_with_borders {
     return 0;
 }
 
-## @method schema()
-#
-# @brief Return the schema of the layer as an anonymous hash. 
-#
-# For the structure of the schema hash see Geo::Vector::schema
 sub schema {
     my $schema = Gtk2::Ex::Geo::Schema->new;
     return $schema;
 }
 
-## @class Gtk2::Ex::Geo::Schema
-# @brief A class for layer schemas.
 package Gtk2::Ex::Geo::Schema;
 
 sub new {
@@ -988,74 +933,91 @@ sub value_range {
     return (0, 0);
 }
 
-## @method @world()
-#
-# @brief A callback function. Return the bounding box.
-# @return (minx, miny, maxx, maxy)
+=pod
 
-## @method render($pb, $cr, $overlay, $viewport)
-#
-# @brief A callback function. Render the layer.
-# @param pb Gtk2::Gdk::Pixbuf object
-# @param cr Cairo context
-# @param overlay Gtk2::Ex::Geo::Overlay object
-# @param viewport The pixbuf / cairo surface area in map coordinates
-# [minx, miny, maxx, maxy]
+=head2 render_selection($gc, $overlay)
 
-## @method render_selection($gc)
-#
-# @brief Render the selection using the given graphics context
-# @param $gc Gtk2::Gdk::GC
+$gc is a Gtk2::Gdk::GC (graphics context) onto which to draw the
+selection.
+
+Todo: document.
+
+Required by the glue object.
+
+=cut
+
 sub render_selection {
 }
 
-## @method void render($pb, $cr, $overlay, $viewport)
-#
-# @brief A request to render the data of the layer onto a surface.
-#
-# @param[in,out] pb A (XS wrapped) pointer to a gtk2_ex_geo_pixbuf.
-# @param[in,out] cr A Cairo::Context object for the surface to draw on.
-# @param[in] overlay A Gtk2::Ex::Geo::Overlay object which manages the surface.
-# @param[in] viewport A reference to the bounding box [min_x, min_y,
-# max_x, max_y] of the surface in world coordinates.
+=pod
+
+=head2 render($pb, $cr, $overlay, $viewport)
+
+A request to render the data of the layer onto a surface.
+
+$pb is a (XS wrapped) pointer to a gtk2_ex_geo_pixbuf,
+
+$cr is a Cairo::Context object for the surface to draw on,
+
+$overlay is the Gtk2::Ex::Geo::Overlay object which manages the
+surface, and
+
+$viewport is a reference to the bounding box [min_x, min_y, max_x,
+max_y] of the surface in world coordinates.
+
+Required by the overlay object.
+
+=cut
+
 sub render {
     my($self, $pb, $cr, $overlay, $viewport) = @_;
 }
 
-## @method $string statusbar_info()
-#
-# @brief A request for an information string for the statusbar.
-#
-# @param[in] x The x location of the mouse.
-# @param[in] y The y location of the mouse.
-#
-# @return A short information string for the statusbar.
+=pod
+
+=head2 statusbar_info($x, $y)
+
+A request for an information string for the statusbar of the GUI.
+
+$x, $y is the location of the mouse.
+
+Required by the glue object.
+
+=cut
+
 sub statusbar_info {
     my($self, $x, $y) = @_;
     return '';
 }
 
-## @method $bootstrap_dialog($gui, $dialog, $title, $connects)
-#
-# @brief Bootstrap the requested dialog.
-#
-# The requested dialog is asked from a Glue object, stored into the
-# layer, and presented. 
-#
-# @param gui A Gtk2::Ex::Geo::Glue object
-# @param dialog A name by which the GladeXML object is stored into the
-# layer. Also the name of the dialog widget in one of the glade
-# resources given to Glue object as Gtk2::Ex::Geo::DialogMaster
-# objects. Note that the name must be globally unique.
-# @param title Title for the dialog.
-# @param connects A hash of widget names linked to an array of signal
-# name, subroutine, and user data.
-# @param combos A list of simple combos that need a model and a text
-# renderer in boot up.
-#
-# @return the GladeXML object of the dialog or the object and a
-# boolean telling whether the dialog was just booted, and may need
-# further boot up.
+=pod
+
+=head2 bootstrap_dialog($glue, $dialog_class, $title, $connects, $combos)
+
+Called by the "open" method of a dialog class to create and initialize
+or restore a dialog object of a given class. If the dialog does not
+exist, one is obtained from the glue object, which in turn obtains
+it from the Dialogs object of this or some other layer class.
+
+$title is the title for the dialog box.
+
+$connects is a reference to a hash of widget names, which are
+associated with a reference to a list of signal name, subroutine
+reference, and user parameter. For example
+
+    copy_button => [clicked => \&do_copy, [$layer, $glue]]
+
+$combos is a reference to a list of name of simple ComboBoxes that
+need a model and a text renderer in initialization.
+
+The method returns the dialog box widget and a boolean value, which
+indicates whether the dialog box was created or if it already existed.
+
+Not part of the Layer interface. Used by the glue object for the
+introspection dialog.
+
+=cut
+
 sub bootstrap_dialog {
     my($self, $gui, $dialog, $title, $connects, $combos) = @_;
     $self = {} unless $self;
@@ -1097,6 +1059,17 @@ sub bootstrap_dialog {
     return wantarray ? ($self->{$dialog}, $boot) : $self->{$dialog};
 }
 
+=pod
+
+=head2 hide_dialog($dialog_class)
+
+Hides the given dialog of this layer object.
+
+Not part of the Layer interface. Used by the glue object for the
+introspection dialog.
+
+=cut
+
 ## @method hide_dialog($dialog)
 # @brief Hide the given (name of a) dialog.
 sub hide_dialog {
@@ -1105,31 +1078,11 @@ sub hide_dialog {
     $self->{$dialog}->get_widget($dialog)->hide();
 }
 
-## @method $dialog_visible($dialog)
-#
-# @brief Return true is the given (name of a) dialog is visible.
 sub dialog_visible {
     my($self, $dialog) = @_;
     my $d = $self->{$dialog};
     return 0 unless $d;
     return $d->get_widget($dialog)->get('visible');
 }
-
-=head1 NAME
-
-Gtk2::Ex::Geo::Layer
-
-Gtk2::Ex::Geo::Schema
-
-=head1 DESCRIPTION
-
-The root class of all layer classes.
-
-Layer classes should be registered with the glue object. The
-registration information comprises a dialogs object (an instance of
-DialogMaster or its subclass), and class methods it offers (typically
-a subset of 'new', 'open', 'save', etc.).
-
-=cut
 
 1;

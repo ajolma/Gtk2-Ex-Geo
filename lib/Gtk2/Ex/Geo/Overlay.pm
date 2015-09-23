@@ -94,7 +94,28 @@ been rendered.
 
 =head1 GRAPHICS PIPELINE
 
-to do: describe the graphics pipeline
+The graphics pipeline is invoked by calling the render method of the
+glue object, or the render method of the overlay object (the latter is
+invoked by the former). First the overlay object emits the signal
+update-layers to allow layers to prepare for rendering.
+
+At this point the overlay object creates a Gtk2::Ex::Geo::Canvas
+object. Gtk2::Ex::Geo::Canvas is a subclass of Gtk2::Gdk::Pixbuf.
+
+In the constructor of Canvas first a memory image is created wrapped
+into a Gtk2::Ex::Geo::Pixbuf object. Then the same memory image is
+also wrapped into a Cairo::ImageSurface object. A Cairo::Context
+object is created for the ImageSurface. Gtk2::Ex::Geo::Pixbuf is
+defined in the Geo.xs file of this distribution. The render method of
+each layer in the order bottom up is then invoked with both
+Gtk2::Ex::Geo::Pixbuf and Cairo::Context objects as parameters. In the end
+of the constructor the memory image is copied to a pixbuf, which is
+wrapped to a Gtk2::Gdk::Pixbuf object.
+
+The Gtk2::Gdk::Pixbuf is then rendered on a Gtk2::Gdk::Pixmap. The
+user drawing, selection, and annotations are then rendered on the
+Pixmap. In the end the Gtk2::Image in the Gtk2::ScrolledWindow, which
+the Gtk2::Ex::Geo::Overlay is, is set from the Pixmap.
 
 =head1 METHODS
 
@@ -111,7 +132,7 @@ use Geo::OGC::Geometry;
 
 use vars qw / $EDIT_SNAP_DISTANCE /;
 
-our $VERSION = '0.62'; # same as Geo.pm
+our $VERSION = '0.70'; # same as Geo.pm
 
 $EDIT_SNAP_DISTANCE = 5;
 
@@ -227,7 +248,8 @@ sub my_inits {
 # Always zooms to the first layer added.
 sub add_layer {
     my($self, $layer, $do_not_zoom_to) = @_;
-    return unless blessed($layer) and $layer->isa('Gtk2::Ex::Geo::Layer');
+    # maybe not require the subclass status, allow duck typing
+    # return unless blessed($layer) and $layer->isa('Gtk2::Ex::Geo::Layer');
     push @{$self->{layers}}, $layer;
     # MUST zoom to if this is the first layer
     $do_not_zoom_to = 0 unless $self->{first_added};
@@ -524,7 +546,7 @@ sub get_focus {
 	my $cr = Cairo::Context->create($surface);
 	
 	for my $layer (@$layers) {
-	    $layer->render($pb, $cr, $overlay, \@viewport) if $layer->{VISIBLE};
+	    $layer->render($pb, $cr, $overlay, \@viewport) if $layer->visible;
 	}
 	
 	undef $cr;

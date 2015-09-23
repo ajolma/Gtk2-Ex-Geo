@@ -1,5 +1,18 @@
-#** @file DialogMaster.pm
-#*
+=pod
+
+=head1 NAME
+
+Gtk2::Ex::Geo::DialogMaster - A dialog manager
+
+This module is a part of the Gtk2::Ex::Geo toolkit.
+
+=head1 DESCRIPTION
+
+
+=head1 METHODS
+
+=cut
+
 package Gtk2::Ex::Geo::DialogMaster;
 
 use strict;
@@ -22,6 +35,15 @@ sub new {
     $self->{buffer} = $params{buffer};
     bless $self => (ref($class) or $class);
 }
+
+=pod
+
+=head2 get_dialog($dialog_class)
+
+Return a new widget (dialog box) of the given class by creating it
+from the XML stored in this object.
+
+=cut
 
 sub get_dialog {
     my($self, $dialog_name) = @_;

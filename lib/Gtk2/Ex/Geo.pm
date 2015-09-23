@@ -19,7 +19,7 @@ BEGIN {
     our %EXPORT_TAGS = ( 'all' => [ qw( ) ] );
     our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
     our @EXPORT = qw( );
-    our $VERSION = '0.66';
+    our $VERSION = '0.70';
     XSLoader::load( 'Gtk2::Ex::Geo', $VERSION );
 }
 
@@ -142,12 +142,6 @@ objects. Functionality includes redraw, support for selections (point,
 line, path, rectangle, polygon, or many of them), zoom, pan, and
 conversion between event and world (layer) coordinates.
 
-=head2 Gtk2::Ex::Geo::Canvas
-
-The class for a map canvas, a subclass of Gtk2::Gdk::Pixbuf. This
-class is used for constructing a map from a stack of geospatial layer
-objects by rendering them sequentially on a pixbuf.
-
 =head2 Gtk2::Ex::Geo::Layer
 
 The root class for geospatial layers. A geospatial layer is typically
@@ -155,26 +149,15 @@ a subclass of a class for geospatial data (raster, vector features, or
 something else) and of this class. The methods defined in this class
 are called when the user interacts with the application.
 
-=head2 Gtk2::Ex::Geo::DialogMaster
-
-A class which maintains a set of Glade dialogs taken from XML in DATA
-section.
-
 =head2 Gtk2::Ex::Geo::Dialogs
 
 A subclass of Gtk2::Ex::Geo::DialogMaster. Contains dialogs for
 Gtk2::Ex::Geo::Layer.
 
-=head2 Gtk2::Ex::Geo::History
+=head2 Gtk2::Ex::Geo::DialogMaster
 
-Input history for the command line entry a'la (at least attempting)
-GNU history. The command line entry is managed by Glue object with
-Gtk2::Entry.
-
-=head2 Gtk2::Ex::Geo::TreeDumper
-
-From L<http://www.asofyet.org/muppet/software/gtk2-perl/treedumper.pl-txt>
-For inspecting layer and other objects.
+A class which maintains a set of Glade dialogs taken from XML in DATA
+section.
 
 =head1 SHORTCOMINGS
 

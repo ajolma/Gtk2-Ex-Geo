@@ -1,11 +1,19 @@
-#** @file Dialogs.pm
-#*
+=pod
 
-#** @class Gtk2::Ex::Geo::Dialogs
-# Dialogs is a subclass of DialogMaster and its purpose is to maintain
-# the Glade dialog code. Each layer class should create one Dialogs
-# object in its registration method and return it to the Glue object.
-#*
+=head1 NAME
+
+Gtk2::Ex::Geo::Dialogs - A manager of dialogs embedded in a package file as XML
+
+This module is a part of the Gtk2::Ex::Geo toolkit.
+
+=head1 DESCRIPTION
+
+A subclass of Gtk2::Ex::Geo::DialogMaster.
+
+=head1 METHODS
+
+=cut
+
 package Gtk2::Ex::Geo::Dialogs;
 
 use strict;
@@ -25,6 +33,15 @@ our %EXPORT_TAGS = (
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 our @EXPORT = qw( );
+
+=pod
+
+=head2 new()
+
+Grabs the glade XML from the file of this class and creates a new
+DialogMaster object with it.
+
+=cut
 
 #** @method new(%params) 
 #*
@@ -129,12 +146,6 @@ sub get_number_from_entry {
     #print STDERR "return $text\n";
     $text;
 }
-
-=head1 DESCRIPTION
-
-Add here description of Glade etc.
-
-=cut
 
 1;
 __DATA__
