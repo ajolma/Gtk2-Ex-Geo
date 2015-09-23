@@ -138,26 +138,26 @@ sub create_layer_tree_view {
     my($self) = @_;
     my @columns = qw /name type v a/;
     my %tooltips = (
-	name => 'name',
-	type => 'type',
-	v => 'visibility',
-	a => 'alpha'
-	);    
+        name => 'name',
+        type => 'type',
+        v => 'visibility',
+        a => 'alpha'
+        );    
     my $model = Gtk2::TreeStore->new(qw/Glib::String Glib::String Glib::String Glib::String/);
     my $view = Gtk2::TreeView->new();
     $view->set_model($model);    
     my $i = 0;
     foreach my $column (@columns) {
-	my $cell = Gtk2::CellRendererText->new;
-	if ($column eq 'a') {
-	    $cell->set(editable => 1);
-	    $cell->signal_connect(edited => \&layer_list_edit, [$self, $column]);
-	}
-	my $col = Gtk2::TreeViewColumn->new_with_attributes($column, $cell, text => $i++);
-	$col->set_resizable(TRUE) if $i == 1;
-	$col->set_expand(TRUE) if $i == 1;
-	$view->append_column($col);
-	$view->set_expander_column($col) if $i == 1;
+        my $cell = Gtk2::CellRendererText->new;
+        if ($column eq 'a') {
+            $cell->set(editable => 1);
+            $cell->signal_connect(edited => \&layer_list_edit, [$self, $column]);
+        }
+        my $col = Gtk2::TreeViewColumn->new_with_attributes($column, $cell, text => $i++);
+        $col->set_resizable(TRUE) if $i == 1;
+        $col->set_expand(TRUE) if $i == 1;
+        $view->append_column($col);
+        $view->set_expander_column($col) if $i == 1;
     }
 
     # could set to true and put all info to expanded view
@@ -167,40 +167,40 @@ sub create_layer_tree_view {
     my $selection = $view->get_selection;
     $selection->set_mode('multiple');
     $view->signal_connect
-	( cursor_changed => sub {
-	      my(undef, $self) = @_;
-	      my $layer = $self->get_selected_layer();
-	      return if $self->{focused} and $self->{focused}->name eq $layer->name;
-	      $self->{focused}->lost_focus($self) if $self->{focused};
-	      $layer->got_focus($self) if $layer;
-	      $self->{focused} = $layer;
-	  }, $self);
+        ( cursor_changed => sub {
+              my(undef, $self) = @_;
+              my $layer = $self->get_selected_layer();
+              return if $self->{focused} and $self->{focused}->name eq $layer->name;
+              $self->{focused}->lost_focus($self) if $self->{focused};
+              $layer->got_focus($self) if $layer;
+              $self->{focused} = $layer;
+          }, $self);
     $view->signal_connect
-	( motion_notify_event => sub {
-	      my($self, $event, $gis) = @_;
-	      $self->set_has_tooltip(0);
-	      my @res = $self->get_path_at_pos($event->x, $event->y);
-	      return unless $res[0] and defined $res[0]->to_string;
-	      return unless $res[1];
-	      my $layer = $gis->{overlay}->get_layer_by_index($res[0]->to_string);
-	      my $column = $res[1]->get_title;
-	      my $tooltip = $tooltips{$column}.': ';
-	      for ($column) {
-		  $tooltip .= $layer->name if /^name/;
-		  $tooltip .= $layer->type('long') if /^type/;
-		  $tooltip .= $layer->visible ? 'visible' : 'hidden' if /^v/;
-		  $tooltip .= $layer->alpha if /^a/;
-	      }
-	      $self->set_tooltip_text($tooltip);
-	      $self->set_has_tooltip(1);
-	  }, $self) if Gtk2->CHECK_VERSION(2,12,0);
+        ( motion_notify_event => sub {
+              my($self, $event, $gis) = @_;
+              $self->set_has_tooltip(0);
+              my @res = $self->get_path_at_pos($event->x, $event->y);
+              return unless $res[0] and defined $res[0]->to_string;
+              return unless $res[1];
+              my $layer = $gis->{overlay}->get_layer_by_index($res[0]->to_string);
+              my $column = $res[1]->get_title;
+              my $tooltip = $tooltips{$column}.': ';
+              for ($column) {
+                  $tooltip .= $layer->name if /^name/;
+                  $tooltip .= $layer->type('long') if /^type/;
+                  $tooltip .= $layer->visible ? 'visible' : 'hidden' if /^v/;
+                  $tooltip .= $layer->alpha if /^a/;
+              }
+              $self->set_tooltip_text($tooltip);
+              $self->set_has_tooltip(1);
+          }, $self) if Gtk2->CHECK_VERSION(2,12,0);
     $view->signal_connect
-	( leave_notify_event => sub {
-	      my($self) = @_;
-	      $self->set_has_tooltip(0);
-	  }) if Gtk2->CHECK_VERSION(2,12,0);
+        ( leave_notify_event => sub {
+              my($self) = @_;
+              $self->set_has_tooltip(0);
+          }) if Gtk2->CHECK_VERSION(2,12,0);
     $view->signal_connect
-	( button_press_event => \&layer_menu, $self );
+        ( button_press_event => \&layer_menu, $self );
     return ($view, $model);
 }
 
@@ -210,11 +210,11 @@ sub layer_list_edit {
     my $layer = $self->{overlay}->get_layer_by_index($path);
     return unless $layer;
     if ($column eq 'name') {
-	$layer->name($new_value) unless $self->{overlay}->get_layer_by_name($new_value);
+        $layer->name($new_value) unless $self->{overlay}->get_layer_by_name($new_value);
     } else {
-	$layer->alpha($new_value);
-	$self->update;
-	$self->{overlay}->render;
+        $layer->alpha($new_value);
+        $self->update;
+        $self->{overlay}->render;
     }
 }
 
@@ -229,7 +229,7 @@ sub create_toolbar {
     my $model = Gtk2::ListStore->new('Glib::String');
     $button1->set_model($model);
     for my $command ('Zoom','Pan','Select','Measure','Draw','Edit') {
-	$model->set($model->append, 0, $command);
+        $model->set($model->append, 0, $command);
     }
     $button1->signal_connect(changed => \&_set_interaction_mode, $self);
     $button1->set_tooltip_text('Interaction mode') if Gtk2->CHECK_VERSION(2,12,0);
@@ -242,7 +242,7 @@ sub create_toolbar {
     $model = Gtk2::ListStore->new('Glib::String');
     $button2->set_model($model);
     for my $command ('Line','Path','Rectangle','Ellipse','Polygon') {
-	$model->set($model->append, 0, $command);
+        $model->set($model->append, 0, $command);
     }
     $button2->signal_connect(changed => \&_set_interaction_geometry, $self);
     $button2->set_tooltip_text('Interaction geometry') if Gtk2->CHECK_VERSION(2,12,0);
@@ -296,25 +296,25 @@ sub _set_interaction_mode {
     my $iter = $model->get_iter_from_string($a);
     my $mode = $model->get_value($iter);
     if ($mode eq 'Zoom') {
-	$self->set_interaction_geometry('Rectangle');
-	$self->{geometry_button}->set_sensitive(0);
+        $self->set_interaction_geometry('Rectangle');
+        $self->{geometry_button}->set_sensitive(0);
     } elsif ($mode eq 'Pan') {
-	$self->set_interaction_geometry('Line');
-	$self->{geometry_button}->set_sensitive(0);
+        $self->set_interaction_geometry('Line');
+        $self->{geometry_button}->set_sensitive(0);
     } elsif ($mode eq 'Select') {
-	$self->set_interaction_geometry('Rectangle');
-	$self->{geometry_button}->set_sensitive(1);
+        $self->set_interaction_geometry('Rectangle');
+        $self->{geometry_button}->set_sensitive(1);
     } elsif ($mode eq 'Measure') {
-	$self->set_interaction_geometry('Line');
-	$self->{geometry_button}->set_sensitive(1);
+        $self->set_interaction_geometry('Line');
+        $self->{geometry_button}->set_sensitive(1);
     } elsif ($mode eq 'Draw') {
-	$self->set_interaction_geometry('Rectangle');
-	$self->{geometry_button}->set_sensitive(1);
+        $self->set_interaction_geometry('Rectangle');
+        $self->{geometry_button}->set_sensitive(1);
     } elsif ($mode eq 'Edit') {
-	$self->set_interaction_geometry('Line');
-	$self->{geometry_button}->set_sensitive(0);
+        $self->set_interaction_geometry('Line');
+        $self->{geometry_button}->set_sensitive(0);
     } else {
-	$self->{geometry_button}->set_sensitive(1);
+        $self->{geometry_button}->set_sensitive(1);
     }
     $self->{overlay}->{rubberband_mode} = lc($mode);
 }
@@ -349,49 +349,49 @@ sub create_overlay {
     my($menu, $menu_item_setup) = overlay_menu();
 
     my %overlay_params = ( menu => $menu,
-			   menu_item_setup => $menu_item_setup,
-			   rubberband_mode => 'zoom',
-			   rubberband_geometry => 'rect',
-			   selecting => 'that_intersect',
-	);
+                           menu_item_setup => $menu_item_setup,
+                           rubberband_mode => 'zoom',
+                           rubberband_geometry => 'rect',
+                           selecting => 'that_intersect',
+        );
     
     for my $key (keys %params) {
-	if ($key =~ /^overlay:(\w+)/) {
-	    $overlay_params{$1} = $params{$key};
-	}
+        if ($key =~ /^overlay:(\w+)/) {
+            $overlay_params{$1} = $params{$key};
+        }
     }
     
     $overlay->my_inits( %overlay_params );  
     
     $overlay->signal_connect
-	( pixmap_ready => sub {
-	    my($overlay, $gis) = @_;
-	    my $layer = $self->get_selected_layer();
-	    if ($layer) {
-		my $gc = Gtk2::Gdk::GC->new($overlay->{pixmap});
-		$gc->set_rgb_fg_color(Gtk2::Gdk::Color->new(65535,0,0));
-		$layer->render_selection($gc, $overlay);
-	    }
-	  }, $self);
+        ( pixmap_ready => sub {
+            my($overlay, $gis) = @_;
+            my $layer = $self->get_selected_layer();
+            if ($layer) {
+                my $gc = Gtk2::Gdk::GC->new($overlay->{pixmap});
+                $gc->set_rgb_fg_color(Gtk2::Gdk::Color->new(65535,0,0));
+                $layer->render_selection($gc, $overlay);
+            }
+          }, $self);
     
     $overlay->signal_connect
-	( new_selection => 
-	  sub {
-	      my(undef, $gis) = @_;
-	      my $overlay = $gis->{overlay};
-	      my $layer = $gis->get_selected_layer();
-	      if ($layer) {
-		  if ($overlay->{selection}) {
-		      $layer->select($overlay->{selecting} => $overlay->{selection}, glue => $self);
-		  } else {
-		      $layer->select(glue => $self);
-		  }
-		  $overlay->update_image;
-	      }
-	  }, $self);
+        ( new_selection => 
+          sub {
+              my(undef, $gis) = @_;
+              my $overlay = $gis->{overlay};
+              my $layer = $gis->get_selected_layer();
+              if ($layer) {
+                  if ($overlay->{selection}) {
+                      $layer->select($overlay->{selecting} => $overlay->{selection}, glue => $self);
+                  } else {
+                      $layer->select(glue => $self);
+                  }
+                  $overlay->update_image;
+              }
+          }, $self);
 
     $overlay->signal_connect
-	( motion_notify => \&show_information, $self );
+        ( motion_notify => \&show_information, $self );
 
     return $overlay;
 }
@@ -402,17 +402,17 @@ sub new {
     my ($class, $history) = @_;
     push @$history,'' unless defined($history->[$#$history]) and $history->[$#$history] eq '';
     my $self = { index => $#$history,
-		 history => $history,
-		 edit_index => -1,
-		 edit_text => '',
-	     };
+                 history => $history,
+                 edit_index => -1,
+                 edit_text => '',
+             };
     bless($self, $class); 
 }
 
 sub arrow_up {
     my $self = shift;
     if ($self->{edit_index} >= 0) {
-	$self->{history}->[$self->{edit_index}] = $self->{edit_text};
+        $self->{history}->[$self->{edit_index}] = $self->{edit_text};
     }
     $self->{index} = max(0, $self->{index}-1);
     return $self->{edit_text} if $self->{edit_index} == $self->{index};
@@ -422,7 +422,7 @@ sub arrow_up {
 sub arrow_down {
     my $self = shift;
     if ($self->{edit_index} >= 0) {
-	$self->{history}->[$self->{edit_index}] = $self->{edit_text};
+        $self->{history}->[$self->{edit_index}] = $self->{edit_text};
     }
     $self->{index} = min($#{$self->{history}}, $self->{index}+1);
     return $self->{edit_text} if $self->{edit_index} == $self->{index};
@@ -440,13 +440,13 @@ sub enter {
     $self->{edit_text} = $text if defined $text;
     my $history = $self->{history};
     if ($#$history >= 0) {
-	unless ($#$history > 0 and $history->[$#$history-1] eq $self->{edit_text}) {
-	    $history->[$#$history] = $self->{edit_text};
-	    push @$history,'' unless $self->{edit_text} eq '';
-	}
-	$self->{index} = $#$history;
-	$self->{edit_index} = -1;
-	$self->{edit_text} = '';
+        unless ($#$history > 0 and $history->[$#$history-1] eq $self->{edit_text}) {
+            $history->[$#$history] = $self->{edit_text};
+            push @$history,'' unless $self->{edit_text} eq '';
+        }
+        $self->{index} = $#$history;
+        $self->{edit_index} = -1;
+        $self->{edit_text} = '';
     }
 }
 
@@ -464,19 +464,19 @@ sub open_history {
     my($self, $filename) = @_;
     my $history;
     if ($filename) {
-	my $mode = 0600;
-	chmod $mode, $filename if -e $filename;
-	if (open TMP, $filename) {
-	    my @history = <TMP>;
-	    CORE::close TMP;
-	    for (@history) {
-		chomp $_;
-		s/\r//;
-	    }
-	    $history = new Gtk2::Ex::Geo::History(\@history);
-	} else {
-	    carp("$!: $filename (it will be created at exit)");
-	}
+        my $mode = 0600;
+        chmod $mode, $filename if -e $filename;
+        if (open TMP, $filename) {
+            my @history = <TMP>;
+            CORE::close TMP;
+            for (@history) {
+                chomp $_;
+                s/\r//;
+            }
+            $history = new Gtk2::Ex::Geo::History(\@history);
+        } else {
+            carp("$!: $filename (it will be created at exit)");
+        }
     }
     $history = Gtk2::Ex::Geo::History->new(['']) unless $history;
     return ($history, $filename);
@@ -486,26 +486,26 @@ sub open_resources {
     my($self, $filename) = @_;
     my %resources;
     if ($filename) {
-	my $mode = 0600;
-	chmod $mode, $filename if -e $filename;
-	if (open TMP, $filename) {
-	    my $key = '';
-	    while (<TMP>) {
-		chomp $_;
-		s/\r//;
-		if (/^  /) {
-		    s/^  //;
-		    my @value = split /\t/;
-		    my $k = shift @value;
-		    $resources{$key}{$k} = [@value] if $k;
-		} else {
-		    $key = $_;
-		}
-	    }
-	    CORE::close TMP;
-	} else {
-	    carp("$!: $filename (it will be created at exit)");
-	}
+        my $mode = 0600;
+        chmod $mode, $filename if -e $filename;
+        if (open TMP, $filename) {
+            my $key = '';
+            while (<TMP>) {
+                chomp $_;
+                s/\r//;
+                if (/^  /) {
+                    s/^  //;
+                    my @value = split /\t/;
+                    my $k = shift @value;
+                    $resources{$key}{$k} = [@value] if $k;
+                } else {
+                    $key = $_;
+                }
+            }
+            CORE::close TMP;
+        } else {
+            carp("$!: $filename (it will be created at exit)");
+        }
     }
     return (\%resources, $filename);
 }
@@ -520,13 +520,13 @@ sub register_dialogs {
 sub register_command {
     my($self, %args) = @_;
     if (!$args{icon_widget} and $Config::Config{'osname'} ne 'MSWin32') {
-	$args{icon_widget} = Gtk2::Label->new($args{label});
+        $args{icon_widget} = Gtk2::Label->new($args{label});
     }
     my $button;
     if ($args{stock_id}) {
-	$button = Gtk2::ToolButton->new_from_stock($args{stock_id});
+        $button = Gtk2::ToolButton->new_from_stock($args{stock_id});
     } else {
-	$button = Gtk2::ToolButton->new($args{icon_widget}, $args{label});
+        $button = Gtk2::ToolButton->new($args{icon_widget}, $args{label});
     }
     $button->set_icon_name($args{icon_name}) if $args{icon_name};
     $button->set_label_widget($args{label_widget}) if $args{label_widget};
@@ -554,50 +554,50 @@ sub unregister_command {
 sub register_commands {
     my($self, $commands) = @_;
     unless (ref $commands->[0]) {
-	my @commands;
-	while (ref $commands->[$#$commands]) {
-	    push @commands, pop @$commands;
-	}
-	my $menu = Gtk2::Menu->new;
-	for my $command (reverse @commands) {
-	    my $name = $command->{label};
-	    my $item;
-	    #$item = Gtk2::SeparatorMenuItem->new();
-	    $item = Gtk2::MenuItem->new_with_label($name);
-	    $item->signal_connect(activate => $command->{sub}, $self);
-	    $menu->append($item);
-	}
-	my %args = @$commands;
-	if (!$args{icon_widget} and $Config::Config{'osname'} ne 'MSWin32') {
-	    $args{icon_widget} = Gtk2::Label->new($args{label});
-	}
-	my $button;
-	if ($args{stock_id}) {
-	    $button = Gtk2::ToolButton->new_from_stock($args{stock_id});
-	} else {
-	    $button = Gtk2::ToolButton->new($args{icon_widget}, $args{label});
-	}
-	$button->set_icon_name($args{icon_name}) if $args{icon_name};
-	$button->set_label_widget($args{label_widget}) if $args{label_widget};
-	my $tooltips = Gtk2::Tooltips->new;
-	$args{tip} = $args{tip} || '';
-	$button->set_tooltip($tooltips, $args{tip}, '');
-	$tooltips->set_tip($button, $args{tip});
-	$tooltips->enable;
-	$args{pos} = -1 unless defined $args{pos};
-	#$button->set_menu($menu);
-	$button->show_all;
-	$menu->show_all;
+        my @commands;
+        while (ref $commands->[$#$commands]) {
+            push @commands, pop @$commands;
+        }
+        my $menu = Gtk2::Menu->new;
+        for my $command (reverse @commands) {
+            my $name = $command->{label};
+            my $item;
+            #$item = Gtk2::SeparatorMenuItem->new();
+            $item = Gtk2::MenuItem->new_with_label($name);
+            $item->signal_connect(activate => $command->{sub}, $self);
+            $menu->append($item);
+        }
+        my %args = @$commands;
+        if (!$args{icon_widget} and $Config::Config{'osname'} ne 'MSWin32') {
+            $args{icon_widget} = Gtk2::Label->new($args{label});
+        }
+        my $button;
+        if ($args{stock_id}) {
+            $button = Gtk2::ToolButton->new_from_stock($args{stock_id});
+        } else {
+            $button = Gtk2::ToolButton->new($args{icon_widget}, $args{label});
+        }
+        $button->set_icon_name($args{icon_name}) if $args{icon_name};
+        $button->set_label_widget($args{label_widget}) if $args{label_widget};
+        my $tooltips = Gtk2::Tooltips->new;
+        $args{tip} = $args{tip} || '';
+        $button->set_tooltip($tooltips, $args{tip}, '');
+        $tooltips->set_tip($button, $args{tip});
+        $tooltips->enable;
+        $args{pos} = -1 unless defined $args{pos};
+        #$button->set_menu($menu);
+        $button->show_all;
+        $menu->show_all;
 
-	$button->signal_connect(clicked => sub {
-	    $menu->popup(undef, undef, undef, undef, 0, 0);
-				});
-	
-	$self->{toolbar}->insert($button, $args{pos});
+        $button->signal_connect(clicked => sub {
+            $menu->popup(undef, undef, undef, undef, 0, 0);
+                                });
+        
+        $self->{toolbar}->insert($button, $args{pos});
     } else {
-	for my $command (@$commands) {
-	    $self->register_command(%$command);
-	}
+        for my $command (@$commands) {
+            $self->register_command(%$command);
+        }
     }
 }
 
@@ -633,15 +633,15 @@ sub register_class {
     my $self = shift;
     my %params;
     if (@_ > 1) {
-	%params = @_;
+        %params = @_;
     } else {
-	$params{class} = shift;
+        $params{class} = shift;
     }
     if ($params{class}) {
         push @{$self->{classes}}, $params{class};
-	$sub = $params{class}.'::registration';
-	my $registration = &$sub($self);
-	%params = %$registration;
+        $sub = $params{class}.'::registration';
+        my $registration = &$sub($self);
+        %params = %$registration;
     }
     $self->register_dialogs($params{dialogs}) if $params{dialogs};
     $self->register_commands($params{commands}) if $params{commands};
@@ -650,7 +650,7 @@ sub register_class {
 sub register_feature_class {
     my($self) = shift;
     for my $class (@_) {
-	$self->{feature_classes}{$class} = $class;
+        $self->{feature_classes}{$class} = $class;
     }
 }
 
@@ -668,28 +668,28 @@ sub close {
     my($self) = @_;
     my $resources = $self->{resources};
     if ($self->{history_file}) {
-	my $history = $self->{history}->{history};
-	if (open TMP,">$self->{history_file}") {
-	    for (@$history[max(0,$#$history-1000)..$#$history]) {
-		print TMP "$_\n";
-	    }
-	    close TMP;
-	} else {
-	    croak "$!: $self->{history_file}";
-	}
+        my $history = $self->{history}->{history};
+        if (open TMP,">$self->{history_file}") {
+            for (@$history[max(0,$#$history-1000)..$#$history]) {
+                print TMP "$_\n";
+            }
+            close TMP;
+        } else {
+            croak "$!: $self->{history_file}";
+        }
     }
     if ($self->{resources_file}) {
         if (open TMP,">$self->{resources_file}") {
-	    for my $key (keys %$resources) {
-		print TMP "$key\n";
-		for my $value (keys %{$resources->{$key}}) {
-		    print TMP "  $value\t",join("\t",@{$resources->{$key}{$value}}),"\n";
-		}
-	    }
-	    close TMP;
-	} else {
-	    croak "$!: $self->{resources_file}";
-	}
+            for my $key (keys %$resources) {
+                print TMP "$key\n";
+                for my $value (keys %{$resources->{$key}}) {
+                    print TMP "  $value\t",join("\t",@{$resources->{$key}{$value}}),"\n";
+                }
+            }
+            close TMP;
+        } else {
+            croak "$!: $self->{resources_file}";
+        }
     }
     while ($self->delete_selected(1)) {};
     delete $self->{dialogs};
@@ -699,13 +699,13 @@ sub close {
     delete $self->{overlay};
     delete $self->{model};
     for my $key ('mode_button', 'geometry_button', 'toolbar', 'tree_view', 'entry', 'statusbar') {
-	$self->{$key}->destroy;
-	delete $self->{$key};
+        $self->{$key}->destroy;
+        delete $self->{$key};
     }
     while (my($key, $widget) = each %$self) {
-	next if $key eq 'treedumper';
-	$widget->destroy if blessed($widget) and $widget->isa("Gtk2::Widget");
-	delete $self->{$key};
+        next if $key eq 'treedumper';
+        $widget->destroy if blessed($widget) and $widget->isa("Gtk2::Widget");
+        delete $self->{$key};
     }
 }
 
@@ -726,8 +726,8 @@ be globally unique.
 sub get_dialog {
     my($self, $dialog_name) = @_;
     for my $dialogs (@{$self->{dialogs}}) {
-	$d = $dialogs->get_dialog($dialog_name);
-	return $d if $d;
+        $d = $dialogs->get_dialog($dialog_name);
+        return $d if $d;
     }
     croak "can't find dialog $dialog_name";
 }
@@ -743,10 +743,10 @@ Display a short information message to the user in a Gtk2::MessageDialog.
 sub message {
     my($self, $message) = @_;
     my $dialog = Gtk2::MessageDialog->new(undef,
-					  'destroy-with-parent',
-					  'info',
-					  'close',
-					  $message);
+                                          'destroy-with-parent',
+                                          'info',
+                                          'close',
+                                          $message);
     $dialog->signal_connect(response => sub {$_[0]->destroy});
     $dialog->show_all;
 }
@@ -754,103 +754,103 @@ sub message {
 # Construct a menu for an overlay object.
 sub overlay_menu {
     my @menu = 
-	('Zoom to pre_vious' => sub {
-	     my ($item, $self) = @_;
-	     my $zoom = pop @{$self->{zoom_stack}};
-	     $self->zoom(@$zoom, 0, 1) if $zoom;
-	 },
-	 1 => 0,
-	 'Reselect' => sub { 
-	     my ($item, $self) = @_;
-	     $self->signal_emit('new_selection');
-	 },
-	 '_Clear selection' => sub { 
-	     my ($item, $self) = @_;
-	     if ($self->{selection}) {
-		 delete $self->{selection};
-		 $self->signal_emit('new_selection');
-	     }
-	 },
-	 1 => 0,
-	 'Select within' => sub { 
-	     my ($item, $self) = @_;
-	     $self->{selecting} = 'that_are_within';
-	 },
-	 'Select containing' => sub { 
-	     my ($item, $self) = @_;
-	     $self->{selecting} = 'that_contain';
-	 },
-	 'Select intersecting' => sub { 
-	     my ($item, $self) = @_;
-	     $self->{selecting} = 'that_intersect';
-	 },
-	 1 => 0,
-	 'Clear drawing' => sub { 
-	     my ($item, $self) = @_;
-	     if ($self->{drawing}) {
-		 delete $self->{drawing};
-		 $self->update_image;
-	     }
-	 },
-	 1 => 0,
-	 'Set _background color..' => sub { 
-	     my ($item, $self) = @_;
-	     my $color = $self->{bg_color};
-	     my $d = Gtk2::ColorSelectionDialog->new('Color for the background');
-	     my $c = new Gtk2::Gdk::Color ($color ? $color->[0]*257 : 0,
-					   $color ? $color->[1]*257 : 0,
-					   $color ? $color->[2]*257 : 0);
-	     $d->colorsel->set_current_color($c);
-	     
-	     if ($d->run eq 'ok') {
-		 $c = $d->colorsel->get_current_color;
-		 $d->destroy;
-		 $self->{bg_color} = 
-		     [int($c->red/257),int($c->green/257),int($c->blue/257),255];
-		 $self->render;
-	     } else {
-		 $d->destroy};
-	 },
-	 '_Export as PNG' => sub { 
-	     my ($item, $self) = @_;
-	     my $filename = file_chooser('Export as a PNG image', 'save');
-	     if ($filename) {
-		 my $type = 'png';
-		 if (-e $filename) {
-		     my $dialog = Gtk2::MessageDialog->new(undef,'destroy-with-parent',
-							   'question',
-							   'yes_no',
-							   "Overwrite existing $filename?");
-		     my $ret = $dialog->run;
-		     $filename = '' if $ret eq 'no';
-		     $dialog->destroy;
-		 }
-		 $self->render(filename=>$filename, type=>$type) if $filename;
-	     }
-	 },
-	 'Res_tore' => sub { 
-	     my ($item, $self) = @_;
-	     $self->update_image;
-	 });
+        ('Zoom to pre_vious' => sub {
+             my ($item, $self) = @_;
+             my $zoom = pop @{$self->{zoom_stack}};
+             $self->zoom(@$zoom, 0, 1) if $zoom;
+         },
+         1 => 0,
+         'Reselect' => sub { 
+             my ($item, $self) = @_;
+             $self->signal_emit('new_selection');
+         },
+         '_Clear selection' => sub { 
+             my ($item, $self) = @_;
+             if ($self->{selection}) {
+                 delete $self->{selection};
+                 $self->signal_emit('new_selection');
+             }
+         },
+         1 => 0,
+         'Select within' => sub { 
+             my ($item, $self) = @_;
+             $self->{selecting} = 'that_are_within';
+         },
+         'Select containing' => sub { 
+             my ($item, $self) = @_;
+             $self->{selecting} = 'that_contain';
+         },
+         'Select intersecting' => sub { 
+             my ($item, $self) = @_;
+             $self->{selecting} = 'that_intersect';
+         },
+         1 => 0,
+         'Clear drawing' => sub { 
+             my ($item, $self) = @_;
+             if ($self->{drawing}) {
+                 delete $self->{drawing};
+                 $self->update_image;
+             }
+         },
+         1 => 0,
+         'Set _background color..' => sub { 
+             my ($item, $self) = @_;
+             my $color = $self->{bg_color};
+             my $d = Gtk2::ColorSelectionDialog->new('Color for the background');
+             my $c = new Gtk2::Gdk::Color ($color ? $color->[0]*257 : 0,
+                                           $color ? $color->[1]*257 : 0,
+                                           $color ? $color->[2]*257 : 0);
+             $d->colorsel->set_current_color($c);
+             
+             if ($d->run eq 'ok') {
+                 $c = $d->colorsel->get_current_color;
+                 $d->destroy;
+                 $self->{bg_color} = 
+                     [int($c->red/257),int($c->green/257),int($c->blue/257),255];
+                 $self->render;
+             } else {
+                 $d->destroy};
+         },
+         '_Export as PNG' => sub { 
+             my ($item, $self) = @_;
+             my $filename = file_chooser('Export as a PNG image', 'save');
+             if ($filename) {
+                 my $type = 'png';
+                 if (-e $filename) {
+                     my $dialog = Gtk2::MessageDialog->new(undef,'destroy-with-parent',
+                                                           'question',
+                                                           'yes_no',
+                                                           "Overwrite existing $filename?");
+                     my $ret = $dialog->run;
+                     $filename = '' if $ret eq 'no';
+                     $dialog->destroy;
+                 }
+                 $self->render(filename=>$filename, type=>$type) if $filename;
+             }
+         },
+         'Res_tore' => sub { 
+             my ($item, $self) = @_;
+             $self->update_image;
+         });
     my $item_setup = sub {
-	my($item, $self) = @_;
-	for ($item) {
-	    $_ .= ' x', last if /contain/ and $self->{selecting} =~ /contain/;
-	    $_ .= ' x', last if /within/ and $self->{selecting} =~ /within/;
-	    $_ .= ' x', last if /intersect/ and $self->{selecting} =~ /intersect/;
-	    $_ .= ' x', last if /_Zoom/ and $self->{rubberband_mode} =~ /zoom/;
-	    $_ .= ' x', last if /Pan/ and $self->{rubberband_mode} =~ /pan/;
-	    $_ .= ' x' if /_Select/ and $self->{rubberband_mode} =~ /select/;
-	    $_ .= ' x' if /Measure/ and $self->{rubberband_mode} =~ /measure/;
-	    $_ .= ' x' if /Draw/ and $self->{rubberband_mode} =~ /draw/;
-	    $_ .= ' x' if /Edit drawing/ and $self->{rubberband_mode} =~ /edit/;
-	    $_ .= ' x' if /Line/ and $self->{rubberband_geometry} =~ /line/;
-	    $_ .= ' x' if /Path/ and $self->{rubberband_geometry} =~ /path/;
-	    $_ .= ' x' if /Rect/ and $self->{rubberband_geometry} =~ /rect/;
-	    $_ .= ' x' if /Ellipse/ and $self->{rubberband_geometry} =~ /ellipse/;
-	    $_ .= ' x' if /Polygon/ and $self->{rubberband_geometry} =~ /polygon/;
-	}
-	return $item;
+        my($item, $self) = @_;
+        for ($item) {
+            $_ .= ' x', last if /contain/ and $self->{selecting} =~ /contain/;
+            $_ .= ' x', last if /within/ and $self->{selecting} =~ /within/;
+            $_ .= ' x', last if /intersect/ and $self->{selecting} =~ /intersect/;
+            $_ .= ' x', last if /_Zoom/ and $self->{rubberband_mode} =~ /zoom/;
+            $_ .= ' x', last if /Pan/ and $self->{rubberband_mode} =~ /pan/;
+            $_ .= ' x' if /_Select/ and $self->{rubberband_mode} =~ /select/;
+            $_ .= ' x' if /Measure/ and $self->{rubberband_mode} =~ /measure/;
+            $_ .= ' x' if /Draw/ and $self->{rubberband_mode} =~ /draw/;
+            $_ .= ' x' if /Edit drawing/ and $self->{rubberband_mode} =~ /edit/;
+            $_ .= ' x' if /Line/ and $self->{rubberband_geometry} =~ /line/;
+            $_ .= ' x' if /Path/ and $self->{rubberband_geometry} =~ /path/;
+            $_ .= ' x' if /Rect/ and $self->{rubberband_geometry} =~ /rect/;
+            $_ .= ' x' if /Ellipse/ and $self->{rubberband_geometry} =~ /ellipse/;
+            $_ .= ' x' if /Polygon/ and $self->{rubberband_geometry} =~ /polygon/;
+        }
+        return $item;
     };
     return (\@menu, $item_setup);
 }
@@ -871,88 +871,88 @@ sub layer_menu {
     my $path = Gtk2::TreePath->new($index);
 
     if (@rows < 2) {
-	$layer = $self->{overlay}->get_layer_by_index($index);
-	return unless $layer;
+        $layer = $self->{overlay}->get_layer_by_index($index);
+        return unless $layer;
     } else {
-	for my $r (@rows) {
-	    $layer = $self->{overlay}->get_layer_by_index($r->to_string);
-	    push @layers, $layer;
-	}
+        for my $r (@rows) {
+            $layer = $self->{overlay}->get_layer_by_index($r->to_string);
+            push @layers, $layer;
+        }
     }
     
     if ($event->button == 3) {
 
-	$tree_view->set_cursor($path);
+        $tree_view->set_cursor($path);
 
-	my $hide = $layer->visible() ? '_Hide' : '_Show';
-	
-	my @items = @layers ?
-	    ( '_Hide' => sub {
-		my($layers, $self) = @{$_[1]};
-		for my $layer (@$layers) {
-		    $layer->visible(0);
-		}
-		$self->update;
-		$self->{overlay}->render;
-	      },
-	      '_Show' => sub {
-		  my($layers, $self) = @{$_[1]};
-		  for my $layer (@$layers) {
-		      $layer->visible(1);
-		  }
-		  $self->update;
-		  $self->{overlay}->render;
-	      },
-	      '_Remove' => sub {
-		  my($layers, $self) = @{$_[1]};
-		  for my $layer (@$layers) {
-		      $self->{model}->remove($layer->{_tree_index});
-		      $self->{overlay}->remove_layer_by_name($layer->name);
-		  }
-		  $self->{overlay}->render;
-	      }
-	    ) 
-	    :
-	    ( 
-	      '_Zoom to' => sub {
-		  my($layer, $self) = @{$_[1]};
-		  $self->{overlay}->zoom_to($layer);
-	      },
-	      '_Up' => sub {
-		  my($layer, $self) = @{$_[1]};
-		  $self->move_up();
-	      },
-	      '_Down' => sub {
-		  my($layer, $self) = @{$_[1]};
-		  $self->move_down();
-	      },
-	      $hide => sub {
-		  my($layer, $self) = @{$_[1]};
-		  $layer->visible(!$layer->visible());
-		  $self->update;
-		  $self->{overlay}->render;
-	      },
-	      '_Remove' => sub {
-		  my($layer, $self) = @{$_[1]};
-		  $self->delete_selected(); 
-	      }
-	    );
+        my $hide = $layer->visible() ? '_Hide' : '_Show';
+        
+        my @items = @layers ?
+            ( '_Hide' => sub {
+                my($layers, $self) = @{$_[1]};
+                for my $layer (@$layers) {
+                    $layer->visible(0);
+                }
+                $self->update;
+                $self->{overlay}->render;
+              },
+              '_Show' => sub {
+                  my($layers, $self) = @{$_[1]};
+                  for my $layer (@$layers) {
+                      $layer->visible(1);
+                  }
+                  $self->update;
+                  $self->{overlay}->render;
+              },
+              '_Remove' => sub {
+                  my($layers, $self) = @{$_[1]};
+                  for my $layer (@$layers) {
+                      $self->{model}->remove($layer->{_tree_index});
+                      $self->{overlay}->remove_layer_by_name($layer->name);
+                  }
+                  $self->{overlay}->render;
+              }
+            ) 
+            :
+            ( 
+              '_Zoom to' => sub {
+                  my($layer, $self) = @{$_[1]};
+                  $self->{overlay}->zoom_to($layer);
+              },
+              '_Up' => sub {
+                  my($layer, $self) = @{$_[1]};
+                  $self->move_up();
+              },
+              '_Down' => sub {
+                  my($layer, $self) = @{$_[1]};
+                  $self->move_down();
+              },
+              $hide => sub {
+                  my($layer, $self) = @{$_[1]};
+                  $layer->visible(!$layer->visible());
+                  $self->update;
+                  $self->{overlay}->render;
+              },
+              '_Remove' => sub {
+                  my($layer, $self) = @{$_[1]};
+                  $self->delete_selected(); 
+              }
+            );
 
-	# add items from the layer classes
-	unless (@layers) {
-	    push @items, ( 1 => 0 );
-	    push @items, $layer->menu_items();
-	}
-	
-	my $menu = Gtk2::Menu->new;
-	my $params = @layers ? [\@layers, $self] : [$layer, $self];
-	$i = 0;
-	for (my $i =0; $i < @items; $i+=2) {
-	    my $item;
-	    unless ($items[$i+1]) {
-		$item = Gtk2::SeparatorMenuItem->new();
-	    } else {
-		$item = Gtk2::MenuItem->new($items[$i]);
+        # add items from the layer classes
+        unless (@layers) {
+            push @items, ( 1 => 0 );
+            push @items, $layer->menu_items();
+        }
+        
+        my $menu = Gtk2::Menu->new;
+        my $params = @layers ? [\@layers, $self] : [$layer, $self];
+        $i = 0;
+        for (my $i =0; $i < @items; $i+=2) {
+            my $item;
+            unless ($items[$i+1]) {
+                $item = Gtk2::SeparatorMenuItem->new();
+            } else {
+                $item = Gtk2::MenuItem->new($items[$i]);
                 my $value = $items[$i+1];
                 if (ref($value) eq 'CODE') {
                     $item->signal_connect(activate => $value, $params);
@@ -968,22 +968,22 @@ sub layer_menu {
                 } else {
                     die "Value of a menuitem '$items[$i]' is not code nor an array!";
                 }
-	    }
-	    $item->show;
-	    $menu->append($item);
-	}
-	$menu->popup(undef, undef, undef, undef, $event->button, $event->time);
-	return 1;
+            }
+            $item->show;
+            $menu->append($item);
+        }
+        $menu->popup(undef, undef, undef, undef, $event->button, $event->time);
+        return 1;
 
     } elsif ($column =~ /^v/) {
 
-	$layer->visible(!$layer->visible());
-	$self->update;
-	$self->{overlay}->render;
+        $layer->visible(!$layer->visible());
+        $self->update;
+        $self->{overlay}->render;
 
     } elsif ($column =~ /^t/) {
 
-	$tree_view->columns_autosize();
+        $tree_view->columns_autosize();
 
     }
 
@@ -1004,22 +1004,22 @@ sub show_information {
     # additional info, based on mode
     my($dim, $val) = $self->{overlay}->rubberband_value();
     if (defined $dim) {
-	$dim = $dim == 1 ? 'length' : 'area';
-	if (defined $val) {
-	    my $d = '';
-	    if ($val > 1000000) {
-		$val /= 1000000;
-		$d = 'M';
-	    } elsif ($val > 1000) {
-		$val /= 1000;
-		$d = 'k';
-	    }
-	    $val = sprintf(" $dim = %.2f$d", $val);
-	} else {
-	    $val = " $dim not computed";
-	}
+        $dim = $dim == 1 ? 'length' : 'area';
+        if (defined $val) {
+            my $d = '';
+            if ($val > 1000000) {
+                $val /= 1000000;
+                $d = 'M';
+            } elsif ($val > 1000) {
+                $val /= 1000;
+                $d = 'k';
+            }
+            $val = sprintf(" $dim = %.2f$d", $val);
+        } else {
+            $val = " $dim not computed";
+        }
     } else {
-	$val = '';
+        $val = '';
     }
 
     my $mode = $self->{overlay}->rubberband_mode();
@@ -1033,20 +1033,20 @@ sub inspect {
     $name = 'unknown variable' unless $name;
 
     Gtk2::Ex::Geo::Layer::bootstrap_dialog(
-	$self, $self, 'inspect_dialog', "Inspecting ".$name, 
-	{
-	    inspect_dialog => [delete_event => \&close_inspect, [$self]],
-	    inspect_close_button => [clicked => \&close_inspect, [$self]],
-	}
-	);
+        $self, $self, 'inspect_dialog', "Inspecting ".$name, 
+        {
+            inspect_dialog => [delete_event => \&close_inspect, [$self]],
+            inspect_close_button => [clicked => \&close_inspect, [$self]],
+        }
+        );
 
     $data = \$data unless ref $data;
 
     $name =~ s/_/__/g;
     my $treedumper = Gtk2::Ex::Geo::TreeDumper->new
-	( data => $data,
-	  title => $name,
-	  dumper_setup => {} );
+        ( data => $data,
+          title => $name,
+          dumper_setup => {} );
 
     $treedumper->{tree_view}->modify_font(Gtk2::Pango::FontDescription->from_string('monospace'));
     $treedumper->{tree_view}->collapse_all;
@@ -1062,8 +1062,8 @@ sub inspect {
 sub close_inspect {
     my $self;
     for (@_) {
-	next unless ref eq 'ARRAY';
-	($self) = @{$_};
+        next unless ref eq 'ARRAY';
+        ($self) = @{$_};
     }
     Gtk2::Ex::Geo::Layer::hide_dialog($self, 'inspect_dialog');
     1;
@@ -1082,11 +1082,11 @@ sub set_layer {
     $visible = $layer->visible ? 'X' : ' ';
 
     $self->{model}->set ($layer->{_tree_index},
-			 0, $layer->name(),
-			 1, $type,
-			 2, $visible,
-			 3, $alpha,
-			 );
+                         0, $layer->name(),
+                         1, $type,
+                         2, $visible,
+                         3, $alpha,
+                         );
 }
 
 =pod
@@ -1165,12 +1165,12 @@ sub get_focal {
     my($self, $name) = @_;
     my $gd = $self->{overlay}->get_layer_by_name($name);
     if ($gd and $gd->isa('Geo::Raster')) {
-	my @clip = $self->{overlay}->get_focus;
-	@clip = $gd->wa2ga(@clip);
-	# do not expand the view
-	$clip[2]--; 
-	$clip[3]--;
-	return $gd->clip(@clip);
+        my @clip = $self->{overlay}->get_focus;
+        @clip = $gd->wa2ga(@clip);
+        # do not expand the view
+        $clip[2]--; 
+        $clip[3]--;
+        return $gd->clip(@clip);
     }
 }
 
@@ -1178,7 +1178,7 @@ sub get_focal {
 sub update {
     my($self) = @_;
     for my $layer (@{$self->{overlay}->{layers}}) {
-	$self->set_layer($layer);
+        $self->set_layer($layer);
     }
 }
 
@@ -1200,9 +1200,9 @@ sub move_down {
     my $index = $path->to_string;
     my $n = $#{$self->{overlay}->{layers}};
     if ($index < $n) {
-	my($layer1,$layer2) = swap($self->{overlay}->{layers},$n-$index,$n-$index-1);
-	$self->{model}->move_after($layer1->{_tree_index},$layer2->{_tree_index});
-	$self->{overlay}->render;
+        my($layer1,$layer2) = swap($self->{overlay}->{layers},$n-$index,$n-$index-1);
+        $self->{model}->move_after($layer1->{_tree_index},$layer2->{_tree_index});
+        $self->{overlay}->render;
     }
 
 }
@@ -1216,9 +1216,9 @@ sub move_up {
     my $index = $path->to_string;
     my $n = $#{$self->{overlay}->{layers}};
     if ($index > 0) {
-	my($layer1,$layer2) = swap($self->{overlay}->{layers},$n-$index,$n-$index+1);
-	$self->{model}->move_before($layer1->{_tree_index},$layer2->{_tree_index});
-	$self->{overlay}->render;
+        my($layer1,$layer2) = swap($self->{overlay}->{layers},$n-$index,$n-$index+1);
+        $self->{model}->move_before($layer1->{_tree_index},$layer2->{_tree_index});
+        $self->{overlay}->render;
     }
 
 }
@@ -1258,8 +1258,8 @@ sub delete_selected {
     delete($self->{focused}) if $self->{focused} and $self->{focused}->name eq $layer->name;
     $layer->close($self);
     if ($n > 0) {
-	$index-- if $index == $n;
-	$self->{tree_view}->set_cursor(Gtk2::TreePath->new($index));
+        $index-- if $index == $n;
+        $self->{tree_view}->set_cursor(Gtk2::TreePath->new($index));
     }    
     $self->{overlay}->render unless $do_not_render;
     return 1;
@@ -1293,7 +1293,7 @@ sub select_layer {
     my($self, $name) = @_;
     my $index = $self->{overlay}->index_of_layer($name);
     if (defined $index) {
-	$self->{tree_view}->set_cursor(Gtk2::TreePath->new($index));
+        $self->{tree_view}->set_cursor(Gtk2::TreePath->new($index));
     }
 }
 
@@ -1306,54 +1306,54 @@ sub eval_entry {
 
     if ($text ne '' and $key == $Gtk2::Gdk::Keysyms{Return}) {
 
-	$self->{history}->enter();
-	$entry->set_text('');
+        $self->{history}->enter();
+        $entry->set_text('');
 
-	my $focal = 0; # default is global
-	if ($text =~ /^focal:\s*/) {
-	    $text =~ s/^focal:\s*//;
-	    $focal = 1;
-	}
-	for my $sub ('inspect') {
-	    $text =~ s/^$sub/\$self\-\>$sub/ if $text =~ /^$sub\(/;
-	}
-	my($function) = $text =~ /^(\w+)\b/;
-	if ($function and $self->{functions}{$function}) {
-	    if ($self->{functions}{$function}{sub}) {
-		$text =~ s/^$function/$self->{functions}{$function}{sub}/;
-	    } else { # object
-		$text =~ s/^$function/\$self->{functions}{$function}{object}-\>$function/;
-	    }
-	}
-	my @g = $text =~ /\$(\w+)/g;
-	my @_gd;
-	for my $i (0..$#g) {
-	    $_gd[$i] = $focal ? $self->get_focal($g[$i]) : $self->{overlay}->get_layer_by_name($g[$i]);
-	    next unless $_gd[$i];
-	    $text =~ s/\$$g[$i]\b/\$_gd[$i]/;
-	}
-	{
-	    no strict;
-	    eval $text;
-	    croak "$text\n$@" if $@;
-	}
-	for my $i (0..$#g) {
-	    if ($self->{overlay}->get_layer_by_name($g[$i])) {
-		$_gd[$i]->value_range() if $_gd[$i]->isa('Geo::Raster');
-	    } else {
-		eval "\$self->add_layer(\$$g[$i],'$g[$i]',1);" if $g[$i] and $g[$i] ne 'self';
-	    }
-	}
-	undef @_gd;
-	$self->update();
-	$self->{overlay}->render;
-	return 1;
+        my $focal = 0; # default is global
+        if ($text =~ /^focal:\s*/) {
+            $text =~ s/^focal:\s*//;
+            $focal = 1;
+        }
+        for my $sub ('inspect') {
+            $text =~ s/^$sub/\$self\-\>$sub/ if $text =~ /^$sub\(/;
+        }
+        my($function) = $text =~ /^(\w+)\b/;
+        if ($function and $self->{functions}{$function}) {
+            if ($self->{functions}{$function}{sub}) {
+                $text =~ s/^$function/$self->{functions}{$function}{sub}/;
+            } else { # object
+                $text =~ s/^$function/\$self->{functions}{$function}{object}-\>$function/;
+            }
+        }
+        my @g = $text =~ /\$(\w+)/g;
+        my @_gd;
+        for my $i (0..$#g) {
+            $_gd[$i] = $focal ? $self->get_focal($g[$i]) : $self->{overlay}->get_layer_by_name($g[$i]);
+            next unless $_gd[$i];
+            $text =~ s/\$$g[$i]\b/\$_gd[$i]/;
+        }
+        {
+            no strict;
+            eval $text;
+            croak "$text\n$@" if $@;
+        }
+        for my $i (0..$#g) {
+            if ($self->{overlay}->get_layer_by_name($g[$i])) {
+                $_gd[$i]->value_range() if $_gd[$i]->isa('Geo::Raster');
+            } else {
+                eval "\$self->add_layer(\$$g[$i],'$g[$i]',1);" if $g[$i] and $g[$i] ne 'self';
+            }
+        }
+        undef @_gd;
+        $self->update();
+        $self->{overlay}->render;
+        return 1;
     } elsif ($key == $Gtk2::Gdk::Keysyms{Up}) {
-	$entry->set_text($self->{history}->arrow_up);
-	return 1;
+        $entry->set_text($self->{history}->arrow_up);
+        return 1;
     } elsif ($key == $Gtk2::Gdk::Keysyms{Down}) {
-	$entry->set_text($self->{history}->arrow_down);
-	return 1;
+        $entry->set_text($self->{history}->arrow_down);
+        return 1;
     }
 }
 
@@ -1370,8 +1370,8 @@ sub simulate {
 sub stop {
     my($self) = @_;
     if ($self->{_event_source}) {
-	Glib::Source->remove($self->{_event_source});
-	delete $self->{_event_source};
+        Glib::Source->remove($self->{_event_source});
+        delete $self->{_event_source};
     }
 }
 

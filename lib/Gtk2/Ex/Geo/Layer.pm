@@ -56,39 +56,39 @@ $SINGLE_COLOR = [0, 0, 0, 255];
 # the integer values are the same as in libral visualization code:
 
 %PALETTE_TYPE = ( 'Single color' => 0, 
-		  Grayscale => 1, 
-		  Rainbow => 2, 
-		  'Color table' => 3, 
-		  'Color bins' => 4,
-		  'Red channel' => 5, 
-		  'Green channel' => 6, 
-		  'Blue channel' => 7,
+                  Grayscale => 1, 
+                  Rainbow => 2, 
+                  'Color table' => 3, 
+                  'Color bins' => 4,
+                  'Red channel' => 5, 
+                  'Green channel' => 6, 
+                  'Blue channel' => 7,
     );
 
 %GRAYSCALE_SUBTYPE = ( Gray => 0,
-		       Hue => 1,
-		       Saturation => 2,
-		       Value => 3,
-		       Opacity => 4,
+                       Hue => 1,
+                       Saturation => 2,
+                       Value => 3,
+                       Opacity => 4,
     );
 
 %SYMBOL_TYPE = ( 'No symbol' => 0, 
-		 'Flow_direction' => 1, 
-		 Square => 2, 
-		 Dot => 3, 
-		 Cross => 4, 
-		 'Wind rose' => 6,
+                 'Flow_direction' => 1, 
+                 Square => 2, 
+                 Dot => 3, 
+                 Cross => 4, 
+                 'Wind rose' => 6,
     );
 
 %LABEL_PLACEMENT = ( 'Center' => 0, 
-		     'Center left' => 1, 
-		     'Center right' => 2, 
-		     'Top left' => 3, 
-		     'Top center' => 4, 
-		     'Top right' => 5, 
-		     'Bottom left' => 6, 
-		     'Bottom center' => 7, 
-		     'Bottom right' => 8,
+                     'Center left' => 1, 
+                     'Center right' => 2, 
+                     'Top left' => 3, 
+                     'Top center' => 4, 
+                     'Top right' => 5, 
+                     'Bottom left' => 6, 
+                     'Bottom center' => 7, 
+                     'Bottom right' => 8,
     );
 
 =pod
@@ -137,7 +137,7 @@ To do: explain adding non-menu commands.
 sub registration {
     my($glue) = @_;
     if ($glue->{resources}{icons}{dir}) {
-	#print STDERR "reg: @{$glue->{resources}{icons}{dir}}\n";
+        #print STDERR "reg: @{$glue->{resources}{icons}{dir}}\n";
     }
     my $dialogs = Gtk2::Ex::Geo::Dialogs->new();
     return { dialogs => $dialogs };
@@ -165,36 +165,36 @@ sub menu_items {
     my($self) = @_;
     my @items;
     push @items, (
-	'_Unselect all' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->select;
-	    $gui->{overlay}->update_image;
-	    $self->open_features_dialog($gui, 1);
-	},
-	'_Rules...' => sub {
+        '_Unselect all' => sub {
+            my($self, $gui) = @{$_[1]};
+            $self->select;
+            $gui->{overlay}->update_image;
+            $self->open_features_dialog($gui, 1);
+        },
+        '_Rules...' => sub {
              my($self, $gui) = @{$_[1]};
              $self->open_rules_dialog($gui);
-	},
-	'_Symbol...' => sub {
+        },
+        '_Symbol...' => sub {
              my($self, $gui) = @{$_[1]};
              $self->open_symbols_dialog($gui);
-	},
-	'_Colors...' => sub {
+        },
+        '_Colors...' => sub {
              my($self, $gui) = @{$_[1]};
              $self->open_colors_dialog($gui);
-	},
-	'_Labeling...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->open_labeling_dialog($gui);
-	},
-	'_Inspect...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $gui->inspect($self->inspect_data, $self->name);
-	},
-	'_Properties...' => sub {
-	    my($self, $gui) = @{$_[1]};
-	    $self->open_properties_dialog($gui);
-	}
+        },
+        '_Labeling...' => sub {
+            my($self, $gui) = @{$_[1]};
+            $self->open_labeling_dialog($gui);
+        },
+        '_Inspect...' => sub {
+            my($self, $gui) = @{$_[1]};
+            $gui->inspect($self->inspect_data, $self->name);
+        },
+        '_Properties...' => sub {
+            my($self, $gui) = @{$_[1]};
+            $self->open_properties_dialog($gui);
+        }
     );
     return @items;
 }
@@ -228,10 +228,10 @@ Required by the glue object.
 sub close {
     my($self, $gui) = @_;
     for (keys %$self) {
-	if (blessed($self->{$_}) and $self->{$_}->isa("Gtk2::GladeXML")) {
-	    $self->{$_}->get_widget($_)->destroy;
-	}
-	delete $self->{$_};
+        if (blessed($self->{$_}) and $self->{$_}->isa("Gtk2::GladeXML")) {
+            $self->{$_}->get_widget($_)->destroy;
+        }
+        delete $self->{$_};
     }
 }
 
@@ -291,9 +291,9 @@ Required by the glue object.
 sub alpha {
     my($self, $alpha) = @_;
     if (defined $alpha) {
-	$alpha = 0 if $alpha < 0;
-	$alpha = 255 if $alpha > 255;
-	$self->{ALPHA} = $alpha;
+        $alpha = 0 if $alpha < 0;
+        $alpha = 255 if $alpha > 255;
+        $self->{ALPHA} = $alpha;
     }
     $self->{ALPHA};
 }
@@ -365,12 +365,12 @@ update those.
 sub select {
     my($self, %params) = @_;
     if (@_ > 1) {
-	for my $key (keys %params) {
-	    my $features = $self->features($key => $params{$key});
-	    $self->selected_features($features);
-	}
+        for my $key (keys %params) {
+            my $features = $self->features($key => $params{$key});
+            $self->selected_features($features);
+        }
     } else {
-	$self->{SELECTED_FEATURES} = [];
+        $self->{SELECTED_FEATURES} = [];
     }
     $self->open_features_dialog($self, $params{glue}, 1);
 }
@@ -533,8 +533,8 @@ sub defaults {
 sub DESTROY {
     my $self = shift;
     while (my($key, $widget) = each %$self) {
-	$widget->destroy if blessed($widget) and $widget->isa("Gtk2::Widget");
-	delete $self->{$key};
+        $widget->destroy if blessed($widget) and $widget->isa("Gtk2::Widget");
+        delete $self->{$key};
     }
 }
 
@@ -570,10 +570,10 @@ sub inspect_data {
 sub palette_type {
     my($self, $palette_type) = @_;
     if (defined $palette_type) {
-	croak "Unknown palette type: $palette_type" unless defined $PALETTE_TYPE{$palette_type};
-	$self->{PALETTE_TYPE} = $palette_type;
+        croak "Unknown palette type: $palette_type" unless defined $PALETTE_TYPE{$palette_type};
+        $self->{PALETTE_TYPE} = $palette_type;
     } else {
-	return $self->{PALETTE_TYPE};
+        return $self->{PALETTE_TYPE};
     }
 }
 
@@ -581,7 +581,7 @@ sub supported_palette_types {
     my($class) = @_;
     my @ret;
     for my $t (sort {$PALETTE_TYPE{$a} <=> $PALETTE_TYPE{$b}} keys %PALETTE_TYPE) {
-	push @ret, $t;
+        push @ret, $t;
     }
     return @ret;
 }
@@ -589,10 +589,10 @@ sub supported_palette_types {
 sub symbol_type {
     my($self, $symbol_type) = @_;
     if (defined $symbol_type) {
-	croak "Unknown symbol type: $symbol_type" unless defined $SYMBOL_TYPE{$symbol_type};
-	$self->{SYMBOL_TYPE} = $symbol_type;
+        croak "Unknown symbol type: $symbol_type" unless defined $SYMBOL_TYPE{$symbol_type};
+        $self->{SYMBOL_TYPE} = $symbol_type;
     } else {
-	return $self->{SYMBOL_TYPE};
+        return $self->{SYMBOL_TYPE};
     }
 }
 
@@ -600,7 +600,7 @@ sub supported_symbol_types {
     my($self) = @_;
     my @ret;
     for my $t (sort {$SYMBOL_TYPE{$a} <=> $SYMBOL_TYPE{$b}} keys %SYMBOL_TYPE) {
-	push @ret, $t;
+        push @ret, $t;
     }
     return @ret;
 }
@@ -608,15 +608,15 @@ sub supported_symbol_types {
 sub symbol_size {
     my($self, $size) = @_;
     defined $size ?
-	$self->{SYMBOL_SIZE} = $size+0 :
-	$self->{SYMBOL_SIZE};
+        $self->{SYMBOL_SIZE} = $size+0 :
+        $self->{SYMBOL_SIZE};
 }
 
 sub symbol_scale {
     my($self, $min, $max) = @_;
     if (defined $min) {
-		$self->{SYMBOL_SCALE_MIN} = $min+0;
-		$self->{SYMBOL_SCALE_MAX} = $max+0;
+                $self->{SYMBOL_SCALE_MIN} = $min+0;
+                $self->{SYMBOL_SCALE_MAX} = $max+0;
     }
     return ($self->{SYMBOL_SCALE_MIN}, $self->{SYMBOL_SCALE_MAX});
 }
@@ -624,9 +624,9 @@ sub symbol_scale {
 sub hue_range {
     my($self, $min, $max, $dir) = @_;
     if (defined $min) {
-		$self->{HUE_AT_MIN} = $min+0;
-		$self->{HUE_AT_MAX} = $max+0;
-		$self->{INVERT} = (!(defined $dir) or $dir == 1) ? 0 : 1;
+                $self->{HUE_AT_MIN} = $min+0;
+                $self->{HUE_AT_MAX} = $max+0;
+                $self->{INVERT} = (!(defined $dir) or $dir == 1) ? 0 : 1;
     }
     return ($self->{HUE_AT_MIN}, $self->{HUE_AT_MAX}, $self->{INVERT} ? -1 : 1);
 }
@@ -634,19 +634,19 @@ sub hue_range {
 sub grayscale_subtype {
     my($self, $scale) = @_;
     if (defined $scale) {
-	croak "unknown grayscale subtype: $scale" unless exists $GRAYSCALE_SUBTYPE{$scale};
-	$self->{GRAYSCALE_SUBTYPE} = $scale;
+        croak "unknown grayscale subtype: $scale" unless exists $GRAYSCALE_SUBTYPE{$scale};
+        $self->{GRAYSCALE_SUBTYPE} = $scale;
     } else {
-	$self->{GRAYSCALE_SUBTYPE};
+        $self->{GRAYSCALE_SUBTYPE};
     }
 }
 
 sub invert_scale {
     my($self, $invert) = @_;
     if (defined $invert) {
-	$self->{INVERT} = $invert and 1;
+        $self->{INVERT} = $invert and 1;
     } else {
-	$self->{INVERT};
+        $self->{INVERT};
     }
 }
 
@@ -660,11 +660,11 @@ sub grayscale_color {
 sub symbol_field {
     my($self, $field_name) = @_;
     if (defined $field_name) {
-	if ($field_name eq 'Fixed size' or $self->schema->field($field_name)) {
-	    $self->{SYMBOL_FIELD} = $field_name;
-	} else {
-	    croak "Layer ".$self->name()." does not have field with name: $field_name";
-	}
+        if ($field_name eq 'Fixed size' or $self->schema->field($field_name)) {
+            $self->{SYMBOL_FIELD} = $field_name;
+        } else {
+            croak "Layer ".$self->name()." does not have field with name: $field_name";
+        }
     }
     return $self->{SYMBOL_FIELD};
 }
@@ -679,10 +679,10 @@ sub single_color {
 sub color_scale {
     my($self, $min, $max) = @_;
     if (defined $min) {
-	$min = 0 unless $min;
-	$max = 0 unless $max;
-	$self->{COLOR_SCALE_MIN} = $min;
-	$self->{COLOR_SCALE_MAX} = $max;
+        $min = 0 unless $min;
+        $max = 0 unless $max;
+        $self->{COLOR_SCALE_MIN} = $min;
+        $self->{COLOR_SCALE_MAX} = $max;
     }
     return ($self->{COLOR_SCALE_MIN}, $self->{COLOR_SCALE_MAX});
 }
@@ -690,11 +690,11 @@ sub color_scale {
 sub color_field {
     my($self, $field_name) = @_;
     if (defined $field_name) {
-	if ($self->schema->field($field_name)) {
-	    $self->{COLOR_FIELD} = $field_name;
-	} else {
-	    croak "Layer ", $self->name, " does not have field: $field_name";
-	}
+        if ($self->schema->field($field_name)) {
+            $self->{COLOR_FIELD} = $field_name;
+        } else {
+            croak "Layer ", $self->name, " does not have field: $field_name";
+        }
     }
     return $self->{COLOR_FIELD};
 }
@@ -703,44 +703,44 @@ sub color_table {
     my($self, $color_table) = @_;
     unless (defined $color_table) 
     {
-	$self->{COLOR_TABLE} = [] unless $self->{COLOR_TABLE};
-	return $self->{COLOR_TABLE};
+        $self->{COLOR_TABLE} = [] unless $self->{COLOR_TABLE};
+        return $self->{COLOR_TABLE};
     }
     if (ref($color_table) eq 'ARRAY') 
     {
-	$self->{COLOR_TABLE} = [];
-	for (@$color_table) {
-	    push @{$self->{COLOR_TABLE}}, [@$_];
-	}
+        $self->{COLOR_TABLE} = [];
+        for (@$color_table) {
+            push @{$self->{COLOR_TABLE}}, [@$_];
+        }
     } elsif (ref($color_table)) 
     {
-	$self->{COLOR_TABLE} = [];
-	for my $i (0..$color_table->GetCount-1) {
-	    my @color = $color_table->GetColorEntryAsRGB($i);
-	    push @{$self->{COLOR_TABLE}}, [$i, @color];
-	}
+        $self->{COLOR_TABLE} = [];
+        for my $i (0..$color_table->GetCount-1) {
+            my @color = $color_table->GetColorEntryAsRGB($i);
+            push @{$self->{COLOR_TABLE}}, [$i, @color];
+        }
     } else 
     {
-	open(my $fh, '<', $color_table) or croak "can't read from $color_table: $!";
-	$self->{COLOR_TABLE} = [];
-	while (<$fh>) {
-	    next if /^#/;
-	    my @tokens = split /\s+/;
-	    next unless @tokens > 3;
-	    $tokens[4] = 255 unless defined $tokens[4];
-	    #print STDERR "@tokens\n";
-	    for (@tokens[1..4]) {
-		$_ =~ s/\D//g;
-	    }
-	    #print STDERR "@tokens\n";
-	    for (@tokens[1..4]) {
-		$_ = 0 if $_ < 0;
-		$_ = 255 if $_ > 255;
-	    }
-	    #print STDERR "@tokens\n";
-	    push @{$self->{COLOR_TABLE}}, \@tokens;
-	}
-	CORE::close($fh);
+        open(my $fh, '<', $color_table) or croak "can't read from $color_table: $!";
+        $self->{COLOR_TABLE} = [];
+        while (<$fh>) {
+            next if /^#/;
+            my @tokens = split /\s+/;
+            next unless @tokens > 3;
+            $tokens[4] = 255 unless defined $tokens[4];
+            #print STDERR "@tokens\n";
+            for (@tokens[1..4]) {
+                $_ =~ s/\D//g;
+            }
+            #print STDERR "@tokens\n";
+            for (@tokens[1..4]) {
+                $_ = 0 if $_ < 0;
+                $_ = 255 if $_ > 255;
+            }
+            #print STDERR "@tokens\n";
+            push @{$self->{COLOR_TABLE}}, \@tokens;
+        }
+        CORE::close($fh);
     }
 }
 
@@ -749,21 +749,21 @@ sub color {
     my $index = shift unless $self->{PALETTE_TYPE} eq 'Single color';
     my @color = @_ if @_;
     if (@color) {
-	if ($self->{PALETTE_TYPE} eq 'Color table') {
-	    $self->{COLOR_TABLE}[$index] = \@color;
-	} elsif ($self->{PALETTE_TYPE} eq 'Color bins') {
-	    $self->{COLOR_BINS}[$index] = \@color;
-	} else {
-	    $self->{SINGLE_COLOR} = \@color;
-	}
+        if ($self->{PALETTE_TYPE} eq 'Color table') {
+            $self->{COLOR_TABLE}[$index] = \@color;
+        } elsif ($self->{PALETTE_TYPE} eq 'Color bins') {
+            $self->{COLOR_BINS}[$index] = \@color;
+        } else {
+            $self->{SINGLE_COLOR} = \@color;
+        }
     } else {
-	if ($self->{PALETTE_TYPE} eq 'Color table') {
-	    @color = @{$self->{COLOR_TABLE}[$index]};
-	} elsif ($self->{PALETTE_TYPE} eq 'Color bins') {
-	    @color = @{$self->{COLOR_BINS}[$index]};
-	} else {
-	    @color = @{$self->{SINGLE_COLOR}};
-	}
+        if ($self->{PALETTE_TYPE} eq 'Color table') {
+            @color = @{$self->{COLOR_TABLE}[$index]};
+        } elsif ($self->{PALETTE_TYPE} eq 'Color bins') {
+            @color = @{$self->{COLOR_BINS}[$index]};
+        } else {
+            @color = @{$self->{SINGLE_COLOR}};
+        }
     }
     return @color;
 }
@@ -771,18 +771,18 @@ sub color {
 sub add_color {
     my($self, $index, @XRGBA) = @_;
     if ($self->{PALETTE_TYPE} eq 'Color table') {
-	splice @{$self->{COLOR_TABLE}}, $index, 0, [@XRGBA];
+        splice @{$self->{COLOR_TABLE}}, $index, 0, [@XRGBA];
     } else {
-	splice @{$self->{COLOR_BINS}}, $index, 0, [@XRGBA];
+        splice @{$self->{COLOR_BINS}}, $index, 0, [@XRGBA];
     }
 }
 
 sub remove_color {
     my($self, $index) = @_;
     if ($self->{PALETTE_TYPE} eq 'Color table') {
-	splice @{$self->{COLOR_TABLE}}, $index, 1;
+        splice @{$self->{COLOR_TABLE}}, $index, 1;
     } else {
-	splice @{$self->{COLOR_BINS}}, $index, 1;
+        splice @{$self->{COLOR_BINS}}, $index, 1;
     }
 }
 
@@ -791,7 +791,7 @@ sub save_color_table {
     my($self, $filename) = @_;
     open(my $fh, '>', $filename) or croak "can't write to $filename: $!";
     for my $color (@{$self->{COLOR_TABLE}}) {
-	print $fh "@$color\n";
+        print $fh "@$color\n";
     }
     CORE::close($fh);
 }
@@ -799,30 +799,30 @@ sub save_color_table {
 sub color_bins {
     my($self, $color_bins) = @_;
     unless (defined $color_bins) {
-	$self->{COLOR_BINS} = [] unless $self->{COLOR_BINS};
-	return $self->{COLOR_BINS};
+        $self->{COLOR_BINS} = [] unless $self->{COLOR_BINS};
+        return $self->{COLOR_BINS};
     }
     if (ref($color_bins) eq 'ARRAY') {
-	$self->{COLOR_BINS} = [];
-	for (@$color_bins) {
-	    push @{$self->{COLOR_BINS}}, [@$_];
-	}
+        $self->{COLOR_BINS} = [];
+        for (@$color_bins) {
+            push @{$self->{COLOR_BINS}}, [@$_];
+        }
     } else {
-	open(my $fh, '<', $color_bins) or croak "can't read from $color_bins: $!";
-	$self->{COLOR_BINS} = [];
-	while (<$fh>) {
-	    next if /^#/;
-	    my @tokens = split /\s+/;
-	    next unless @tokens > 3;
-	    $tokens[4] = 255 unless defined $tokens[4];
-	    for (@tokens[1..4]) {
-		$_ =~ s/\D//g;
-		$_ = 0 if $_ < 0;
-		$_ = 255 if $_ > 255;
-	    }
-	    push @{$self->{COLOR_BINS}}, \@tokens;
-	}
-	CORE::close($fh);
+        open(my $fh, '<', $color_bins) or croak "can't read from $color_bins: $!";
+        $self->{COLOR_BINS} = [];
+        while (<$fh>) {
+            next if /^#/;
+            my @tokens = split /\s+/;
+            next unless @tokens > 3;
+            $tokens[4] = 255 unless defined $tokens[4];
+            for (@tokens[1..4]) {
+                $_ =~ s/\D//g;
+                $_ = 0 if $_ < 0;
+                $_ = 255 if $_ > 255;
+            }
+            push @{$self->{COLOR_BINS}}, \@tokens;
+        }
+        CORE::close($fh);
     }
 }
 
@@ -830,7 +830,7 @@ sub save_color_bins {
     my($self, $filename) = @_;
     open(my $fh, '>', $filename) or croak "can't write to $filename: $!";
     for my $color (@{$self->{COLOR_BINS}}) {
-	print $fh "@$color\n";
+        print $fh "@$color\n";
     }
     CORE::close($fh);
 }
@@ -845,19 +845,19 @@ sub border_color {
 sub labeling {
     my($self, $labeling) = @_;
     if ($labeling) {
-	$self->{LABEL_FIELD} = $labeling->{field};
-	$self->{LABEL_PLACEMENT} = $labeling->{placement};
-	$self->{LABEL_FONT} = $labeling->{font};
-	@{$self->{LABEL_COLOR}} =@{$labeling->{color}};
-	$self->{LABEL_MIN_SIZE} = $labeling->{min_size};
+        $self->{LABEL_FIELD} = $labeling->{field};
+        $self->{LABEL_PLACEMENT} = $labeling->{placement};
+        $self->{LABEL_FONT} = $labeling->{font};
+        @{$self->{LABEL_COLOR}} =@{$labeling->{color}};
+        $self->{LABEL_MIN_SIZE} = $labeling->{min_size};
         $self->{INCREMENTAL_LABELS} = $labeling->{incremental};
     } else {
-	$labeling = {};
-	$labeling->{field} = $self->{LABEL_FIELD};
-	$labeling->{placement} = $self->{LABEL_PLACEMENT};
-	$labeling->{font} = $self->{LABEL_FONT};
-	@{$labeling->{color}} = @{$self->{LABEL_COLOR}};
-	$labeling->{min_size} = $self->{LABEL_MIN_SIZE};
+        $labeling = {};
+        $labeling->{field} = $self->{LABEL_FIELD};
+        $labeling->{placement} = $self->{LABEL_PLACEMENT};
+        $labeling->{font} = $self->{LABEL_FONT};
+        @{$labeling->{color}} = @{$self->{LABEL_COLOR}};
+        $labeling->{min_size} = $self->{LABEL_MIN_SIZE};
         $labeling->{incremental} = $self->{INCREMENTAL_LABELS};
     }
     return $labeling;
@@ -866,7 +866,7 @@ sub labeling {
 sub selected_features {
     my($self, $selected) = @_;
     if (@_ > 1) {
-	$self->{SELECTED_FEATURES} = $selected;
+        $self->{SELECTED_FEATURES} = $selected;
     }
     return $self->{SELECTED_FEATURES};
 }
@@ -992,34 +992,34 @@ sub bootstrap_dialog {
     my $boot = 0;
     my $widget;
     unless ($self->{$dialog}) {
-	$self->{$dialog} = $gui->get_dialog($dialog);
-	croak "$dialog does not exist" unless $self->{$dialog};
-	$widget = $self->{$dialog}->get_widget($dialog);
-	if ($connects) {
-	    for my $n (keys %$connects) {
-		my $w = $self->{$dialog}->get_widget($n);
-		#print STDERR "connect: '$n'\n";
-		$w->signal_connect(@{$connects->{$n}});
-	    }
-	}
-	if ($combos) {
-	    for my $n (@$combos) {
-		my $combo = $self->{$dialog}->get_widget($n);
-		unless ($combo->isa('Gtk2::ComboBoxEntry')) {
-		    my $renderer = Gtk2::CellRendererText->new;
-		    $combo->pack_start($renderer, TRUE);
-		    $combo->add_attribute($renderer, text => 0);
-		}
-		my $model = Gtk2::ListStore->new('Glib::String');
-		$combo->set_model($model);
-		$combo->set_text_column(0) if $combo->isa('Gtk2::ComboBoxEntry');
-	    }
-	}
-	$boot = 1;
-	$widget->set_position('center');
+        $self->{$dialog} = $gui->get_dialog($dialog);
+        croak "$dialog does not exist" unless $self->{$dialog};
+        $widget = $self->{$dialog}->get_widget($dialog);
+        if ($connects) {
+            for my $n (keys %$connects) {
+                my $w = $self->{$dialog}->get_widget($n);
+                #print STDERR "connect: '$n'\n";
+                $w->signal_connect(@{$connects->{$n}});
+            }
+        }
+        if ($combos) {
+            for my $n (@$combos) {
+                my $combo = $self->{$dialog}->get_widget($n);
+                unless ($combo->isa('Gtk2::ComboBoxEntry')) {
+                    my $renderer = Gtk2::CellRendererText->new;
+                    $combo->pack_start($renderer, TRUE);
+                    $combo->add_attribute($renderer, text => 0);
+                }
+                my $model = Gtk2::ListStore->new('Glib::String');
+                $combo->set_model($model);
+                $combo->set_text_column(0) if $combo->isa('Gtk2::ComboBoxEntry');
+            }
+        }
+        $boot = 1;
+        $widget->set_position('center');
     } else {
-	$widget = $self->{$dialog}->get_widget($dialog);
-	$widget->move(@{$self->{$dialog.'_position'}}) unless $widget->get('visible');
+        $widget = $self->{$dialog}->get_widget($dialog);
+        $widget->move(@{$self->{$dialog.'_position'}}) unless $widget->get('visible');
     }
     $widget->set_title($title);
     $widget->show_all;
@@ -1058,16 +1058,16 @@ package Gtk2::Ex::Geo::Schema;
 sub new {
     my $package = shift;
     my $self = { GeometryType => 'Unknown',
-		 Fields => [], };
+                 Fields => [], };
     bless $self => (ref($package) or $package);
 }
 
 sub fields {
     my $schema = shift;
     my @fields = (
-	{ Name => '.FID', Type => 'Integer' },
-	{ Name => '.GeometryType', Type => $schema->{GeometryType} }
-	);
+        { Name => '.FID', Type => 'Integer' },
+        { Name => '.GeometryType', Type => $schema->{GeometryType} }
+        );
     push @fields, { Name => '.Z', Type => 'Real' } if $schema->{GeometryType} =~ /25/;
     push @fields, @{$schema->{Fields}};
     return @fields;
@@ -1078,7 +1078,7 @@ sub field_names {
     my @names = ('.FID', '.GeometryType');
     push @names, '.Z' if $schema->{GeometryType} =~ /25/;
     for my $f (@{$schema->{Fields}}) {
-	push @names, $f->{Name};
+        push @names, $f->{Name};
     }
     return @names;
 }
@@ -1086,18 +1086,18 @@ sub field_names {
 sub field {
     my($schema, $field_name) = @_;
     if ($field_name eq '.FID') {
-	return { Name => '.FID', Type => 'Integer' };
+        return { Name => '.FID', Type => 'Integer' };
     }
     if ($field_name eq '.GeometryType') {
-	return { Name => '.GeometryType', Type => 'String' };
+        return { Name => '.GeometryType', Type => 'String' };
     }
     if ($field_name eq '.Z') {
-	return { Name => '.Z', Type => 'Real' };
+        return { Name => '.Z', Type => 'Real' };
     }
     my $i = 0;
     for my $f (@{$schema->{Fields}}) {
-	return $f if $field_name eq $f->{Name};
-	$i++;
+        return $f if $field_name eq $f->{Name};
+        $i++;
     }
 }
 
@@ -1105,10 +1105,10 @@ sub field_index {
     my($schema, $field_name) = @_;
     my $i = 0;
     for my $f (@{$schema->{Fields}}) {
-	if ($field_name eq $f->{Name}) {
-	    return $i;
-	}
-	$i++;
+        if ($field_name eq $f->{Name}) {
+            return $i;
+        }
+        $i++;
     }
 }
 
