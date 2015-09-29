@@ -47,14 +47,15 @@ our $deps = ExtUtils::Depends->new('Gtk2::Ex::Geo', 'Gtk2');
 
 our %pm_files = (
     'lib/Gtk2/Ex/Geo/Dialogs/Rules.pm'  => '$(INST_LIBDIR)/Geo/Dialogs/Rules.pm',
-    'lib/Gtk2/Ex/Geo/Dialogs/Colors.pm'  => '$(INST_LIBDIR)/Geo/Dialogs/Colors.pm',
+    'lib/Gtk2/Ex/Geo/Dialogs/Coloring.pm'  => '$(INST_LIBDIR)/Geo/Dialogs/Coloring.pm',
     'lib/Gtk2/Ex/Geo/Dialogs/Labeling.pm'=> '$(INST_LIBDIR)/Geo/Dialogs/Labeling.pm',
-    'lib/Gtk2/Ex/Geo/Dialogs/Symbols.pm' => '$(INST_LIBDIR)/Geo/Dialogs/Symbols.pm',
+    'lib/Gtk2/Ex/Geo/Dialogs/Symbolizing.pm' => '$(INST_LIBDIR)/Geo/Dialogs/Symbolizing.pm',
     'lib/Gtk2/Ex/Geo/Overlay.pm'      => '$(INST_LIBDIR)/Geo/Overlay.pm',
     'lib/Gtk2/Ex/Geo/Glue.pm'         => '$(INST_LIBDIR)/Geo/Glue.pm',
     'lib/Gtk2/Ex/Geo/TreeDumper.pm'   => '$(INST_LIBDIR)/Geo/TreeDumper.pm',
     'lib/Gtk2/Ex/Geo/DialogMaster.pm' => '$(INST_LIBDIR)/Geo/DialogMaster.pm',
     'lib/Gtk2/Ex/Geo/Layer.pm'        => '$(INST_LIBDIR)/Geo/Layer.pm',
+    'lib/Gtk2/Ex/Geo/Style.pm'        => '$(INST_LIBDIR)/Geo/Style.pm',
     'lib/Gtk2/Ex/Geo/Dialogs.pm'      => '$(INST_LIBDIR)/Geo/Dialogs.pm',
     'lib/Gtk2/Ex/Geo.pm'              => '$(INST_LIBDIR)/Geo.pm',
     );

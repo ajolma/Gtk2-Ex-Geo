@@ -1,5 +1,4 @@
-package Gtk2::Ex::Geo::Dialogs::Symbols;
-
+package Gtk2::Ex::Geo::Dialogs::Symbolizing;
 
 use strict;
 use warnings;
@@ -95,7 +94,7 @@ sub fill_symbol_type_combo {
     my $combo = $self->{symbols_dialog}->get_widget('symbols_type_combobox');
     my $model = $combo->get_model;
     $model->clear;
-    my @symbol_types = $self->supported_symbol_types();
+    my @symbol_types = $self->symbol_types();
     my $i = 0;
     my $active = 0;
     for (@symbol_types) {
@@ -128,12 +127,12 @@ sub fill_symbol_field_combo {
     $active = $i if $name eq $self->symbol_field();
     $self->{index2symbol_field}{$i} = $name;
     $i++;
-    for my $field ($self->schema()->fields) {
+    while (my ($name, $field) = each %{$self->schema()->{Fields}}) {
 	next unless $field->{Type};
 	next unless $field->{Type} eq 'Integer' or $field->{Type} eq 'Real';
-	$model->set($model->append, 0, $field->{Name});
-	$active = $i if $field->{Name} eq $symbol_field;
-	$self->{index2symbol_field}{$i} = $field->{Name};
+	$model->set($model->append, 0, $name);
+	$active = $i if $name eq $symbol_field;
+	$self->{index2symbol_field}{$i} = $name;
 	$i++;
     }
     $combo->set_active($active);

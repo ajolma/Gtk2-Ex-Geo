@@ -28,8 +28,6 @@ sub open {
     
     # set up controllers
 
-    my $schema = $self->schema;
-
     my $combo = $dialog->get_widget('labels_field_combobox');
     my $model = $combo->get_model;
     $model->clear;
@@ -38,9 +36,9 @@ sub open {
     $model->set ($model->append, 0, 'No Labels');
     $active = $i if $labeling->{field} eq 'No Labels';
     $i++;
-    for my $fname ($schema->field_names) {
-	$model->set ($model->append, 0, $fname);
-	$active = $i if $labeling->{field} eq $fname;
+    while (my ($name, $field) = each %{$self->schema()->{Fields}}) {
+	$model->set ($model->append, 0, $name);
+	$active = $i if $labeling->{field} eq $name;
 	$i++;
     }
     $combo->set_active($active);

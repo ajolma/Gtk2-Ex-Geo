@@ -2,7 +2,7 @@
 <glade-interface>
   <!-- interface-requires gtk+ 2.16 -->
   <!-- interface-naming-policy toplevel-contextual -->
-  <widget class="GtkDialog" id="colors_dialog">
+  <widget class="GtkDialog" id="coloring_dialog">
     <property name="can_focus">False</property>
     <property name="border_width">5</property>
     <property name="default_height">500</property>
@@ -18,7 +18,7 @@
             <property name="can_focus">False</property>
             <property name="layout_style">end</property>
             <child>
-              <widget class="GtkButton" id="colors_apply_button">
+              <widget class="GtkButton" id="coloring_apply_button">
                 <property name="label">gtk-apply</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -33,7 +33,7 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkButton" id="colors_cancel_button">
+              <widget class="GtkButton" id="coloring_cancel_button">
                 <property name="label">gtk-cancel</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -48,7 +48,7 @@
               </packing>
             </child>
             <child>
-              <widget class="GtkButton" id="colors_ok_button">
+              <widget class="GtkButton" id="coloring_ok_button">
                 <property name="label">gtk-ok</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -102,10 +102,10 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkLabel" id="color_field_label">
+                  <widget class="GtkLabel" id="color_property_label">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Color is based on field:</property>
+                    <property name="label" translatable="yes">Color is based on property:</property>
                   </widget>
                   <packing>
                     <property name="expand">False</property>
@@ -115,7 +115,7 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkComboBox" id="color_field_combobox">
+                  <widget class="GtkComboBox" id="color_property_combobox">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                   </widget>
@@ -124,9 +124,6 @@
                     <property name="fill">False</property>
                     <property name="position">3</property>
                   </packing>
-                </child>
-                <child>
-                  <placeholder/>
                 </child>
               </widget>
               <packing>
@@ -140,10 +137,10 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
-                  <widget class="GtkLabel" id="scale_label2">
+                  <widget class="GtkLabel" id="property_value_label2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Scale min: </property>
+                    <property name="label" translatable="yes">Property value min: </property>
                   </widget>
                   <packing>
                     <property name="expand">True</property>
@@ -152,7 +149,7 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkEntry" id="scale_min_entry">
+                  <widget class="GtkEntry" id="property_value_min_entry">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="invisible_char">●</property>
@@ -168,10 +165,10 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkLabel" id="scale_label3">
+                  <widget class="GtkLabel" id="property_value_label3">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Scale max:</property>
+                    <property name="label" translatable="yes">Property value max:</property>
                   </widget>
                   <packing>
                     <property name="expand">True</property>
@@ -180,7 +177,7 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkEntry" id="scale_max_entry">
+                  <widget class="GtkEntry" id="property_value_max_entry">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="invisible_char">●</property>
@@ -196,8 +193,8 @@
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkButton" id="color_scale_button">
-                    <property name="label" translatable="yes">Get scale</property>
+                  <widget class="GtkButton" id="color_property_value_range_button">
+                    <property name="label" translatable="yes">Get value range</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
@@ -210,22 +207,6 @@ selected field from layer.</property>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
                     <property name="position">4</property>
-                  </packing>
-                </child>
-                <child>
-                  <widget class="GtkButton" id="color_legend_button">
-                    <property name="label" translatable="yes">Legend</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="tooltip" translatable="yes">Build a palette from this range.</property>
-                    <property name="use_action_appearance">False</property>
-                    <property name="use_underline">True</property>
-                  </widget>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">5</property>
                   </packing>
                 </child>
               </widget>
@@ -330,83 +311,7 @@ selected field from layer.</property>
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
-                  <widget class="GtkLabel" id="grayscale_label4">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Grayscale base color: </property>
-                  </widget>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <widget class="GtkLabel" id="grayscale_color_label">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">label</property>
-                  </widget>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="padding">4</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <widget class="GtkButton" id="grayscale_color_button">
-                    <property name="label">gtk-select-color</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="use_action_appearance">False</property>
-                    <property name="use_stock">True</property>
-                  </widget>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-                <child>
-                  <widget class="GtkLabel" id="grayscale_label5">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes"> Grayscale adjust: </property>
-                  </widget>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">3</property>
-                  </packing>
-                </child>
-                <child>
-                  <widget class="GtkComboBox" id="grayscale_adjust_combobox">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                  </widget>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">4</property>
-                  </packing>
-                </child>
-                <child>
-                  <widget class="GtkCheckButton" id="grayscale_invert_checkbutton">
-                    <property name="label" translatable="yes">invert adjust</property>
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="receives_default">False</property>
-                    <property name="use_action_appearance">False</property>
-                    <property name="use_underline">True</property>
-                    <property name="draw_indicator">True</property>
-                  </widget>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">5</property>
-                  </packing>
+                  <placeholder/>
                 </child>
               </widget>
               <packing>
@@ -464,14 +369,44 @@ selected field from layer.</property>
                     <property name="position">2</property>
                   </packing>
                 </child>
+              </widget>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
+              <widget class="GtkHBox" id="hbox8">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <child>
+                  <widget class="GtkButton" id="color_legend_button">
+                    <property name="label" translatable="yes">Make palette legend</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="has_tooltip">True</property>
+                    <property name="tooltip" translatable="yes">Build a palette from this range.</property>
+                    <property name="use_action_appearance">False</property>
+                  </widget>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <placeholder/>
+                </child>
                 <child>
                   <placeholder/>
                 </child>
               </widget>
               <packing>
                 <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">4</property>
+                <property name="fill">False</property>
+                <property name="position">5</property>
               </packing>
             </child>
             <child>
@@ -481,7 +416,7 @@ selected field from layer.</property>
                 <property name="hscrollbar_policy">automatic</property>
                 <property name="vscrollbar_policy">automatic</property>
                 <child>
-                  <widget class="GtkTreeView" id="colors_treeview">
+                  <widget class="GtkTreeView" id="coloring_treeview">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                   </widget>
@@ -490,7 +425,7 @@ selected field from layer.</property>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
-                <property name="position">5</property>
+                <property name="position">6</property>
               </packing>
             </child>
             <child>
@@ -558,7 +493,7 @@ selected field from layer.</property>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">6</property>
+                <property name="position">7</property>
               </packing>
             </child>
             <child>
@@ -578,7 +513,7 @@ selected field from layer.</property>
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkButton" id="copy_colors_button">
+                  <widget class="GtkButton" id="copy_palette_button">
                     <property name="label">gtk-copy</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -595,7 +530,7 @@ another layer.</property>
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkButton" id="open_colors_button">
+                  <widget class="GtkButton" id="open_palette_button">
                     <property name="label">gtk-open</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -610,7 +545,7 @@ another layer.</property>
                   </packing>
                 </child>
                 <child>
-                  <widget class="GtkButton" id="save_colors_button">
+                  <widget class="GtkButton" id="save_palette_button">
                     <property name="label">gtk-save-as</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -628,7 +563,7 @@ another layer.</property>
               <packing>
                 <property name="expand">False</property>
                 <property name="fill">True</property>
-                <property name="position">7</property>
+                <property name="position">8</property>
               </packing>
             </child>
           </widget>
@@ -717,7 +652,7 @@ another layer.</property>
       </widget>
     </child>
   </widget>
-  <widget class="GtkDialog" id="labels_dialog">
+  <widget class="GtkDialog" id="labeling_dialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">dialog1</property>
     <property name="type_hint">dialog</property>
@@ -1181,7 +1116,7 @@ another layer.</property>
       </widget>
     </child>
   </widget>
-  <widget class="GtkDialog" id="symbols_dialog">
+  <widget class="GtkDialog" id="symbolizing_dialog">
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">dialog1</property>
     <property name="type_hint">dialog</property>

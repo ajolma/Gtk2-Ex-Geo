@@ -47,11 +47,11 @@ DialogMaster object with it.
 #*
 sub new {
     my($class, %params) = @_;
-
-    my @buffer = <DATA>;
-    pop @buffer unless $buffer[$#buffer] =~ /^\</; # remove the extra content
-
-    return Gtk2::Ex::Geo::DialogMaster::new($class, %params, buffer => \@buffer);
+    unless ($params{glade_interface}) {
+        my @glade_interface = <DATA>;
+        $params{glade_interface} = \@glade_interface;
+    }
+    return $class->SUPER::new(%params);
 }
 
 sub progress {
@@ -67,6 +67,8 @@ sub get_value_from_combo {
     if (@_ == 2) {
 	my($dialog, $name_of_combo) = @_;
 	$combo = $dialog->get_widget($name_of_combo);
+        print STDERR "Can't find combobox $name_of_combo." unless $combo;
+        return unless $combo;
     } else {
 	$combo = shift;
     }

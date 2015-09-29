@@ -5,7 +5,7 @@ use warnings;
 use Carp;
 use Glib qw/TRUE FALSE/;
 use Gtk2::Ex::Geo::Dialogs qw /:all/;
-use Gtk2::Ex::Geo::Layer;
+use Gtk2::Ex::Geo::Style;
 
 use vars qw//;
 

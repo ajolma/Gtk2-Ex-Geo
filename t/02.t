@@ -22,6 +22,24 @@ Gtk2->init;
 	my $self = Gtk2::Ex::Geo::Layer::new(@_);
 	return $self;
     }
+    sub schema {
+        return { 
+            Properties => {
+                MyInt => {
+                    Type => 'Integer',
+                },
+                MyReal => {
+                    Type => 'Real',
+                },
+                MyPoint => {
+                    Type => 'Point',
+                },
+                MyLine => {
+                    Type => 'LineString',
+                }
+            }
+        };
+    }
     sub world {
 	return (0, 0, 100, 100);
     }

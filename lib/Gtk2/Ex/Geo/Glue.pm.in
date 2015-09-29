@@ -63,7 +63,7 @@ references to layers are replaced with clipped versions
 
 package Gtk2::Ex::Geo::Glue;
 
-#use strict; # causes "Variable not imported in some cases" ??
+use strict; # causes "Variable not imported in some cases" ??
 use warnings;
 use Scalar::Util qw(blessed);
 use Carp;
@@ -125,10 +125,8 @@ sub new {
     ($self->{history}, $self->{history_file}) = $self->open_history($params{history});
     ($self->{resources}, $self->{resources_file}) = $self->open_resources($params{resources});
 
-    my @buffer = <Gtk2::Ex::Geo::Glue::DATA>;
-    pop @buffer unless $buffer[$#buffer] =~ /^\</; # remove the extra content
-    shift @buffer if $buffer[0] =~ /^\s*$/;
-    register_dialogs($self, Gtk2::Ex::Geo::DialogMaster->new(buffer => \@buffer));  
+    my @glade_interface = <Gtk2::Ex::Geo::Glue::DATA>;
+    register_dialogs($self, Gtk2::Ex::Geo::DialogMaster->new(glade_interface => \@glade_interface));  
 
     return $self;
 }
@@ -510,10 +508,9 @@ sub open_resources {
     return (\%resources, $filename);
 }
 
-# Extend the capabilities by adding new dialogs
+# Extend the capabilities by adding new dialog sources
 sub register_dialogs {
     my($self, $dialogs) = @_;
-    croak "$dialogs is not a DialogMaster" unless $dialogs->isa('Gtk2::Ex::Geo::DialogMaster');
     push @{$self->{dialogs}}, $dialogs;
 }
 
@@ -639,8 +636,7 @@ sub register_class {
     }
     if ($params{class}) {
         push @{$self->{classes}}, $params{class};
-        $sub = $params{class}.'::registration';
-        my $registration = &$sub($self);
+        my $registration = eval $params{class}.'::registration(\$self)';
         %params = %$registration;
     }
     $self->register_dialogs($params{dialogs}) if $params{dialogs};
@@ -726,7 +722,7 @@ be globally unique.
 sub get_dialog {
     my($self, $dialog_name) = @_;
     for my $dialogs (@{$self->{dialogs}}) {
-        $d = $dialogs->get_dialog($dialog_name);
+        my $d = $dialogs->get_dialog($dialog_name);
         return $d if $d;
     }
     croak "can't find dialog $dialog_name";
@@ -946,24 +942,26 @@ sub layer_menu {
         
         my $menu = Gtk2::Menu->new;
         my $params = @layers ? [\@layers, $self] : [$layer, $self];
-        $i = 0;
+        my $i = 0;
         for (my $i =0; $i < @items; $i+=2) {
             my $item;
             unless ($items[$i+1]) {
                 $item = Gtk2::SeparatorMenuItem->new();
             } else {
                 $item = Gtk2::MenuItem->new($items[$i]);
+                [$item->get_children]->[0]->set_markup($items[$i]) if $items[$i] =~ /</;
                 my $value = $items[$i+1];
                 if (ref($value) eq 'CODE') {
                     $item->signal_connect(activate => $value, $params);
                 } elsif (ref($value) eq 'ARRAY') {
-                    my $submenu = Gtk2::Menu->new();
-                    $item->set_submenu($submenu);
+                    my $menu = Gtk2::Menu->new();
+                    $item->set_submenu($menu);
                     for (my $j =0; $j < @$value; $j+=2) {
-                        my $subitem = Gtk2::MenuItem->new($value->[$j]);
-                        $subitem->signal_connect(activate => $value->[$j+1], $params);
-                        $subitem->show;
-                        $submenu->append($subitem);
+                        my $item = Gtk2::MenuItem->new($value->[$j]);
+                        [$item->get_children]->[0]->set_markup($value->[$j]) if $value->[$j] =~ /</;
+                        $item->signal_connect(activate => $value->[$j+1], $params);
+                        $item->show;
+                        $menu->append($item);
                     }
                 } else {
                     die "Value of a menuitem '$items[$i]' is not code nor an array!";
@@ -1129,6 +1127,8 @@ sub add_layer {
  
     $self->set_layer($layer);
     $self->{overlay}->add_layer($layer, $do_not_zoom_to);
+
+    $layer->{glue} = $self;
     return $layer;
 }
 

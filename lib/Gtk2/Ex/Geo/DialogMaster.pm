@@ -32,7 +32,7 @@ BEGIN {
 sub new {
     my($class, %params) = @_;
     my $self = {};
-    $self->{buffer} = $params{buffer};
+    $self->{glade_interface} = $params{glade_interface};
     bless $self => (ref($class) or $class);
 }
 
@@ -49,7 +49,7 @@ sub get_dialog {
     my($self, $dialog_name) = @_;
     my @buf = ('<glade-interface>');
     my $push = 0;
-    for (@{$self->{buffer}}) {
+    for (@{$self->{glade_interface}}) {
         # assumes top level widgets have two spaces indent
     	$push = 1 if (/^  <widget/ and /$dialog_name/);
 	push @buf, $_ if $push;
