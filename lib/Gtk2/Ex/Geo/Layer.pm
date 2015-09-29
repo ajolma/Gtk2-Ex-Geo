@@ -472,8 +472,7 @@ sub DESTROY {
 Returns the schema of this layer as an anonymous hash. The schema
 should contain key 'Properties', whose value should be a hash of hashes
 (properties). The key of each property should be the name of the property and
-the property itself should have a key 'Type'. Geospatial properties should
-have a key 'Style', which points to a Style object.
+the property itself should have a key 'Type'.
 
 =cut
 
@@ -619,9 +618,8 @@ sub open_rules_dialog {
 
 sub open_symbolizing_dialog {
     my($self, $property, $glue) = @_;
-    my $f = $self->schema()->{Properties}->{$property};
-    $f->{Style} = Gtk2::Ex::Geo::Style->new(layer => $self, property => $property) unless $f->{Style};
-    Gtk2::Ex::Geo::Dialogs::Symbolizing::open($f->{Style});
+    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(layer => $self, property => $property) unless $self->{styles}->{$property};
+    Gtk2::Ex::Geo::Dialogs::Symbolizing::open($self->{styles}->{$property});
 }
 
 =pod
@@ -632,9 +630,8 @@ sub open_symbolizing_dialog {
 
 sub open_coloring_dialog {
     my($self, $property, $glue) = @_;
-    my $f = $self->schema()->{Properties}->{$property};
-    $f->{Style} = Gtk2::Ex::Geo::Style->new(layer => $self, property => $property) unless $f->{Style};
-    Gtk2::Ex::Geo::Dialogs::Coloring::open($f->{Style});
+    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(layer => $self, property => $property) unless $self->{styles}->{$property};
+    Gtk2::Ex::Geo::Dialogs::Coloring::open($self->{styles}->{$property});
 }
 
 =pod
@@ -645,9 +642,8 @@ sub open_coloring_dialog {
 
 sub open_labeling_dialog {
     my($self, $property, $glue) = @_;
-    my $f = $self->schema()->{Properties}->{$property};
-    $f->{Style} = Gtk2::Ex::Geo::Style->new(layer => $self, property => $property) unless $f->{Style};
-    Gtk2::Ex::Geo::Dialogs::Labeling::open($f->{Style});
+    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(layer => $self, property => $property) unless $self->{styles}->{$property};
+    Gtk2::Ex::Geo::Dialogs::Labeling::open($self->{styles}->{$property});
 }
 
 1;
