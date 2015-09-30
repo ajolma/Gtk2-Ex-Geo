@@ -56,6 +56,7 @@ our %pm_files = (
     'lib/Gtk2/Ex/Geo/DialogMaster.pm' => '$(INST_LIBDIR)/Geo/DialogMaster.pm',
     'lib/Gtk2/Ex/Geo/Layer.pm'        => '$(INST_LIBDIR)/Geo/Layer.pm',
     'lib/Gtk2/Ex/Geo/Style.pm'        => '$(INST_LIBDIR)/Geo/Style.pm',
+    'lib/Gtk2/Ex/Geo/ColorPalette.pm' => '$(INST_LIBDIR)/Geo/ColorPalette.pm',
     'lib/Gtk2/Ex/Geo/Dialogs.pm'      => '$(INST_LIBDIR)/Geo/Dialogs.pm',
     'lib/Gtk2/Ex/Geo.pm'              => '$(INST_LIBDIR)/Geo.pm',
     );

@@ -2,6 +2,7 @@ package Gtk2::Ex::Geo::Dialogs::Symbolizing;
 
 use strict;
 use warnings;
+use locale;
 use Carp;
 use Glib qw/TRUE FALSE/;
 

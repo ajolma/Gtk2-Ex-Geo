@@ -124,7 +124,7 @@ the Gtk2::Ex::Geo::Overlay is, is set from the Pixmap.
 package Gtk2::Ex::Geo::Overlay;
 
 use strict;
-use POSIX;
+use locale;
 use Scalar::Util qw(blessed);
 use Carp;
 use Glib qw/TRUE FALSE/;
@@ -504,6 +504,7 @@ sub get_focus {
 
 {
     package Gtk2::Ex::Geo::PseudoOverlay;
+    use locale;
     sub round {
 	return int($_[0] + .5 * ($_[0] <=> 0));
     }
@@ -521,6 +522,7 @@ sub get_focus {
 		round(($self->{maxY} - $p[1])/$self->{pixel_size} - 0.5));
     }
     package Gtk2::Ex::Geo::Canvas;
+    use locale;
     use base qw(Gtk2::Gdk::Pixbuf);
  
     sub new {
@@ -559,6 +561,7 @@ sub get_focus {
 }
 
 package Gtk2::Ex::Geo::Overlay;
+use locale;
 
 =pod
 
@@ -1042,7 +1045,8 @@ sub motion_notify {
     my @end = @{$self->{event_coordinates}};
     my $w = $end[0] - $begin[0];
     my $h = $end[1] - $begin[1];
-    my @rb = @{$self->{rubberband}} if $self->{rubberband};
+    my @rb;
+    @rb = @{$self->{rubberband}} if $self->{rubberband};
     
     if ($self->{drawing_edit}) {
 	
@@ -1149,7 +1153,8 @@ sub rubberband_value {
 
     if ($self->{path}) {
 
-	my @p0 = $self->event_pixel2point(@{$self->{path}[0]}) if $self->{path}[0];
+	my @p0;
+        @p0 = $self->event_pixel2point(@{$self->{path}[0]}) if $self->{path}[0];
 	my @p1 = $self->event_pixel2point(@{$self->{event_coordinates}});
 
 	for ($self->{rubberband_geometry}) {
@@ -1197,7 +1202,8 @@ sub button_release_event {
     if ($self->{path}) {
 
 	my $pm = $self->{pixmap};
-	my @rb = @{$self->{rubberband}} if $self->{rubberband};
+	my @rb;
+        @rb = @{$self->{rubberband}} if $self->{rubberband};
 	my $rgc = $self->{rubberband_gc};
 	my @begin = @{$self->{path}[0]};
 	my @end = ($event->x, $event->y);

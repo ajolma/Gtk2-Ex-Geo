@@ -3,6 +3,7 @@ package Gtk2::Ex::Geo::Dialogs::Labeling;
 
 use strict;
 use warnings;
+use locale;
 use Carp;
 use Glib qw/TRUE FALSE/;
 

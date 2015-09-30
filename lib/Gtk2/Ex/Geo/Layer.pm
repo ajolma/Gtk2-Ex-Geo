@@ -32,11 +32,13 @@ package Gtk2::Ex::Geo::Layer;
 
 use strict;
 use warnings;
+use locale;
 use Scalar::Util qw(blessed);
 use Carp;
 use Class::Inspector;
 use Glib qw /TRUE FALSE/;
 use Gtk2::Ex::Geo::Style;
+use Gtk2::Ex::Geo::ColorPalette;
 use Gtk2::Ex::Geo::Dialogs;
 use Gtk2::Ex::Geo::Dialogs::Rules;
 use Gtk2::Ex::Geo::Dialogs::Symbolizing;
@@ -56,15 +58,18 @@ BEGIN {
             $GEOMETRY_TYPES{$type} = 1;
         }
     }
-    %PALETTE_TYPES = ( 'Single color' => 0, 
-                       'Shades of gray' => 1, 
-                       'Hue region' => 2, 
-                       'Color table' => 3, 
-                       'Color bins' => 4,
-                       'Red channel' => 5, 
-                       'Green channel' => 6, 
-                       'Blue channel' => 7,
-    );
+    unless (%PALETTE_TYPES) {
+        my $type = Gtk2::Ex::Geo::ColorPalette->readable_class_name;
+        my $order = Gtk2::Ex::Geo::ColorPalette->order;
+        $PALETTE_TYPES{$type} = $order if $type ne '';
+        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::ColorPalette' );
+        for my $class (@$subclass_names) {
+            my $type = eval $class.'->readable_class_name';
+            my $order = eval $class.'->order';
+            next if $type eq '';
+            $PALETTE_TYPES{$type} = $order;
+        }
+    }
 }
 
 =pod
@@ -492,6 +497,7 @@ sub features {
 }
 
 sub value_range {
+    my ($self, $property) = @_;
     return (0, 0);
 }
 
@@ -513,66 +519,6 @@ in the coloring dialog box.
 
 sub palette_types {
     return sort {$PALETTE_TYPES{$a} <=> $PALETTE_TYPES{$b}} keys %PALETTE_TYPES;
-}
-
-sub palette_type_supports_string_keys {
-    my ($type) = @_;
-    return 0 if $type eq 'Single color';
-    return 0 if $type eq 'Shades of gray';
-    return 0 if $type eq 'Hue region';
-    return 1 if $type eq 'Color table';
-    return 0 if $type eq 'Color bins';
-    return 0 if $type eq 'Red channel';
-    return 0 if $type eq 'Green channel';
-    return 0 if $type eq 'Blue channel';
-}
-
-sub palette_type_supports_integer_keys {
-    my ($type) = @_;
-    return 0 if $type eq 'Single color';
-    return 1 if $type eq 'Shades of gray';
-    return 1 if $type eq 'Hue region';
-    return 1 if $type eq 'Color table';
-    return 1 if $type eq 'Color bins';
-    return 1 if $type eq 'Red channel';
-    return 1 if $type eq 'Green channel';
-    return 1 if $type eq 'Blue channel';
-}
-
-sub palette_type_supports_real_keys {
-    my ($type) = @_;
-    return 0 if $type eq 'Single color';
-    return 1 if $type eq 'Shades of gray';
-    return 1 if $type eq 'Hue region';
-    return 0 if $type eq 'Color table';
-    return 1 if $type eq 'Color bins';
-    return 1 if $type eq 'Red channel';
-    return 1 if $type eq 'Green channel';
-    return 1 if $type eq 'Blue channel';
-}
-
-sub palette_type_has_finite_keys {
-    my ($type) = @_;
-    return 0 if $type eq 'Single color';
-    return 0 if $type eq 'Shades of gray';
-    return 0 if $type eq 'Hue region';
-    return 1 if $type eq 'Color table';
-    return 1 if $type eq 'Color bins';
-    return 0 if $type eq 'Red channel';
-    return 0 if $type eq 'Green channel';
-    return 0 if $type eq 'Blue channel';
-}
-
-sub palette_type_output_is_hue {
-    my ($type) = @_;
-    return 0 if $type eq 'Single color';
-    return 0 if $type eq 'Shades of gray';
-    return 1 if $type eq 'Hue region';
-    return 0 if $type eq 'Color table';
-    return 0 if $type eq 'Color bins';
-    return 0 if $type eq 'Red channel';
-    return 0 if $type eq 'Green channel';
-    return 0 if $type eq 'Blue channel';
 }
 
 =pod

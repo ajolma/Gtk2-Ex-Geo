@@ -4,6 +4,7 @@
 package Gtk2::Ex::Geo::TreeDumper;
 
 use strict;
+use locale;
 use Scalar::Util qw(blessed);
 use Glib ':constants';
 use Gtk2;

@@ -12,7 +12,8 @@ my $have_gnuplot = !$@;
     our @ISA = qw(Gtk2::Ex::Geo::Layer);
     sub registration {
 	my $class = shift;
-	my $registration = $class->SUPER::registration() if $class;
+	my $registration;
+        $registration = $class->SUPER::registration() if $class;
 	return $registration;
     }
     sub new {

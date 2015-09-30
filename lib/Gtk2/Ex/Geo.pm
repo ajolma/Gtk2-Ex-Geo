@@ -4,6 +4,9 @@ use strict;
 use warnings;
 use XSLoader;
 
+use POSIX qw(locale_h);
+use locale;
+
 use Carp;
 use Glib qw/TRUE FALSE/;
 use Gtk2;
@@ -21,6 +24,13 @@ BEGIN {
     our @EXPORT = qw( );
     our $VERSION = '0.70';
     XSLoader::load( 'Gtk2::Ex::Geo', $VERSION );
+    if ($ENV{LC_ALL}) {
+        setlocale(LC_NUMERIC, $ENV{LC_ALL});
+    } elsif ($ENV{LC_NUMERIC}) {
+        setlocale(LC_NUMERIC, $ENV{LC_NUMERIC});
+    } elsif ($ENV{LANG}) {
+        setlocale(LC_NUMERIC, $ENV{LANG});
+    }
 }
 
 sub exception_handler {

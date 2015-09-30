@@ -10,7 +10,7 @@ BEGIN {
     use_ok('Gtk2::Ex::Geo');
 };
 
-exit unless $ENV{GUI};
+#exit unless $ENV{GUI};
 
 Gtk2->init;
 #Glib->install_exception_handler(\&Gtk2::Ex::Geo::exception_handler);
@@ -31,6 +31,9 @@ Gtk2->init;
                 MyReal => {
                     Type => 'Real',
                 },
+                MyString => {
+                    Type => 'String',
+                },
                 MyPoint => {
                     Type => 'Point',
                 },
@@ -39,6 +42,12 @@ Gtk2->init;
                 }
             }
         };
+    }
+    sub value_range {
+        my ($self, $property) = @_;
+        return (0, 10) if $property eq 'MyInt';
+        return (0.5, 5.6) if $property eq 'MyReal';
+        return undef;
     }
     sub world {
 	return (0, 0, 100, 100);

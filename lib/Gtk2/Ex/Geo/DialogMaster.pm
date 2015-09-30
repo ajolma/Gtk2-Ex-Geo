@@ -17,6 +17,7 @@ package Gtk2::Ex::Geo::DialogMaster;
 
 use strict;
 use warnings;
+use locale;
 use Carp;
 
 BEGIN {

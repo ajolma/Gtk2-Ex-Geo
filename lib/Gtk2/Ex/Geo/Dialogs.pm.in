@@ -18,8 +18,7 @@ package Gtk2::Ex::Geo::Dialogs;
 
 use strict;
 use warnings;
-use UNIVERSAL;
-#use URI::Escape;
+use locale;
 
 use base qw(Exporter Gtk2::Ex::Geo::DialogMaster);
 
@@ -27,8 +26,8 @@ use vars qw/$folder/;
 
 our %EXPORT_TAGS = ( 
     'all' => [ 
-	qw(&progress &get_value_from_combo &set_combo_to
-&get_selected_from_selection &file_chooser &get_number_from_entry) ] );
+	qw(&progress &refill_combo &get_value_from_combo &set_combo_to
+           &get_selected_from_selection &file_chooser) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
@@ -60,6 +59,22 @@ sub progress {
     $bar->set_fraction($progress);
     Gtk2->main_iteration while Gtk2->events_pending;
     return 1;
+}
+
+sub refill_combo {
+    my ($self, $name_of_combo, $entry_list, $selected) = @_;
+    my $combo = $self->get_widget($name_of_combo);
+    my $model = $combo->get_model;
+    $model->clear;
+    my $i = 0;
+    my $active;
+    for my $entry (@$entry_list) {
+	$model->set($model->append, 0, $entry);
+	$active = $i if defined $selected and $entry eq $selected;
+	$i++;
+    }
+    $active = 0 unless defined $active;
+    $combo->set_active($active);
 }
 
 sub get_value_from_combo {
@@ -135,18 +150,6 @@ sub file_chooser {
     #$filename = filename_unescape($filename);
     #print STDERR "$filename\n";
     return $filename;
-}
-
-sub get_number_from_entry {
-    my($entry) = @_;
-    #print STDERR "get_number_from_entry $entry\n";
-    my $text = $entry->get_text;
-    #print STDERR "got $text\n";
-    $text =~ s/\s//g;
-    $text =~ s/,/./;
-    ($text) =~ /(\d+)/;
-    #print STDERR "return $text\n";
-    $text;
 }
 
 1;

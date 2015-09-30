@@ -65,6 +65,7 @@ package Gtk2::Ex::Geo::Glue;
 
 use strict; # causes "Variable not imported in some cases" ??
 use warnings;
+use locale;
 use Scalar::Util qw(blessed);
 use Carp;
 use Glib qw/TRUE FALSE/;
@@ -395,6 +396,7 @@ sub create_overlay {
 }
 
 package Gtk2::Ex::Geo::History;
+use locale;
 
 sub new {
     my ($class, $history) = @_;
@@ -457,6 +459,7 @@ sub max {
 }
 
 package Gtk2::Ex::Geo::Glue;
+use locale;
 
 sub open_history {
     my($self, $filename) = @_;
@@ -1119,7 +1122,8 @@ sub add_layer {
     }
     croak "Will not add '$object' as a layer. Don't know what it is." unless $layer;
 
-    my $i = $self->{overlay}->index_of_layer($name) if defined $name;
+    my $i;
+    $i = $self->{overlay}->index_of_layer($name) if defined $name;
     croak "Layer with name '$name' already exists." if defined $i;
 
     $layer->name($name);

@@ -2,6 +2,7 @@
 #*
 package Gtk2::Ex::Geo::Scale;
 use strict;
+use locale;
 use base qw(Gtk2::Ex::Geo::Layer);
 sub new {
     my($package, %param) = @_;

@@ -43,6 +43,7 @@ package Gtk2::Ex::Geo::Style;
 
 use strict;
 use warnings;
+use locale;
 use Scalar::Util qw(blessed);
 use Carp;
 use Glib qw /TRUE FALSE/;
@@ -91,12 +92,7 @@ sub defaults {
     return  {
         # coloring
         color_property => undef,
-        palette_type => 'Single color',
-        color => [0, 0, 0, 255],
-        color_property_value_range => [0, 0], # mapped property value range
-        hue_range => [235, 0, -1], # the last is increment
-        color_table => [],
-        color_bins => [],
+        palette => Gtk2::Ex::Geo::ColorPalette->new,
 
         include_border => 0,
         border_color => [],
@@ -137,9 +133,12 @@ sub initialize {
         unless (ref $defaults->{$property}) {
             $self->{$property} = $defaults->{$property} unless exists $self->{$property};
             $self->{$property} = $params{$property} if exists $params{$property};
-        } else {
+        } elsif (ref $defaults->{$property} eq 'ARRAY') {
             @{$self->{$property}} = @{$defaults->{$property}} unless exists $self->{$property};
             @{$self->{$property}} = @{$params{$property}} if exists $params{$property};
+        } else { # currently this can only be an object
+            $self->{$property} = $defaults->{$property} unless exists $self->{$property};
+            $self->{$property} = $params{$property} if exists $params{$property};
         }
     }
 
@@ -187,37 +186,10 @@ Get or set the palette type for this layer.
 
 =cut
 
-sub palette_type {
-    my($self, $palette_type) = @_;
-    if (defined $palette_type) {
-        $self->{palette_type} = $palette_type;
-    } else {
-        return $self->{palette_type};
-    }
-}
-
-sub color {
-    my $self = shift;
-    croak "@_ is not a RGBA color" if @_ and @_ != 4;
-    $self->{color} = [@_] if @_;
-    return @{$self->{color}};
-}
-
-sub color_property_value_range {
-    my($self, $min, $max) = @_;
-    if (defined $min) {
-        $min = 0 unless $min;
-        $max = 0 unless $max;
-        $self->{color_property_value_range} = [$min, $max];
-    }
-    return @{$self->{color_property_value_range}};
-}
-
-sub hue_range {
-    my($self, $min, $max, $increment) = @_;
-    $increment = -1 unless defined $increment;
-    $self->{hue_range} = [$min+0, $max+0, $increment] if defined $max;
-    return @{$self->{hue_range}};
+sub palette {
+    my($self, $palette) = @_;
+    $self->{palette} = $palette if defined $palette;
+    return $self->{palette};
 }
 
 sub color_table {
@@ -313,15 +285,6 @@ sub save_color_bins {
     CORE::close($fh);
 }
 
-sub add_color {
-    my($self, $index, @XRGBA) = @_;
-    if ($self->{palette_type} eq 'Color table') {
-        splice @{$self->{color_table}}, $index, 0, [@XRGBA];
-    } else {
-        splice @{$self->{color_bins}}, $index, 0, [@XRGBA];
-    }
-}
-
 sub remove_color {
     my($self, $index) = @_;
     if ($self->{palette_type} eq 'Color table') {
@@ -334,7 +297,7 @@ sub remove_color {
 sub color_from_palette {
     my $self = shift;
     my $index = shift unless $self->{palette_type} eq 'Single color';
-    my @color = @_ if @_;
+    my @color = @_;
     if (@color) {
         if ($self->{palette_type} eq 'Color table') {
             $self->{color_table}[$index] = \@color;

@@ -2,6 +2,7 @@ package Gtk2::Ex::Geo::Dialogs::Rules;
 
 use strict;
 use warnings;
+use locale;
 use Carp;
 use Glib qw/TRUE FALSE/;
 use Gtk2::Ex::Geo::Dialogs qw /:all/;
