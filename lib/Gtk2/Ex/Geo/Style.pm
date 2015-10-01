@@ -89,10 +89,10 @@ sub new {
 }
 
 sub defaults {
+    my $self = shift;
     return  {
         # coloring
-        color_property => undef,
-        palette => Gtk2::Ex::Geo::ColorPalette->new,
+        palette => Gtk2::Ex::Geo::ColorPalette->new( style => $self ),
 
         include_border => 0,
         border_color => [],
@@ -123,12 +123,17 @@ sub initialize {
     my $self = shift;
     my %params = @_;
 
+    $self->{layer} = $params{layer};
+    $self->{property} = $params{property};
+
+    croak "Style initializer missing layer or property." unless $self->{layer} && $self->{property};
+
     # set defaults for all, order of preference is: 
     # user given as constructor parameter
     # subclass default
     # default as defined here
 
-    my $defaults = defaults;
+    my $defaults = $self->defaults;
     for my $property (keys %$defaults) {
         unless (ref $defaults->{$property}) {
             $self->{$property} = $defaults->{$property} unless exists $self->{$property};
@@ -141,16 +146,13 @@ sub initialize {
             $self->{$property} = $params{$property} if exists $params{$property};
         }
     }
-
-    $self->{layer} = $params{layer};
-    $self->{property} = $params{property};
     
 }
 
 sub clone {
     my ($self) = @_;
     my %params;
-    my $defaults = defaults;
+    my $defaults = $self->defaults;
     for my $property (keys %$defaults) {
         $params{$property} = $self->{$property};
     }
@@ -159,7 +161,7 @@ sub clone {
 
 sub restore_from {
     my ($self, $another_style) = @_;
-    my $defaults = defaults;
+    my $defaults = $self->defaults;
     for my $property (keys %$defaults) {
         $self->{$property} = $another_style->{$property};
     }
@@ -432,97 +434,6 @@ sub labeling {
         $labeling->{incremental} = $self->{incremental_labels};
     }
     return $labeling;
-}
-
-=pod
-
-=head2 bootstrap_dialog($dialog_class, $title, $connects, $combos)
-
-Called by the "open" method of a dialog class to create and initialize
-or restore a dialog object of a given class. If the dialog does not
-exist, one is obtained from the glue object, which in turn obtains
-it from the Dialogs object of this or some other layer class.
-
-$title is the title for the dialog box.
-
-$connects is a reference to a hash of widget names, which are
-associated with a reference to a list of signal name, subroutine
-reference, and user parameter. For example
-
-    copy_button => [clicked => \&do_copy, [$layer, $glue]]
-
-$combos is a reference to a list of name of simple ComboBoxes that
-need a model and a text renderer in initialization.
-
-The method returns the dialog box widget and a boolean value, which
-indicates whether the dialog box was created or if it already existed.
-
-Not part of the Layer interface. Used by the glue object for the
-introspection dialog.
-
-=cut
-
-sub bootstrap_dialog {
-    my($self, $dialog, $title, $connects, $combos) = @_;
-    my $boot = 0;
-    my $widget;
-    unless ($self->{$dialog}) {
-        $self->{$dialog} = $self->{layer}->{glue}->get_dialog($dialog);
-        croak "$dialog does not exist" unless $self->{$dialog};
-        $widget = $self->{$dialog}->get_widget($dialog);
-        if ($connects) {
-            for my $n (keys %$connects) {
-                my $w = $self->{$dialog}->get_widget($n);
-                print STDERR "Can't find widget '$n'\n" unless defined $w;
-                $w->signal_connect(@{$connects->{$n}}) if defined $w;
-            }
-        }
-        if ($combos) {
-            for my $n (@$combos) {
-                my $combo = $self->{$dialog}->get_widget($n);
-                print STDERR "Can't find combobox '$n'\n" unless defined $combo;
-                next unless defined $combo;
-                unless ($combo->isa('Gtk2::ComboBoxEntry')) {
-                    my $renderer = Gtk2::CellRendererText->new;
-                    $combo->pack_start($renderer, TRUE);
-                    $combo->add_attribute($renderer, text => 0);
-                }
-                my $model = Gtk2::ListStore->new('Glib::String');
-                $combo->set_model($model);
-                $combo->set_text_column(0) if $combo->isa('Gtk2::ComboBoxEntry');
-            }
-        }
-        $boot = 1;
-        $widget->set_position('center');
-    } else {
-        $widget = $self->{$dialog}->get_widget($dialog);
-        $widget->move(@{$self->{$dialog.'_position'}}) unless $widget->get('visible');
-    }
-    $widget->set_title($title);
-    $widget->show_all;
-    $widget->present;
-    return wantarray ? ($self->{$dialog}, $boot) : $self->{$dialog};
-}
-
-=pod
-
-=head2 hide_dialog($dialog_class)
-
-Hides the given dialog of this layer object.
-
-=cut
-
-sub hide_dialog {
-    my($self, $dialog) = @_;
-    $self->{$dialog.'_position'} = [$self->{$dialog}->get_widget($dialog)->get_position];
-    $self->{$dialog}->get_widget($dialog)->hide();
-}
-
-sub dialog_visible {
-    my($self, $dialog) = @_;
-    my $d = $self->{$dialog};
-    return 0 unless $d;
-    return $d->get_widget($dialog)->get('visible');
 }
 
 1;

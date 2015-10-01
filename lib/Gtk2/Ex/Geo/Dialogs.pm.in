@@ -19,17 +19,13 @@ package Gtk2::Ex::Geo::Dialogs;
 use strict;
 use warnings;
 use locale;
+use Glib qw/TRUE FALSE/;
 
 use base qw(Exporter Gtk2::Ex::Geo::DialogMaster);
 
-use vars qw/$folder/;
+our %EXPORT_TAGS = ( all => [ qw(&set_combo_to) ] );
 
-our %EXPORT_TAGS = ( 
-    'all' => [ 
-	qw(&progress &refill_combo &get_value_from_combo &set_combo_to
-           &get_selected_from_selection &file_chooser) ] );
-
-our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+our @EXPORT_OK = ( @{ $EXPORT_TAGS{all} } );
 
 our @EXPORT = qw( );
 
@@ -53,55 +49,6 @@ sub new {
     return $class->SUPER::new(%params);
 }
 
-sub progress {
-    my($progress, $msg, $bar) = @_;
-    $progress = 1 if $progress > 1;
-    $bar->set_fraction($progress);
-    Gtk2->main_iteration while Gtk2->events_pending;
-    return 1;
-}
-
-sub refill_combo {
-    my ($self, $name_of_combo, $entry_list, $selected) = @_;
-    my $combo = $self->get_widget($name_of_combo);
-    my $model = $combo->get_model;
-    $model->clear;
-    my $i = 0;
-    my $active;
-    for my $entry (@$entry_list) {
-	$model->set($model->append, 0, $entry);
-	$active = $i if defined $selected and $entry eq $selected;
-	$i++;
-    }
-    $active = 0 unless defined $active;
-    $combo->set_active($active);
-}
-
-sub get_value_from_combo {
-    my $combo;
-    if (@_ == 2) {
-	my($dialog, $name_of_combo) = @_;
-	$combo = $dialog->get_widget($name_of_combo);
-        print STDERR "Can't find combobox $name_of_combo." unless $combo;
-        return unless $combo;
-    } else {
-	$combo = shift;
-    }
-    my $model = $combo->get_model;
-    return unless $model;
-    my $a = $combo->get_active();
-    if ($a == -1) { # comboboxentry
-	if ($combo->isa('Gtk2::ComboBoxEntry')) {
-	    return $combo->child->get_text;
-	} else {
-	    return '';
-	}
-    }
-    my $iter = $model->get_iter_from_string($a);
-    return unless $iter;
-    return $model->get_value($iter);
-}
-
 sub set_combo_to {
     my($combo, $value) = @{pop()};
     my($model, $path, $iter) = @_;
@@ -110,46 +57,6 @@ sub set_combo_to {
 	$combo->set_active_iter($iter);
 	return 1;
     }
-}
-
-sub get_selected_from_selection {
-    my $selection = shift;
-    my @sel = $selection->get_selected_rows;
-    my %sel;
-    for (@sel) {
-	$sel{$_->to_string} = 1;
-    }
-    my $model = $selection->get_tree_view->get_model;
-    my $iter = $model->get_iter_first();
-    my $i = 0;
-    my %s;
-    while ($iter) {
-	my($id) = $model->get($iter, 0);
-	$s{$id} = 1 if $sel{$i++};
-	$iter = $model->iter_next($iter);
-    }
-    return \%s;
-}
-
-sub file_chooser {
-    my($title, $action, $entry) = @_;
-    my $file_chooser =
-	Gtk2::FileChooserDialog->new ($title, undef, $action,
-				      'gtk-cancel' => 'cancel',
-				      'gtk-ok' => 'ok');
-    $file_chooser->set_current_folder($folder) if $folder;
-    my $filename;
-    if ($file_chooser->run eq 'ok') {
-	$folder = $file_chooser->get_current_folder();
-	$filename = $file_chooser->get_filename;
-	#$filename =~ s/^file:\/\///;
-	#$filename =~ s/^\/// if $filename =~ /^\/\w:/; # hack for windows
-	$entry->set_text($filename) if $entry;
-    }
-    $file_chooser->destroy;
-    #$filename = filename_unescape($filename);
-    #print STDERR "$filename\n";
-    return $filename;
 }
 
 1;

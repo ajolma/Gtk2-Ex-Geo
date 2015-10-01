@@ -66,29 +66,42 @@ sub new {
 sub initialize {
     my $self = shift;
     my %params = @_;
-    $self->{key_type} = undef unless $self->{key_type};
-    $self->{key_type} = $params{key_type};
+    $self->{property_name} = undef;# unless $self->{property_name};
+    $self->{property_name} = $params{property_name};
+    $self->{property_type} = undef;# unless $self->{property_type};
+    $self->{property_type} = $params{property_type};
+    $self->{style} = undef;# unless $self->{style};
+    $self->{style} = $params{style};
+    $self->{glue} = $self->{style}->{layer}->{glue}; # make this a model for views (dialogs)
+    $self->{view} = undef;# unless $self->{view};
+    $self->{view} = $params{view};
 }
 
 sub order {
     return 1;
 }
 
-sub key_type {
+sub property {
     my $self = shift;
     if (@_) {
+        $self->{property_name} = shift;
         my $type = shift;
-        croak "Unknown key type: '$type'." unless $type eq 'Integer' or $type eq 'Real' or $type eq 'String';
-        my $changed = (defined $self->{key_type} and $self->{key_type} ne $type);
-        $self->{key_type} = $type;
-        $self->set_up_mvc if $changed;
+        if ($type and not $self->valid_property_type($type)) {
+            $self->{property_name} = undef;
+            $self->{property_type} = undef;
+            croak "Invalid property type: '$type' for $self.";
+        }
+        $self->{property_type} = $type;
     }
-    return $self->{key_type};
+    return wantarray ? ($self->{property_name}, $self->{property_type}) : $self->{property_name};
 }
 
-sub key_type_for_GTK {
+sub valid_property_type {
+}
+
+sub property_type_for_GTK {
     my $self = shift;
-    my $type = $self->key_type;
+    my $type = $self->{property_type};
     return 'Int' if $type eq 'Integer';
     return 'Double' if $type eq 'Real';
     return 'String' if $type eq 'String';
@@ -99,24 +112,15 @@ sub readable_class_name {
     return '';
 }
 
-sub supports_string_keys {
+sub is_table_like {
     return 0;
-}
-
-sub supports_integer_keys {
-    return 0;
-}
-
-sub supports_real_keys {
-    return 0;
-}
-
-sub has_finite_keys {
-    return undef;
 }
 
 sub output_is_hue {
     return 0;
+}
+
+sub value_range {
 }
 
 sub color { # get or set, if set, the last four params are the color
@@ -125,95 +129,25 @@ sub color { # get or set, if set, the last four params are the color
 sub add_color { # the last four params are the color
 }
 
-sub remove_color {
+sub remove_color_at {
 }
 
-sub key_at { # key or value at index for table like palettes
+sub property_value_at { # property value at index for table like palettes
 }
 
-sub set_mvc {
-    my ($self, $mvc) = @_;
-    $self->{mvc} = $mvc;
+sub set_color_view {
+    my ($self, $view) = @_;
+    $self->{color_view} = $view;
 }
 
-sub set_up_mvc {
+sub set_up_color_view {
     my ($self) = @_;
-    return unless $self->{mvc};
+    return unless $self->{color_view};
 }
 
-sub set_to_model {
-    my ($self) = @_;
-    return unless $self->{model};
-}
-
-sub add_to_model {
+sub update_model {
     my ($self) = @_;
     return unless $self->{model};
-}
-
-sub edit_color {
-    my ($self) = @_;
-    return unless $self->{mvc};
-    
-    my $selection = $self->{mvc}->get_selection;
-    my @selected = $selection->get_selected_rows;
-    return unless @selected;
-
-    my $i = $selected[0]->to_string;
-    my $key = $self->key_at($i);
-    my @color = $self->color($key);
-	    
-    my $d = Gtk2::ColorSelectionDialog->new('Choose a color.');
-    my $s = $d->colorsel;
-	    
-    $s->set_has_opacity_control(1);
-    my $c = Gtk2::Gdk::Color->new($color[0]*257, $color[1]*257, $color[2]*257);
-    $s->set_current_color($c);
-    $s->set_current_alpha($color[3]*257);
-
-    my $ok = $d->run eq 'ok';
-    if ($ok) {
-	$d->destroy;
-	$c = $s->get_current_color;
-	@color = (int($c->red/257+0.5),int($c->green/257+0.5),int($c->blue/257+0.5));
-	$color[3] = int($s->get_current_alpha()/257+0.5);
-
-        for my $selected (@selected) {
-            my $i = $selected->to_string;
-            my $key = $self->key_at($i);
-            $self->color($key, @color);
-        } 
-
-    } else {
-	$d->destroy;
-    }
-    
-    for my $selected (@selected) {
-	$selection->select_path($selected);
-    }
-
-    $self->set_up_mvc if $ok;
-}
-
-sub delete_color {
-    my ($self) = @_;
-    return unless $self->{mvc};
-
-    my $selection = $self->{mvc}->get_selection;
-    my @selected = $selection->get_selected_rows;
-    return unless @selected;
-
-    my @to_remove;
-    for my $selected (@selected) {
-        my $i = $selected->to_string;
-        push @to_remove, $self->key_at($i);
-    } 
-
-    for my $key (@to_remove) {
-        $self->remove_color($key);
-    }
-    
-    $self->set_up_mvc;
 }
 
 sub set_color_to_model {
@@ -244,17 +178,10 @@ sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
     my %params = @_;
-    $self->{color} = [0, 0, 0, 255] unless $self->{color};
+    $self->{color} = [0, 0, 0, 255];# unless $self->{color};
     @{$self->{color}} = @{$params{color}} if $params{color};
-    $self->{key_type} => undef
-}
-
-sub key_type {
-    my $self = shift;
-    if (@_) {
-        croak "Setting key type not supported.";
-    }
-    return $self->{key_type};
+    $self->{property_name} = undef;
+    $self->{property_type} = undef;
 }
 
 sub readable_class_name {
@@ -267,15 +194,16 @@ sub color {
     return @{$self->{color}};
 }
 
-sub set_up_mvc {
+sub set_up_color_view {
     my ($self) = @_;
-    my $model = $self->{mvc}->get_model;
+    return unless $self->{color_view};
+    my $model = $self->{color_view}->get_model;
     $model->clear if $model;
 
     $model = Gtk2::TreeStore->new(qw/Gtk2::Gdk::Pixbuf Glib::Int Glib::Int Glib::Int Glib::Int/);
-    $self->{mvc}->set_model($model);
-    for my $col ($self->{mvc}->get_columns) {
-	$self->{mvc}->remove_column($col);
+    $self->{color_view}->set_model($model);
+    for my $col ($self->{color_view}->get_columns) {
+	$self->{color_view}->remove_column($col);
     }
 
     my $size = $Gtk2::Ex::Geo::ColorPalette::COLOR_CELL_SIZE;
@@ -283,23 +211,24 @@ sub set_up_mvc {
     my $cell = Gtk2::CellRendererPixbuf->new;
     $cell->set_fixed_size($size-2, $size-2);
     my $column = Gtk2::TreeViewColumn->new_with_attributes('Color', $cell, pixbuf => $i++);
-    $self->{mvc}->append_column($column);
+    $self->{color_view}->append_column($column);
 
     for my $c ('Red','Green','Blue','Alpha') {
 	$cell = Gtk2::CellRendererText->new;
 	$cell->set(editable => 1);
 	$cell->signal_connect(edited => \&view_changed, [$self, $i-1]);
 	$column = Gtk2::TreeViewColumn->new_with_attributes($c, $cell, text => $i++);
-	$self->{mvc}->append_column($column);
+	$self->{color_view}->append_column($column);
     }
-    $self->{mvc}->get_selection->set_mode('multiple');
+    $self->{color_view}->get_selection->set_mode('multiple');
 
     $self->{model} = $model;
-    $self->set_model();
+    $self->update_model;
 }
 
-sub set_model {
+sub update_model {
     my ($self) = @_;
+    return unless $self->{model};
     $self->{model}->clear;
     my $iter = $self->{model}->append(undef);
     $self->set_color_to_model($iter, undef, @{$self->{color}});
@@ -311,7 +240,7 @@ sub view_changed {
     my @color = $self->color;
     $color[$column] = $new_value;
     $self->color(@color);
-    $self->set_model;
+    $self->update_model;
 }
 
 package Gtk2::Ex::Geo::ColorPalette::ValueRange;
@@ -324,35 +253,28 @@ sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
     my %params = @_;
-    $self->{min_value} = undef unless defined $self->{min_value};
+    $self->{min_value} = undef;# unless defined $self->{min_value};
     $self->{min_value} = $params{min_value} if $params{min_value};
-    $self->{max_value} = undef unless defined $self->{max_value};
+    $self->{max_value} = undef;# unless defined $self->{max_value};
     $self->{max_value} = $params{max_value} if $params{max_value};
 }
 
-sub key_type {
+sub property {
     my $self = shift;
-    if (@_) {
-        my ($type) = @_;
-        croak "Unsupported key type: '$type'." unless $type eq 'Integer' or $type eq 'Real';
-    }
-    $self->SUPER::key_type(@_);
+    $self->{min_value} = undef;
+    $self->{max_value} = undef;
+    $self->SUPER::property(@_);
+}
+
+sub valid_property_type {
+    my $self = shift;
+    my $type = shift;
+    return unless $type;
+    return $type eq 'Integer' || $type eq 'Real';
 }
 
 sub readable_class_name {
     return ''; # virtual class
-}
-
-sub supports_integer_keys {
-    return 1;
-}
-
-sub supports_real_keys {
-    return 1;
-}
-
-sub has_finite_keys {
-    return 0;
 }
 
 sub output_is_hue {
@@ -361,25 +283,22 @@ sub output_is_hue {
 
 sub value_range {
     my $self = shift;
-    if (@_) {
-        ($self->{min_value}, $self->{max_value}) = @_;
-        $self->set_up_mvc;
-    }
+    ($self->{min_value}, $self->{max_value}) = @_ if @_;
     return ($self->{min_value}, $self->{max_value});
 }
 
-sub set_up_mvc {
+sub set_up_color_view {
     my ($self) = @_;
-    print STDERR "set up mvc $self\n";
-    return unless $self->{mvc};
-    my $model = $self->{mvc}->get_model;
+    print STDERR "set up color_view $self\n";
+    return unless $self->{color_view};
+    my $model = $self->{color_view}->get_model;
     $model->clear if $model;
 
-    my $type = $self->key_type_for_GTK;
+    my $type = $self->property_type_for_GTK;
     $model = Gtk2::TreeStore->new('Gtk2::Gdk::Pixbuf', 'Glib::'.$type);
-    $self->{mvc}->set_model($model);
-    for my $col ($self->{mvc}->get_columns) {
-	$self->{mvc}->remove_column($col);
+    $self->{color_view}->set_model($model);
+    for my $col ($self->{color_view}->get_columns) {
+	$self->{color_view}->remove_column($col);
     }
 
     my $size = $Gtk2::Ex::Geo::ColorPalette::COLOR_CELL_SIZE;
@@ -387,23 +306,23 @@ sub set_up_mvc {
     my $cell = Gtk2::CellRendererPixbuf->new;
     $cell->set_fixed_size($size-2, $size-2);
     my $column = Gtk2::TreeViewColumn->new_with_attributes('color', $cell, pixbuf => $i++);
-    $self->{mvc}->append_column($column);
+    $self->{color_view}->append_column($column);
 
     $cell = Gtk2::CellRendererText->new;
     $cell->set(editable => 0);
     $column = Gtk2::TreeViewColumn->new_with_attributes('value', $cell, text => $i++);
-    $self->{mvc}->append_column($column);
+    $self->{color_view}->append_column($column);
 
     $self->{model} = $model;
-    $self->set_model();
+    $self->update_model;
 }
 
-sub set_model {
+sub update_model {
     my ($self) = @_;
     $self->{model}->clear;
     print STDERR "set model $self\n";
     my ($min, $max) = $self->value_range;
-    return unless (defined $min and $min ne '' and defined $max and $max ne '');
+    return unless defined $min && $min ne '' && defined $max && $max ne '';
     my $delta = ($max-$min)/14;
     print STDERR "$min, $max, $delta\n";
     return if $delta <= 0;
@@ -463,11 +382,11 @@ sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
     my %params = @_;
-    $self->{min_hue} = 235 unless defined $self->{min_hue};
+    $self->{min_hue} = 235;# unless defined $self->{min_hue};
     $self->{min_hue} = $params{min_hue} if $params{min_hue};
-    $self->{max_hue} = 0 unless defined $self->{max_hue};
+    $self->{max_hue} = 0;# unless defined $self->{max_hue};
     $self->{max_hue} = $params{max_hue} if $params{max_hue};
-    $self->{hue_increment} = -1 unless defined $self->{hue_increment};
+    $self->{hue_increment} = -1;# unless defined $self->{hue_increment};
     $self->{hue_increment} = $params{hue_increment} if $params{hue_increment};
 }
 
@@ -477,6 +396,10 @@ sub order {
 
 sub readable_class_name {
     return 'Hue region';
+}
+
+sub output_is_hue {
+    return 1;
 }
 
 sub color {
@@ -516,11 +439,7 @@ sub initialize {
     $self->SUPER::initialize(@_);
 }
 
-sub supports_integer_keys {
-    return 1;
-}
-
-sub has_finite_keys {
+sub is_table_like {
     return 1;
 }
 
@@ -528,18 +447,18 @@ sub output_is_hue {
     return 0;
 }
 
-sub set_up_mvc {
+sub set_up_color_view {
     my ($self) = @_;
-    return unless $self->{mvc};
-    my $model = $self->{mvc}->get_model;
+    return unless $self->{color_view};
+    my $model = $self->{color_view}->get_model;
     $model->clear if $model;
 
-    my $type = $self->key_type_for_GTK;
+    my $type = $self->property_type_for_GTK;
     $model = Gtk2::TreeStore->new("Glib::$type","Gtk2::Gdk::Pixbuf","Glib::Int","Glib::Int","Glib::Int","Glib::Int");
 
-    $self->{mvc}->set_model($model);
-    for my $col ($self->{mvc}->get_columns) {
-	$self->{mvc}->remove_column($col);
+    $self->{color_view}->set_model($model);
+    for my $col ($self->{color_view}->get_columns) {
+	$self->{color_view}->remove_column($col);
     }
 
     my $size = $Gtk2::Ex::Geo::ColorPalette::COLOR_CELL_SIZE;
@@ -548,41 +467,41 @@ sub set_up_mvc {
     $cell->set(editable => 1);
     $cell->signal_connect(edited => \&view_changed, [$self, $i]);
     my $column = Gtk2::TreeViewColumn->new_with_attributes($self->column_header, $cell, text => $i++);
-    $self->{mvc}->append_column($column);
+    $self->{color_view}->append_column($column);
 
     $cell = Gtk2::CellRendererPixbuf->new;
     $cell->set_fixed_size($size-2, $size-2);
     $column = Gtk2::TreeViewColumn->new_with_attributes('Color', $cell, pixbuf => $i++);
-    $self->{mvc}->append_column($column);
+    $self->{color_view}->append_column($column);
 
     for my $c ('Red','Green','Blue','Alpha') {
 	$cell = Gtk2::CellRendererText->new;
 	$cell->set(editable => 1);
 	$cell->signal_connect(edited => \&view_changed, [$self, $i-1]);
 	$column = Gtk2::TreeViewColumn->new_with_attributes($c, $cell, text => $i++);
-	$self->{mvc}->append_column($column);
+	$self->{color_view}->append_column($column);
     }
-    $self->{mvc}->get_selection->set_mode('multiple');
+    $self->{color_view}->get_selection->set_mode('multiple');
 
     $self->{model} = $model;
-    $self->set_model();
+    $self->update_model;
 }
 
 sub view_changed {
     my ($cell, $path, $new_value, $data) = @_;
     my ($self, $column) = @$data;
     if ($column == 0) {
-        $self->key_at($path, $new_value);
+        $self->property_value_at($path, $new_value);
     } else {
         # color changed
-        my $x = $self->key_at($path);
+        my $x = $self->property_value_at($path);
         $column--;
         my @color = $self->color($x);
         $color[$column] = $new_value;
-        print STDERR "view changed: new color @color, at path $path,$column key $x\n";
+        print STDERR "view changed: new color @color, at path $path,$column value $x\n";
         $self->color($x, @color);
     }
-    $self->set_model;
+    $self->update_model;
 }
 
 package Gtk2::Ex::Geo::ColorPalette::Table::Lookup;
@@ -595,17 +514,15 @@ sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
     my %params = @_;
-    $self->{table} = {} unless defined $self->{table};
+    $self->{table} = {};# unless defined $self->{table};
     $self->{table} = $params{table} if $params{table}; # should copy
 }
 
-sub key_type {
+sub valid_property_type {
     my $self = shift;
-    if (@_) {
-        my ($type) = @_;
-        croak "Unsupported key type: '$type'." unless $type eq 'Integer' or $type eq 'String';
-    }
-    $self->SUPER::key_type(@_);
+    my $type = shift;
+    return unless $type;
+    return $type eq 'Integer' || $type eq 'String';
 }
 
 sub order {
@@ -614,14 +531,6 @@ sub order {
 
 sub readable_class_name {
     return 'Color table';
-}
-
-sub supports_string_keys {
-    return 1;
-}
-
-sub supports_real_keys {
-    return 0;
 }
 
 sub color {
@@ -633,9 +542,9 @@ sub color {
     return @{$self->{table}->{$key}} if exists $self->{table}->{$key};
 }
 
-sub new_key {
+sub new_property_value {
     my $self = shift;
-    return $self->{key_type} eq 'String' ? 'Change this.' : 0;
+    return $self->{property_type} eq 'String' ? 'Change this.' : 0;
 }
 
 sub add_color {
@@ -644,28 +553,28 @@ sub add_color {
     $self->{table}->{$key} = [@_];
 }
 
-sub remove_color {
+sub remove_color_at {
     my $self = shift;
-    my $key = shift;
-    delete $self->{table}->{$key};
+    my $value = shift;
+    delete $self->{table}->{$value};
 }
 
 sub column_header {
     return 'Key';
 }
 
-sub key_at {
+sub property_value_at {
     my $self = shift;
     my $index = shift;
     my @table;
     if (@_) {
         my $new_key = shift;
-        my $key = $self->key_at($index);
+        my $key = $self->property_value_at($index);
         my $tmp = $self->{table}->{$key};
         delete $self->{table}->{$key};
         $self->{table}->{$new_key} = $tmp;
     }
-    if ($self->{key_type} eq 'String') {
+    if ($self->{property_type} eq 'String') {
         @table = sort keys %{$self->{table}};
     } else {
         @table = sort {$a <=> $b} keys %{$self->{table}};
@@ -673,10 +582,11 @@ sub key_at {
     return $table[$index];
 }
 
-sub set_model {
+sub update_model {
     my ($self) = @_;
+    return unless $self->{model};
     $self->{model}->clear;
-    if ($self->{key_type} eq 'String') {
+    if ($self->{property_type} eq 'String') {
         for my $key (sort keys %{$self->{table}}) {
             my $iter = $self->{model}->append(undef);
             my @color = $self->color($key);
@@ -702,7 +612,7 @@ sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
     my %params = @_;
-    $self->{table} = [[0,0,0,0,255],[0,255,255,255,255]] unless defined $self->{table};
+    $self->{table} = [[0,0,0,0,255],[0,255,255,255,255]];# unless defined $self->{table};
     $self->{table} = $params{table} if $params{table}; # should copy
 }
 
@@ -710,29 +620,19 @@ sub order {
     return 5;
 }
 
-sub key_type {
+sub valid_property_type {
     my $self = shift;
-    if (@_) {
-        my ($type) = @_;
-        croak "Unsupported key type: '$type'." unless $type eq 'Integer' or $type eq 'Real';
-    }
-    $self->SUPER::key_type(@_);
+    my $type = shift;
+    return unless $type;
+    return $type eq 'Integer' || $type eq 'Real';
 }
 
-sub key_type_for_GTK {
+sub property_type_for_GTK {
     return 'String';
 }
 
 sub readable_class_name {
     return 'Color bins';
-}
-
-sub supports_string_keys {
-    return 0;
-}
-
-sub supports_real_keys {
-    return 1;
 }
 
 sub index {
@@ -757,7 +657,7 @@ sub color {
     return @{$self->{table}->[$index]}[1..4];
 }
 
-sub new_key {
+sub new_property_value {
     return 0;
 }
 
@@ -769,7 +669,7 @@ sub add_color {
     splice @$table, $index, 0, [$value, @_];
 }
 
-sub remove_color {
+sub remove_color_at {
     my $self = shift;
     my $value = shift;
     my $table = $self->{table};
@@ -782,19 +682,20 @@ sub column_header {
     return 'Bin';
 }
 
-sub key_at {
+sub property_value_at {
     my $self = shift;
     my $index = shift;
     if (@_ and $index < $#{$self->{table}}) {
-        my $new_key = shift;
-        $self->{table}->[$index]->[0] = $new_key;
+        my $new_value = shift;
+        $self->{table}->[$index]->[0] = $new_value;
     }
     return 'inf' if $index == $#{$self->{table}};
     return $self->{table}->[$index]->[0];
 }
 
-sub set_model {
+sub update_model {
     my ($self) = @_;
+    return unless $self->{model};
     $self->{model}->clear;
     my $i = 0;
     my $n = @{$self->{table}};

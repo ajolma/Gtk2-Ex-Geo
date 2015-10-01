@@ -57,10 +57,9 @@ sub get_dialog {
 	$push = 0 if /^  <\/widget/;
     }
     push @buf, '</glade-interface>';
-    my $gladexml = Gtk2::GladeXML->new_from_buffer("@buf");
-    my $dialog = $gladexml->get_widget($dialog_name);
-    return unless $dialog;
-    return $gladexml;
+    my $glade = Gtk2::GladeXML->new_from_buffer("@buf");
+    return unless $glade->get_widget($dialog_name);
+    return { glade => $glade };
 }
 
 1;

@@ -576,8 +576,9 @@ sub open_symbolizing_dialog {
 
 sub open_coloring_dialog {
     my($self, $property, $glue) = @_;
-    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(layer => $self, property => $property) unless $self->{styles}->{$property};
-    Gtk2::Ex::Geo::Dialogs::Coloring::open($self->{styles}->{$property});
+    my $styles = $self->{styles};
+    $styles->{$property} = Gtk2::Ex::Geo::Style->new(layer => $self, property => $property) unless $styles->{$property};
+    Gtk2::Ex::Geo::Dialogs::Coloring::open($styles->{$property});
 }
 
 =pod

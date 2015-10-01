@@ -728,7 +728,7 @@ sub get_dialog {
         my $d = $dialogs->get_dialog($dialog_name);
         return $d if $d;
     }
-    croak "can't find dialog $dialog_name";
+    croak "Dialog class '$dialog_name' is not available.";
 }
 
 =pod
