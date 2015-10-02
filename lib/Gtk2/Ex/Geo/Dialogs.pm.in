@@ -21,6 +21,8 @@ use warnings;
 use locale;
 use Glib qw/TRUE FALSE/;
 
+use vars qw/$folder/;
+
 use base qw(Exporter Gtk2::Ex::Geo::DialogMaster);
 
 our %EXPORT_TAGS = ( all => [ qw(&set_combo_to) ] );
@@ -57,6 +59,27 @@ sub set_combo_to {
 	$combo->set_active_iter($iter);
 	return 1;
     }
+}
+
+sub file_chooser {
+    my($title, $action, $entry) = @_;
+    my $file_chooser =
+	Gtk2::FileChooserDialog->new ($title, undef, $action,
+				      'gtk-cancel' => 'cancel',
+				      'gtk-ok' => 'ok');
+    $file_chooser->set_current_folder($folder) if $folder;
+    my $filename;
+    if ($file_chooser->run eq 'ok') {
+	$folder = $file_chooser->get_current_folder();
+	$filename = $file_chooser->get_filename;
+	#$filename =~ s/^file:\/\///;
+	#$filename =~ s/^\/// if $filename =~ /^\/\w:/; # hack for windows
+	$entry->set_text($filename) if $entry;
+    }
+    $file_chooser->destroy;
+    #$filename = filename_unescape($filename);
+    #print STDERR "$filename\n";
+    return $filename;
 }
 
 1;

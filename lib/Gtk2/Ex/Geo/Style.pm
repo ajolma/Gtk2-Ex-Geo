@@ -61,13 +61,6 @@ BEGIN {
     our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 }
 
-%SYMBOLS = ( 'Flow direction' => 1, 
-             Square => 2, 
-             Dot => 3, 
-             Cross => 4, 
-             'Wind rose' => 6,
-    );
-
 %LABEL_PLACEMENTS = ( 'Center' => 0, 
                       'Center left' => 1, 
                       'Center right' => 2, 
@@ -90,21 +83,22 @@ sub new {
 
 sub defaults {
     my $self = shift;
+    my $color_model = Gtk2::Ex::Geo::ColorPalette->new( style => $self );
+    my $color_dialog = Gtk2::Ex::Geo::Dialogs::Coloring->new(glue => $self->{glue},
+                                                             model => $color_model);
+
+    my $symbol_model = Gtk2::Ex::Geo::Symbolizer->new( style => $self );
+    my $symbol_dialog = Gtk2::Ex::Geo::Dialogs::Symbolizing->new(glue => $self->{glue},
+                                                                 model => $symbol_model);
     return  {
         # coloring
-        palette => Gtk2::Ex::Geo::ColorPalette->new( style => $self ),
+        color_dialog => $color_dialog,
 
         include_border => 0,
         border_color => [],
         
-        # symbolization (only Style::Point)
-        symbol_property => undef,
-        symbol => undef,
-        symbol_size => 5, # symbol size is also the max size of the symbol, if symbol_scale is used
-        symbol_property_value_range => [0, 0],
-        symbol_size_range => [0, 0],
-        symbol_table => [],
-        symbol_bins => [],
+        # symbolization
+        symbol_dialog => $symbol_dialog,
         
         # labeling
         label_property => undef,
@@ -123,6 +117,7 @@ sub initialize {
     my $self = shift;
     my %params = @_;
 
+    $self->{glue} = $params{glue};
     $self->{layer} = $params{layer};
     $self->{property} = $params{property};
 

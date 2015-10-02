@@ -39,13 +39,14 @@ use Class::Inspector;
 use Glib qw /TRUE FALSE/;
 use Gtk2::Ex::Geo::Style;
 use Gtk2::Ex::Geo::ColorPalette;
+use Gtk2::Ex::Geo::Symbolizer;
 use Gtk2::Ex::Geo::Dialogs;
 use Gtk2::Ex::Geo::Dialogs::Rules;
 use Gtk2::Ex::Geo::Dialogs::Symbolizing;
 use Gtk2::Ex::Geo::Dialogs::Coloring;
 use Gtk2::Ex::Geo::Dialogs::Labeling;
 
-use vars qw/%GEOMETRY_TYPES %PALETTE_TYPES/;
+use vars qw/%GEOMETRY_TYPES %PALETTE_TYPES %SYMBOLIZER_TYPES/;
 
 BEGIN {
     use Exporter 'import';
@@ -59,15 +60,27 @@ BEGIN {
         }
     }
     unless (%PALETTE_TYPES) {
-        my $type = Gtk2::Ex::Geo::ColorPalette->readable_class_name;
+        my $name = Gtk2::Ex::Geo::ColorPalette->readable_class_name;
         my $order = Gtk2::Ex::Geo::ColorPalette->order;
-        $PALETTE_TYPES{$type} = $order if $type ne '';
+        $PALETTE_TYPES{$name} = $order if $name;
         my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::ColorPalette' );
         for my $class (@$subclass_names) {
-            my $type = eval $class.'->readable_class_name';
+            my $name = eval $class.'->readable_class_name';
             my $order = eval $class.'->order';
-            next if $type eq '';
-            $PALETTE_TYPES{$type} = $order;
+            next unless $name;
+            $PALETTE_TYPES{$name} = $order;
+        }
+    }
+    unless (%SYMBOLIZER_TYPES) {
+        my $name = Gtk2::Ex::Geo::Symbolizer->readable_class_name;
+        my $order = Gtk2::Ex::Geo::Symbolizer->order;
+        $SYMBOLIZER_TYPES{$name} = $order if $name;
+        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::Symbolizer' );
+        for my $class (@$subclass_names) {
+            my $name = eval $class.'->readable_class_name';
+            my $order = eval $class.'->order';
+            next unless $name;
+            $SYMBOLIZER_TYPES{$name} = $order;
         }
     }
 }
@@ -521,6 +534,10 @@ sub palette_types {
     return sort {$PALETTE_TYPES{$a} <=> $PALETTE_TYPES{$b}} keys %PALETTE_TYPES;
 }
 
+sub symbolizer_types {
+    return sort {$SYMBOLIZER_TYPES{$a} <=> $SYMBOLIZER_TYPES{$b}} keys %SYMBOLIZER_TYPES;
+}
+
 =pod
 
 =head1 DIALOGS
@@ -564,8 +581,10 @@ sub open_rules_dialog {
 
 sub open_symbolizing_dialog {
     my($self, $property, $glue) = @_;
-    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(layer => $self, property => $property) unless $self->{styles}->{$property};
-    Gtk2::Ex::Geo::Dialogs::Symbolizing::open($self->{styles}->{$property});
+    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(glue => $glue,
+                                                             layer => $self, 
+                                                             property => $property) unless $self->{styles}->{$property};
+    $self->{styles}->{$property}->{symbol_dialog}->open;
 }
 
 =pod
@@ -577,8 +596,10 @@ sub open_symbolizing_dialog {
 sub open_coloring_dialog {
     my($self, $property, $glue) = @_;
     my $styles = $self->{styles};
-    $styles->{$property} = Gtk2::Ex::Geo::Style->new(layer => $self, property => $property) unless $styles->{$property};
-    Gtk2::Ex::Geo::Dialogs::Coloring::open($styles->{$property});
+    $styles->{$property} = Gtk2::Ex::Geo::Style->new(glue => $glue,
+                                                     layer => $self, 
+                                                     property => $property) unless $styles->{$property};
+    $styles->{$property}->{color_dialog}->open;
 }
 
 =pod

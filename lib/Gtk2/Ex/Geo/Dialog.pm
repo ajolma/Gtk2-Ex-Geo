@@ -3,19 +3,37 @@ package Gtk2::Ex::Geo::Dialog;
 use strict;
 use warnings;
 use locale;
+use Carp;
+use Scalar::Util qw(blessed);
 use Glib qw/TRUE FALSE/;
 
-use vars qw/$folder/;
+sub new {
+    my $class = shift;
+    my %params = @_;
+    my $self = $params{self} ? $params{self} : {};
+    bless $self => (ref($class) or $class);
+    $self->initialize(@_);
+    return $self;
+}
+
+sub initialize {
+    my $self = shift;
+    my %params = @_;
+    $self->{glue} = $params{glue};
+    $self->{model} = $params{model};
+}
 
 sub get_widget {
     my $self = shift;
     my $name = shift;
-    return $self->{glade}->get_widget($name);
+    my $widget = $self->{glade}->get_widget($name);
+    croak "Widget '$name' not found." unless $widget;
+    return $widget;
 }
 
 =pod
 
-=head2 bootstrap_dialog($dialog_class, $title, $connects, $combos)
+=head2 bootstrap($dialog_class, $title, $connects, $combos)
 
 Called by the "open" method of a dialog class to create and initialize
 or restore a dialog object of a given class. If the dialog does not
@@ -42,25 +60,21 @@ introspection dialog.
 =cut
 
 sub bootstrap {
-    my($class, $model, $name, $title, $connects, $combos) = @_;
-    print STDERR "bootstrap from $model\n";
-    my $self = $model->{view};
+    my($self, $name, $title, $connects, $combos) = @_;
     my $boot = 0;
     my $dialog_box;
-    unless ($self) {
-        $self = $model->{glue}->get_dialog($name);
-        bless $self => $class;
+    unless ($self->{name}) {
+        $self->{name} = $name;
+        $self->{glade} = $self->{glue}->get_dialog($name);
         if ($connects) {
             for my $n (keys %$connects) {
-                my $w = $self->{glade}->get_widget($n);
-                print STDERR "Can't find widget '$n'\n" unless defined $w;
+                my $w = $self->get_widget($n);
                 $w->signal_connect(@{$connects->{$n}}) if defined $w;
             }
         }
         if ($combos) {
             for my $n (@$combos) {
-                my $combo = $self->{glade}->get_widget($n);
-                print STDERR "Can't find combobox '$n'\n" unless defined $combo;
+                my $combo = $self->get_widget($n);
                 next unless defined $combo;
                 unless ($combo->isa('Gtk2::ComboBoxEntry')) {
                     my $renderer = Gtk2::CellRendererText->new;
@@ -73,18 +87,16 @@ sub bootstrap {
             }
         }
         $boot = 1;
-        $self->{name} = $name;
-        $dialog_box = $self->{glade}->get_widget($name);
+        $dialog_box = $self->get_widget($name);
         $dialog_box->set_position('center');
     } else {
-        $dialog_box = $self->{glade}->get_widget($name);
+        $dialog_box = $self->get_widget($name);
         $dialog_box->move(@{$self->{position}}) unless $dialog_box->get('visible');
     }
-    print STDERR "bootstrapped $self\n";
     $dialog_box->set_title($title);
     $dialog_box->show_all;
     $dialog_box->present;
-    return wantarray ? ($self, $boot) : $self;
+    return $boot;
 }
 
 =pod
@@ -106,6 +118,25 @@ sub visible {
     return $self->get_widget($self->{name})->get('visible');
 }
 
+sub apply {
+    my ($self, $close) = @{$_[1]};
+    $self->hide if $close;
+    $self->{glue}->{overlay}->render;
+}
+
+sub cancel {
+    my $self;
+    if (@_ == 2) {
+        (undef, $self) = @_;
+    } elsif (@_ == 3) {
+        (undef, undef, $self) = @_;
+    }
+    $self->{model}->clone($self->{model_backup});
+    $self->hide;
+    $self->{glue}->{overlay}->render;
+    return 1;
+}
+
 sub progress {
     my($progress, $msg, $bar) = @_;
     $progress = 1 if $progress > 1;
@@ -114,16 +145,30 @@ sub progress {
     return 1;
 }
 
+sub setup_combo {
+    my ($self, $name) = @_;
+    my $combo = $self->get_widget($name);
+    next unless defined $combo;
+    unless ($combo->isa('Gtk2::ComboBoxEntry')) {
+        my $renderer = Gtk2::CellRendererText->new;
+        $combo->pack_start($renderer, TRUE);
+        $combo->add_attribute($renderer, text => 0);
+    }
+    my $model = Gtk2::ListStore->new('Glib::String');
+    $combo->set_model($model);
+    $combo->set_text_column(0) if $combo->isa('Gtk2::ComboBoxEntry');
+}
+
 sub refill_combo {
-    my ($self, $name_of_combo, $entry_list, $selected) = @_;
-    my $combo = $self->get_widget($name_of_combo);
+    my ($self, $name, $entry_list, $selected) = @_;
+    my $combo = $self->get_widget($name);
     my $model = $combo->get_model;
     $model->clear;
     my $i = 0;
     my $active;
     for my $entry (@$entry_list) {
 	$model->set($model->append, 0, $entry);
-	$active = $i if defined $selected and $entry eq $selected;
+	$active = $i if defined $selected && $entry eq $selected;
 	$i++;
     }
     $active = 0 unless defined $active;
@@ -131,22 +176,21 @@ sub refill_combo {
 }
 
 sub get_value_from_combo {
-    my($self, $name_of_combo) = @_;
-    my $combo = $self->get_widget($name_of_combo);
-    print STDERR "Can't find combobox $name_of_combo." unless $combo;
-    return unless $combo;
+    my($self, $combo) = @_;
+    $combo = blessed $combo ? $combo : $self->get_widget($combo);
+    croak "Can't find combobox $combo." unless $combo;
     my $model = $combo->get_model;
-    return unless $model;
+    croak "Uninitialized combobox $combo." unless $model;
     my $a = $combo->get_active();
     if ($a == -1) { # comboboxentry
-	if ($combo->isa('Gtk2::ComboBoxEntry')) {
-	    return $combo->child->get_text;
-	} else {
-	    return '';
-	}
+        if ($combo->isa('Gtk2::ComboBoxEntry')) {
+            return $combo->child->get_text;
+        } else {
+            return; # croak "Can't get value from combobox entry $combo.";
+        }
     }
     my $iter = $model->get_iter_from_string($a);
-    return unless $iter;
+    croak "Can't convert $a to iter in combobox $combo." unless $iter;
     return $model->get_value($iter);
 }
 
@@ -167,27 +211,6 @@ sub get_selected_from_selection {
 	$iter = $model->iter_next($iter);
     }
     return \%s;
-}
-
-sub file_chooser {
-    my($title, $action, $entry) = @_;
-    my $file_chooser =
-	Gtk2::FileChooserDialog->new ($title, undef, $action,
-				      'gtk-cancel' => 'cancel',
-				      'gtk-ok' => 'ok');
-    $file_chooser->set_current_folder($folder) if $folder;
-    my $filename;
-    if ($file_chooser->run eq 'ok') {
-	$folder = $file_chooser->get_current_folder();
-	$filename = $file_chooser->get_filename;
-	#$filename =~ s/^file:\/\///;
-	#$filename =~ s/^\/// if $filename =~ /^\/\w:/; # hack for windows
-	$entry->set_text($filename) if $entry;
-    }
-    $file_chooser->destroy;
-    #$filename = filename_unescape($filename);
-    #print STDERR "$filename\n";
-    return $filename;
 }
 
 1;

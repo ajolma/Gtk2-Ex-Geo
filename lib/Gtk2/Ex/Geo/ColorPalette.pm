@@ -34,29 +34,43 @@ use locale;
 use Scalar::Util qw(blessed);
 use Carp;
 use Class::Inspector;
+use Clone;
+use Gtk2::Ex::Geo::StyleElement;
 use Glib qw/TRUE FALSE/;
+
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement );
 
 use vars qw/$COLOR_CELL_SIZE/;
 
 $COLOR_CELL_SIZE = 20;
+
+sub order {
+}
+
+sub readable_class_name {
+}
+
+sub is_table_like {
+}
+
+sub output_is_hue {
+}
 
 sub new {
     my $class = shift;
     my %params = @_;
     my $self = $params{self} ? $params{self} : {};
     if ($params{readable_class_name}) {
-        if ($params{readable_class_name} ne Gtk2::Ex::Geo::ColorPalette->readable_class_name) {
-            $class = undef;
-            my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::ColorPalette' );
-            for my $subclass (@$subclass_names) {
-                my $name = eval $subclass.'->readable_class_name';
-                if ($name eq $params{readable_class_name}) {
-                    $class = $subclass;
-                    last;
-                }
+        $class = undef;
+        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::ColorPalette' );
+        for my $subclass (@$subclass_names) {
+            my $name = eval $subclass.'->readable_class_name';
+            if ($name && $name eq $params{readable_class_name}) {
+                $class = $subclass;
+                last;
             }
-            croak "Unknown color palette class: $params{readable_class_name}." unless $class;
         }
+        croak "Unknown color palette class: $params{readable_class_name}." unless $class;
     }
     bless $self => (ref($class) or $class);
     $self->initialize(@_);
@@ -66,59 +80,14 @@ sub new {
 sub initialize {
     my $self = shift;
     my %params = @_;
-    $self->{property_name} = undef;# unless $self->{property_name};
+    $self->{property_name} = undef;
     $self->{property_name} = $params{property_name};
-    $self->{property_type} = undef;# unless $self->{property_type};
+    $self->{property_type} = undef;
     $self->{property_type} = $params{property_type};
-    $self->{style} = undef;# unless $self->{style};
+    $self->{style} = undef;
     $self->{style} = $params{style};
-    $self->{glue} = $self->{style}->{layer}->{glue}; # make this a model for views (dialogs)
-    $self->{view} = undef;# unless $self->{view};
-    $self->{view} = $params{view};
 }
 
-sub order {
-    return 1;
-}
-
-sub property {
-    my $self = shift;
-    if (@_) {
-        $self->{property_name} = shift;
-        my $type = shift;
-        if ($type and not $self->valid_property_type($type)) {
-            $self->{property_name} = undef;
-            $self->{property_type} = undef;
-            croak "Invalid property type: '$type' for $self.";
-        }
-        $self->{property_type} = $type;
-    }
-    return wantarray ? ($self->{property_name}, $self->{property_type}) : $self->{property_name};
-}
-
-sub valid_property_type {
-}
-
-sub property_type_for_GTK {
-    my $self = shift;
-    my $type = $self->{property_type};
-    return 'Int' if $type eq 'Integer';
-    return 'Double' if $type eq 'Real';
-    return 'String' if $type eq 'String';
-    return '';
-}
-
-sub readable_class_name {
-    return '';
-}
-
-sub is_table_like {
-    return 0;
-}
-
-sub output_is_hue {
-    return 0;
-}
 
 sub value_range {
 }
@@ -138,16 +107,27 @@ sub property_value_at { # property value at index for table like palettes
 sub set_color_view {
     my ($self, $view) = @_;
     $self->{color_view} = $view;
+    $self->{model} = undef;
+    my $model = $self->{color_view}->get_model;
+    if ($model) {
+        for my $col ($self->{color_view}->get_columns) {
+            $self->{color_view}->remove_column($col);
+        }
+        $model->clear;
+    }
 }
 
-sub set_up_color_view {
+sub prepare_model {
     my ($self) = @_;
     return unless $self->{color_view};
+    my $model = $self->{color_view}->get_model;
+    $model->clear if $model;
+    for my $col ($self->{color_view}->get_columns) {
+        $self->{color_view}->remove_column($col);
+    }
 }
 
 sub update_model {
-    my ($self) = @_;
-    return unless $self->{model};
 }
 
 sub set_color_to_model {
@@ -174,18 +154,22 @@ use Carp;
 
 our @ISA = qw( Gtk2::Ex::Geo::ColorPalette );
 
-sub initialize {
-    my $self = shift;
-    $self->SUPER::initialize(@_);
-    my %params = @_;
-    $self->{color} = [0, 0, 0, 255];# unless $self->{color};
-    @{$self->{color}} = @{$params{color}} if $params{color};
-    $self->{property_name} = undef;
-    $self->{property_type} = undef;
+sub order {
+    return 1;
 }
 
 sub readable_class_name {
     return 'Single color';
+}
+
+sub initialize {
+    my $self = shift;
+    $self->SUPER::initialize(@_);
+    my %params = @_;
+    $self->{color} = [0, 0, 0, 255];
+    @{$self->{color}} = @{$params{color}} if $params{color};
+    $self->{property_name} = undef;
+    $self->{property_type} = undef;
 }
 
 sub color {
@@ -194,17 +178,13 @@ sub color {
     return @{$self->{color}};
 }
 
-sub set_up_color_view {
+sub prepare_model {
     my ($self) = @_;
     return unless $self->{color_view};
-    my $model = $self->{color_view}->get_model;
-    $model->clear if $model;
+    $self->SUPER::prepare_model;
 
-    $model = Gtk2::TreeStore->new(qw/Gtk2::Gdk::Pixbuf Glib::Int Glib::Int Glib::Int Glib::Int/);
+    my $model = Gtk2::TreeStore->new(qw/Gtk2::Gdk::Pixbuf Glib::Int Glib::Int Glib::Int Glib::Int/);
     $self->{color_view}->set_model($model);
-    for my $col ($self->{color_view}->get_columns) {
-	$self->{color_view}->remove_column($col);
-    }
 
     my $size = $Gtk2::Ex::Geo::ColorPalette::COLOR_CELL_SIZE;
     my $i = 0;
@@ -253,9 +233,9 @@ sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
     my %params = @_;
-    $self->{min_value} = undef;# unless defined $self->{min_value};
+    $self->{min_value} = undef;
     $self->{min_value} = $params{min_value} if $params{min_value};
-    $self->{max_value} = undef;# unless defined $self->{max_value};
+    $self->{max_value} = undef;
     $self->{max_value} = $params{max_value} if $params{max_value};
 }
 
@@ -273,33 +253,21 @@ sub valid_property_type {
     return $type eq 'Integer' || $type eq 'Real';
 }
 
-sub readable_class_name {
-    return ''; # virtual class
-}
-
-sub output_is_hue {
-    return 0;
-}
-
 sub value_range {
     my $self = shift;
     ($self->{min_value}, $self->{max_value}) = @_ if @_;
     return ($self->{min_value}, $self->{max_value});
 }
 
-sub set_up_color_view {
+sub prepare_model {
     my ($self) = @_;
-    print STDERR "set up color_view $self\n";
     return unless $self->{color_view};
-    my $model = $self->{color_view}->get_model;
-    $model->clear if $model;
+    $self->SUPER::prepare_model;
 
     my $type = $self->property_type_for_GTK;
-    $model = Gtk2::TreeStore->new('Gtk2::Gdk::Pixbuf', 'Glib::'.$type);
+    return unless $type;
+    my $model = Gtk2::TreeStore->new('Gtk2::Gdk::Pixbuf', 'Glib::'.$type);
     $self->{color_view}->set_model($model);
-    for my $col ($self->{color_view}->get_columns) {
-	$self->{color_view}->remove_column($col);
-    }
 
     my $size = $Gtk2::Ex::Geo::ColorPalette::COLOR_CELL_SIZE;
     my $i = 0;
@@ -319,12 +287,11 @@ sub set_up_color_view {
 
 sub update_model {
     my ($self) = @_;
+    return unless $self->{model};
     $self->{model}->clear;
-    print STDERR "set model $self\n";
     my ($min, $max) = $self->value_range;
     return unless defined $min && $min ne '' && defined $max && $max ne '';
     my $delta = ($max-$min)/14;
-    print STDERR "$min, $max, $delta\n";
     return if $delta <= 0;
     my $x = $max;
     my $size = $Gtk2::Ex::Geo::ColorPalette::COLOR_CELL_SIZE;
@@ -378,18 +345,6 @@ use Graphics::ColorUtils qw /:all/;
 
 our @ISA = qw( Gtk2::Ex::Geo::ColorPalette::ValueRange );
 
-sub initialize {
-    my $self = shift;
-    $self->SUPER::initialize(@_);
-    my %params = @_;
-    $self->{min_hue} = 235;# unless defined $self->{min_hue};
-    $self->{min_hue} = $params{min_hue} if $params{min_hue};
-    $self->{max_hue} = 0;# unless defined $self->{max_hue};
-    $self->{max_hue} = $params{max_hue} if $params{max_hue};
-    $self->{hue_increment} = -1;# unless defined $self->{hue_increment};
-    $self->{hue_increment} = $params{hue_increment} if $params{hue_increment};
-}
-
 sub order {
     return 3;
 }
@@ -400,6 +355,18 @@ sub readable_class_name {
 
 sub output_is_hue {
     return 1;
+}
+
+sub initialize {
+    my $self = shift;
+    $self->SUPER::initialize(@_);
+    my %params = @_;
+    $self->{min_hue} = 235;
+    $self->{min_hue} = $params{min_hue} if $params{min_hue};
+    $self->{max_hue} = 0;
+    $self->{max_hue} = $params{max_hue} if $params{max_hue};
+    $self->{hue_increment} = -1;
+    $self->{hue_increment} = $params{hue_increment} if $params{hue_increment};
 }
 
 sub color {
@@ -434,32 +401,24 @@ use Carp;
 
 our @ISA = qw( Gtk2::Ex::Geo::ColorPalette );
 
+sub is_table_like {
+    return 1;
+}
+
 sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
 }
 
-sub is_table_like {
-    return 1;
-}
-
-sub output_is_hue {
-    return 0;
-}
-
-sub set_up_color_view {
+sub prepare_model {
     my ($self) = @_;
     return unless $self->{color_view};
-    my $model = $self->{color_view}->get_model;
-    $model->clear if $model;
+    $self->SUPER::prepare_model;
 
     my $type = $self->property_type_for_GTK;
-    $model = Gtk2::TreeStore->new("Glib::$type","Gtk2::Gdk::Pixbuf","Glib::Int","Glib::Int","Glib::Int","Glib::Int");
-
+    return unless $type;
+    my $model = Gtk2::TreeStore->new("Glib::$type","Gtk2::Gdk::Pixbuf","Glib::Int","Glib::Int","Glib::Int","Glib::Int");
     $self->{color_view}->set_model($model);
-    for my $col ($self->{color_view}->get_columns) {
-	$self->{color_view}->remove_column($col);
-    }
 
     my $size = $Gtk2::Ex::Geo::ColorPalette::COLOR_CELL_SIZE;
     my $i = 0;
@@ -498,7 +457,6 @@ sub view_changed {
         $column--;
         my @color = $self->color($x);
         $color[$column] = $new_value;
-        print STDERR "view changed: new color @color, at path $path,$column value $x\n";
         $self->color($x, @color);
     }
     $self->update_model;
@@ -510,12 +468,26 @@ use Carp;
 
 our @ISA = qw( Gtk2::Ex::Geo::ColorPalette::Table );
 
+sub order {
+    return 4;
+}
+
+sub readable_class_name {
+    return 'Lookup table';
+}
+
 sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
     my %params = @_;
-    $self->{table} = {};# unless defined $self->{table};
+    $self->{table} = {};
     $self->{table} = $params{table} if $params{table}; # should copy
+}
+
+sub property {
+    my $self = shift;
+    $self->{table} = {};
+    $self->SUPER::property(@_);
 }
 
 sub valid_property_type {
@@ -523,14 +495,6 @@ sub valid_property_type {
     my $type = shift;
     return unless $type;
     return $type eq 'Integer' || $type eq 'String';
-}
-
-sub order {
-    return 4;
-}
-
-sub readable_class_name {
-    return 'Color table';
 }
 
 sub color {
@@ -544,7 +508,13 @@ sub color {
 
 sub new_property_value {
     my $self = shift;
-    return $self->{property_type} eq 'String' ? 'Change this.' : 0;
+    if ($self->{property_type} eq 'String') {
+        return 'Change this.';
+    } else {
+        my @table = sort {$a <=> $b} keys %{$self->{table}};
+        return 0 unless @table;
+        return $table[$#table]+1;
+    }
 }
 
 sub add_color {
@@ -557,10 +527,6 @@ sub remove_color_at {
     my $self = shift;
     my $value = shift;
     delete $self->{table}->{$value};
-}
-
-sub column_header {
-    return 'Key';
 }
 
 sub property_value_at {
@@ -580,6 +546,10 @@ sub property_value_at {
         @table = sort {$a <=> $b} keys %{$self->{table}};
     }
     return $table[$index];
+}
+
+sub column_header {
+    return 'Key';
 }
 
 sub update_model {
@@ -608,16 +578,26 @@ use bigrat;
 
 our @ISA = qw( Gtk2::Ex::Geo::ColorPalette::Table );
 
+sub order {
+    return 5;
+}
+
+sub readable_class_name {
+    return 'Color bins';
+}
+
 sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
     my %params = @_;
-    $self->{table} = [[0,0,0,0,255],[0,255,255,255,255]];# unless defined $self->{table};
-    $self->{table} = $params{table} if $params{table}; # should copy
+    $self->{table} = [[0,0,0,0,255],[0,255,255,255,255]];
+    $self->{table} = Clone::clone($params{table}) if $params{table};
 }
 
-sub order {
-    return 5;
+sub property {
+    my $self = shift;
+    $self->{table} = [[0,0,0,0,255],[0,255,255,255,255]];
+    $self->SUPER::property(@_);
 }
 
 sub valid_property_type {
@@ -629,10 +609,6 @@ sub valid_property_type {
 
 sub property_type_for_GTK {
     return 'String';
-}
-
-sub readable_class_name {
-    return 'Color bins';
 }
 
 sub index {
@@ -650,6 +626,7 @@ sub index {
 sub color {
     my $self = shift;
     my $value = shift;
+    $value = $self->{property_type} eq 'Integer' ? int($value) : $value;
     my $index = $self->index($value);
     if (@_ > 3) {
         $self->{table}->[$index] = [$value, @_];
@@ -658,15 +635,36 @@ sub color {
 }
 
 sub new_property_value {
-    return 0;
+    my $self = shift;
+    return $self->{table}->[0]->[0]-1;
+}
+
+sub organize {
+    my $self = shift;
+    my @sort;
+    my $n = @{$self->{table}}-1;
+    for (my $i = 0; $i < $n; $i++) {
+        push @sort, [$self->{table}->[$i]->[0], $i];
+    }
+    my $last = $self->{table}->[$n];
+    @sort = sort {$a->[0]<=>$b->[0]} @sort;
+    my @new;
+    for my $value_and_index (@sort) {
+        push @new, $self->{table}->[$value_and_index->[1]];
+    }
+    push @new, $last;
+    $self->{table} = \@new;
 }
 
 sub add_color {
     my $self = shift;
     my $value = shift;
-    my $index = $self->index($value);
-    my $table = $self->{table};
-    splice @$table, $index, 0, [$value, @_];
+    $value = $self->{property_type} eq 'Integer' ? int($value) : $value+0;
+    my $n = @{$self->{table}};
+    unshift @{$self->{table}}, [$value, @_];
+    $n = @{$self->{table}};
+    $self->organize;
+    $n = @{$self->{table}};
 }
 
 sub remove_color_at {
@@ -678,19 +676,22 @@ sub remove_color_at {
     splice @$table, $index, 1;
 }
 
-sub column_header {
-    return 'Bin';
-}
-
 sub property_value_at {
     my $self = shift;
     my $index = shift;
     if (@_ and $index < $#{$self->{table}}) {
-        my $new_value = shift;
-        $self->{table}->[$index]->[0] = $new_value;
+        my $new_value = POSIX::strtod(shift);
+        $new_value = $self->{property_type} eq 'Integer' ? int($new_value) : $new_value;
+        my @color = @{$self->{table}->[$index]}[1..4];
+        $self->{table}->[$index] = [$new_value, @color];
+        $self->organize;
     }
     return 'inf' if $index == $#{$self->{table}};
     return $self->{table}->[$index]->[0];
+}
+
+sub column_header {
+    return 'Bin';
 }
 
 sub update_model {

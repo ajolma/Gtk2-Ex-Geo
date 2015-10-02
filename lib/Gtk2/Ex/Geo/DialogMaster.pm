@@ -41,7 +41,7 @@ sub new {
 
 =head2 get_dialog($dialog_class)
 
-Return a new widget (dialog box) of the given class by creating it
+Return a new Gtk2::GladeXML object of the given class by creating it
 from the XML stored in this object.
 
 =cut
@@ -59,7 +59,7 @@ sub get_dialog {
     push @buf, '</glade-interface>';
     my $glade = Gtk2::GladeXML->new_from_buffer("@buf");
     return unless $glade->get_widget($dialog_name);
-    return { glade => $glade };
+    return $glade;
 }
 
 1;
