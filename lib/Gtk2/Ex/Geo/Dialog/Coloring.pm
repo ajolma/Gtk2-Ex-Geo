@@ -34,8 +34,7 @@ sub open {
         $self->dialog_manager('boot');
     }
 
-    $self->refill_combo('palette_type_combobox',
-                        [$self->{model}->{style}->{layer}->colorer_types],
+    $self->palette_type([$self->{model}->{style}->{layer}->colorer_types],
                         $self->{model}->readable_class_name);
     
 }
@@ -47,6 +46,8 @@ sub palette_type {
     if (defined $key && $key eq 'boot') {
         $self->setup_combo('palette_type_combobox');
         $self->get_widget('palette_type_combobox')->signal_connect(changed => \&palette_type_changed, $self);
+    } elsif (defined $key) {
+        $self->refill_combo('palette_type_combobox', $key, $value);
     }
 }
 

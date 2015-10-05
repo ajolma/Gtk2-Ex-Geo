@@ -1136,7 +1136,7 @@ sub add_layer {
     croak "Layer with name '$name' already exists." if defined $i;
 
     $layer->name($name);
-    $layer->{_tree_index} = $self->{model}->insert (undef, 0);
+    $layer->{_tree_index} = $self->{model}->insert(undef, 0);
  
     $self->set_layer($layer);
     $self->{overlay}->add_layer($layer, $do_not_zoom_to);

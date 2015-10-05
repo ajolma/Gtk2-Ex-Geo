@@ -36,18 +36,16 @@ use Glib qw/TRUE FALSE/;
 
 our @ISA = qw( Gtk2::Ex::Geo::StyleElement );
 
-use vars qw//;
-
 sub shape {
+}
+
+sub shapes {
 }
 
 sub size {
 }
 
-sub value_range {
-}
-
-sub property_value_at {
+sub size_range {
 }
 
 package Gtk2::Ex::Geo::StyleElement::Symbolizer::Simple;
@@ -82,24 +80,121 @@ sub shape {
     return $self->{shape};
 }
 
+sub shapes {
+    return qw/Square Circle Cross/;
+}
+
 sub size {
+    my $self = shift;
+    $self->{size} = shift if @_;
+    return $self->{size};
+}
+
+package Gtk2::Ex::Geo::StyleElement::Symbolizer::VaryingSize;
+use locale;
+use Carp;
+
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Symbolizer );
+
+sub order {
+    return 2;
+}
+
+sub readable_class_name {
+    return 'Varying size';
+}
+
+sub initialize {
+    my $self = shift;
+    $self->SUPER::initialize(@_);
+    my %params = @_;
+    $self->{shape} = 'Square';
+    $self->{shape} = $params{shape} if exists $params{shape};
+    $self->{min_size} = 1;
+    $self->{min_size} = $params{min_size} if exists $params{min_size};
+    $self->{max_size} = 10;
+    $self->{max_size} = $params{max_size} if exists $params{max_size};
+}
+
+sub shape {
     my $self = shift;
     $self->{shape} = shift if @_;
     return $self->{shape};
 }
 
-#         symbol_size => 5, # symbol size is also the max size of the symbol, if symbol_scale is used
-#        symbol_property_value_range => [0, 0],
-#        symbol_size_range => [0, 0],
-#        symbol_table => [],
-#        symbol_bins => [],
-# %SYMBOLS = ( 'Flow direction' => 1, 
-#             Square => 2, 
-#             Dot => 3, 
-#             Cross => 4, 
-#             'Wind rose' => 6,
-#    );
+sub shapes {
+    return qw/Square Circle Cross/;
+}
 
+sub size_range {
+    my $self = shift;
+    if (@_) {
+        $self->{min_size} = shift;
+        $self->{max_size} = shift;
+    }
+    return ($self->{min_size}, $self->{max_size});
+}
 
+package Gtk2::Ex::Geo::StyleElement::Symbolizer::VaryingShape;
+use locale;
+use Carp;
+
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Symbolizer );
+
+sub order {
+    return 3;
+}
+
+sub readable_class_name {
+    return 'Varying shape';
+}
+
+sub initialize {
+    my $self = shift;
+    $self->SUPER::initialize(@_);
+    my %params = @_;
+    $self->{size} = 5;
+    $self->{size} = $params{size} if exists $params{size};
+}
+
+sub size {
+    my $self = shift;
+    $self->{size} = shift if @_;
+    return $self->{size};
+}
+
+package Gtk2::Ex::Geo::StyleElement::Symbolizer::VaryingShapeAndSize;
+use locale;
+use Carp;
+
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Symbolizer );
+
+sub order {
+    return 4;
+}
+
+sub readable_class_name {
+    return 'Varying shape and size';
+}
+
+sub initialize {
+    my $self = shift;
+    $self->SUPER::initialize(@_);
+    my %params = @_;
+
+    $self->{min_size} = 1;
+    $self->{min_size} = $params{min_size} if exists $params{min_size};
+    $self->{max_size} = 10;
+    $self->{max_size} = $params{max_size} if exists $params{max_size};
+}
+
+sub size_range {
+    my $self = shift;
+    if (@_) {
+        $self->{min_size} = shift;
+        $self->{max_size} = shift;
+    }
+    return ($self->{min_size}, $self->{max_size});
+}
 
 1;

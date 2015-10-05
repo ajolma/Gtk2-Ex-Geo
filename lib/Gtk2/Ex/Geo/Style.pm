@@ -73,35 +73,6 @@ sub new {
     return $self;
 }
 
-sub defaults {
-    my $self = shift;
-    my $coloring = Gtk2::Ex::Geo::StyleElement::Colorer->new( style => $self );
-    my $color_dialog = Gtk2::Ex::Geo::Dialog::Coloring->new(glue => $self->{glue},
-                                                            model => $coloring);
-    
-    my $symbolizing = Gtk2::Ex::Geo::StyleElement::Symbolizer->new( style => $self );
-    my $symbol_dialog = Gtk2::Ex::Geo::Dialog::Symbolizing->new(glue => $self->{glue},
-                                                                model => $symbolizing);
-    
-    my $labeling = Gtk2::Ex::Geo::StyleElement::Labeler->new( style => $self );
-    my $labeling_dialog = Gtk2::Ex::Geo::Dialog::Labeling->new(glue => $self->{glue},
-                                                               model => $labeling);
-    
-    return  {
-        # coloring
-        color_dialog => $color_dialog,
-
-        include_border => 0,
-        border_color => [],
-        
-        # symbolization
-        symbol_dialog => $symbol_dialog,
-        
-        # labeling
-        label_dialog => $labeling_dialog,
-    };
-}
-
 sub initialize {
     my $self = shift;
     my %params = @_;
@@ -112,24 +83,20 @@ sub initialize {
 
     croak "Style initializer missing layer or property." unless $self->{layer} && $self->{property};
 
-    # set defaults for all, order of preference is: 
-    # user given as constructor parameter
-    # subclass default
-    # default as defined here
-
-    my $defaults = $self->defaults;
-    for my $property (keys %$defaults) {
-        unless (ref $defaults->{$property}) {
-            $self->{$property} = $defaults->{$property} unless exists $self->{$property};
-            $self->{$property} = $params{$property} if exists $params{$property};
-        } elsif (ref $defaults->{$property} eq 'ARRAY') {
-            @{$self->{$property}} = @{$defaults->{$property}} unless exists $self->{$property};
-            @{$self->{$property}} = @{$params{$property}} if exists $params{$property};
-        } else { # currently this can only be an object
-            $self->{$property} = $defaults->{$property} unless exists $self->{$property};
-            $self->{$property} = $params{$property} if exists $params{$property};
-        }
-    }
+    $self->{colorer} = Gtk2::Ex::Geo::StyleElement::Colorer->new( style => $self );
+    $self->{coloring_dialog} = Gtk2::Ex::Geo::Dialog::Coloring->new(glue => $self->{glue},
+                                                                    model => $self->{colorer});
+    
+    $self->{symbolizer} = Gtk2::Ex::Geo::StyleElement::Symbolizer->new( style => $self );
+    $self->{symbolizing_dialog} = Gtk2::Ex::Geo::Dialog::Symbolizing->new(glue => $self->{glue},
+                                                                          model => $self->{symbolizer});
+    
+    $self->{labeler} = Gtk2::Ex::Geo::StyleElement::Labeler->new( style => $self );
+    $self->{labeling_dialog} = Gtk2::Ex::Geo::Dialog::Labeling->new(glue => $self->{glue},
+                                                                    model => $self->{labeler});
+    
+    $self->{include_border} = undef;        
+    $self->{border_color} = [];
     
 }
 

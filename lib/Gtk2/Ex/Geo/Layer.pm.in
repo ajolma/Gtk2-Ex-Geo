@@ -254,11 +254,13 @@ also bootstrap_dialog.
 =cut
 
 sub close {
-    my($self, $gui) = @_;
+    my($self) = @_;
     for (keys %$self) {
+        next if /_tree_index/;
         if (blessed($self->{$_}) and $self->{$_}->isa("Gtk2::GladeXML")) {
             $self->{$_}->get_widget($_)->destroy;
         }
+        #print STDERR "layer delete $_\n";
         delete $self->{$_};
     }
 }
@@ -525,8 +527,9 @@ sub inspect_data {
 
 Package subroutine.
 
-The list of colorer types that this class supports. The list is used
-in the coloring dialog box.
+The list of colorer types that this layer class supports. The list is
+used in the coloring dialog box and the selected colorer will be
+available as $self->{styles}->{$property}->{colorer} in rendering.
 
 =cut
 
@@ -542,9 +545,9 @@ sub symbolizer_types {
 
 =head1 DIALOGS
 
-The Gtk2::Ex::Geo::Layer class uses five dialogs: coloring,
+The Gtk2::Ex::Geo::Layer class uses four dialogs: coloring,
 colors_from, labeling, and symbolizing. These are stored and managed
-by the Gtk2::Ex::Geo::Dialogs package.
+by the Gtk2::Ex::Geo::Layer package.
 
 =head2 open_properties_dialog($glue)
 
@@ -580,7 +583,7 @@ sub open_symbolizing_dialog {
     $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(glue => $glue,
                                                              layer => $self, 
                                                              property => $property) unless $self->{styles}->{$property};
-    $self->{styles}->{$property}->{symbol_dialog}->open;
+    $self->{styles}->{$property}->{symbolizing_dialog}->open;
 }
 
 =pod
@@ -595,7 +598,7 @@ sub open_coloring_dialog {
     $styles->{$property} = Gtk2::Ex::Geo::Style->new(glue => $glue,
                                                      layer => $self, 
                                                      property => $property) unless $styles->{$property};
-    $styles->{$property}->{color_dialog}->open;
+    $styles->{$property}->{coloring_dialog}->open;
 }
 
 =pod
@@ -609,7 +612,7 @@ sub open_labeling_dialog {
     $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(glue => $glue,
                                                              layer => $self, 
                                                              property => $property) unless $self->{styles}->{$property};
-    $self->{styles}->{$property}->{label_dialog}->open;
+    $self->{styles}->{$property}->{labeling_dialog}->open;
 }
 
 1;

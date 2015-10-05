@@ -100,7 +100,12 @@ sub visible {
 }
 
 sub apply {
-    my ($self, $close) = @_;
+    my ($self, $close);
+    if (ref $_[1]) {
+        ($self, $close) = @{$_[1]};
+    } else {
+        ($self, $close) = @_;
+    }
     $self->hide if $close;
     $self->{glue}->{overlay}->render;
 }
