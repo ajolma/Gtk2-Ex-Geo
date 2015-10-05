@@ -13,8 +13,9 @@ use base qw(Gtk2::Ex::Geo::Dialog);
 sub open {
     my ($self) = @_;
 
-    my $boot = $self->bootstrap('symbolizing_dialog', 
-                                "Symbolizer for ".$self->{model}->{style}->{layer}->name.".".$self->{model}->{style}->{property});
+    my $context = $self->{model}->{style}->{layer}->name.".".$self->{model}->{style}->{property};
+
+    my $boot = $self->bootstrap('symbolizing_dialog', "Symbolizer for $context.");
     if ($boot) {
         $self->symbolizer_type('boot');
         $self->property_name('boot');
@@ -23,24 +24,19 @@ sub open {
         $self->dialog_manager('boot');
     }
 
-    $self->{model_backup} = $self->{model}->clone;
-    
-    # set up the controllers
-    $self->symbolizer_type('reset');
+    $self->refill_combo('symbols_type_combobox',
+                        [$self->{model}->{style}->{layer}->symbolizer_types],
+                        $self->{model}->readable_class_name);
 
 }
 
-# view: setup and accessors
+# view: setup and accessors ($self->{model} should not be used here)
 
 sub symbolizer_type {
     my ($self, $key, $value) = @_;
     if (defined $key && $key eq 'boot') {
         $self->setup_combo('symbols_type_combobox');
         $self->get_widget('symbols_type_combobox')->signal_connect(changed => \&symbolizer_type_changed, $self);
-    } elsif (defined $key && $key eq 'reset') {
-        $self->refill_combo('symbols_type_combobox',
-                            [$self->{model}->{style}->{layer}->symbolizer_types],
-                            $self->{model}->readable_class_name);
     }
 }
 

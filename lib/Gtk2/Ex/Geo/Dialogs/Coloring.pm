@@ -19,10 +19,10 @@ $COLOR_CELL_SIZE = 20;
 
 sub open {
     my ($self) = @_;
-    my $palette = $self->{model};
 
-    my $boot = $self->bootstrap('coloring_dialog', 
-                                "Coloring for ".$palette->{style}->{layer}->name.".$palette->{style}->{property}");
+    my $context = $self->{model}->{style}->{layer}->name.'.'.$self->{model}->{style}->{property};
+
+    my $boot = $self->bootstrap('coloring_dialog', "Coloring for $context.");
     if ($boot) {
         $self->palette_type('boot');
         $self->property_name('boot');
@@ -35,23 +35,19 @@ sub open {
         $self->dialog_manager('boot');
     }
 
-    # back up data
-    $self->{model_backup} = $palette->clone();
-    $self->palette_type('reset');
-
+    $self->refill_combo('palette_type_combobox',
+                        [$self->{model}->{style}->{layer}->palette_types],
+                        $self->{model}->readable_class_name);
+    
 }
 
-# view: setup and accessors
+# view: setup and accessors ($self->{model} should not be used here)
 
 sub palette_type {
     my ($self, $key, $value) = @_;
     if (defined $key && $key eq 'boot') {
         $self->setup_combo('palette_type_combobox');
         $self->get_widget('palette_type_combobox')->signal_connect(changed => \&palette_type_changed, $self);
-    } elsif (defined $key && $key eq 'reset') {
-        $self->refill_combo('palette_type_combobox',
-                            [$self->{model}->{style}->{layer}->palette_types],
-                            $self->{model}->readable_class_name);
     }
 }
 
@@ -76,7 +72,8 @@ sub property_name {
 sub property_value_range {
     my ($self, $min, $max) = @_;
     if (defined $min && $min eq 'boot') {
-        $self->get_widget('color_property_value_range_button')->signal_connect(clicked => \&fill_property_value_range, $self);
+        my $button = $self->get_widget('color_property_value_range_button');
+        $button->signal_connect(clicked => \&fill_property_value_range, $self);
         $self->get_widget('property_value_min_entry')->signal_connect(changed => \&property_value_range_changed, $self);
         $self->get_widget('property_value_max_entry')->signal_connect(changed => \&property_value_range_changed, $self);
     } elsif (defined $min && $min eq 'sensitive') {

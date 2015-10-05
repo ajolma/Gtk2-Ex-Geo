@@ -56,39 +56,6 @@ sub is_table_like {
 sub output_is_hue {
 }
 
-sub new {
-    my $class = shift;
-    my %params = @_;
-    my $self = $params{self} ? $params{self} : {};
-    if ($params{readable_class_name}) {
-        $class = undef;
-        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::ColorPalette' );
-        for my $subclass (@$subclass_names) {
-            my $name = eval $subclass.'->readable_class_name';
-            if ($name && $name eq $params{readable_class_name}) {
-                $class = $subclass;
-                last;
-            }
-        }
-        croak "Unknown color palette class: $params{readable_class_name}." unless $class;
-    }
-    bless $self => (ref($class) or $class);
-    $self->initialize(@_);
-    return $self;
-}
-
-sub initialize {
-    my $self = shift;
-    my %params = @_;
-    $self->{property_name} = undef;
-    $self->{property_name} = $params{property_name};
-    $self->{property_type} = undef;
-    $self->{property_type} = $params{property_type};
-    $self->{style} = undef;
-    $self->{style} = $params{style};
-}
-
-
 sub value_range {
 }
 
@@ -167,7 +134,7 @@ sub initialize {
     $self->SUPER::initialize(@_);
     my %params = @_;
     $self->{color} = [0, 0, 0, 255];
-    @{$self->{color}} = @{$params{color}} if $params{color};
+    @{$self->{color}} = @{$params{color}} if exists $params{color};
     $self->{property_name} = undef;
     $self->{property_type} = undef;
 }
@@ -234,9 +201,9 @@ sub initialize {
     $self->SUPER::initialize(@_);
     my %params = @_;
     $self->{min_value} = undef;
-    $self->{min_value} = $params{min_value} if $params{min_value};
+    $self->{min_value} = $params{min_value} if exists $params{min_value};
     $self->{max_value} = undef;
-    $self->{max_value} = $params{max_value} if $params{max_value};
+    $self->{max_value} = $params{max_value} if exists $params{max_value};
 }
 
 sub property {
@@ -362,11 +329,11 @@ sub initialize {
     $self->SUPER::initialize(@_);
     my %params = @_;
     $self->{min_hue} = 235;
-    $self->{min_hue} = $params{min_hue} if $params{min_hue};
+    $self->{min_hue} = $params{min_hue} if exists $params{min_hue};
     $self->{max_hue} = 0;
-    $self->{max_hue} = $params{max_hue} if $params{max_hue};
+    $self->{max_hue} = $params{max_hue} if exists $params{max_hue};
     $self->{hue_increment} = -1;
-    $self->{hue_increment} = $params{hue_increment} if $params{hue_increment};
+    $self->{hue_increment} = $params{hue_increment} if exists $params{hue_increment};
 }
 
 sub color {
@@ -403,11 +370,6 @@ our @ISA = qw( Gtk2::Ex::Geo::ColorPalette );
 
 sub is_table_like {
     return 1;
-}
-
-sub initialize {
-    my $self = shift;
-    $self->SUPER::initialize(@_);
 }
 
 sub prepare_model {
@@ -481,7 +443,40 @@ sub initialize {
     $self->SUPER::initialize(@_);
     my %params = @_;
     $self->{table} = {};
-    $self->{table} = $params{table} if $params{table}; # should copy
+    $self->{table} = Clone::clone($params{table}) if exists $params{table};
+    $self->{property_type} = 'Integer' unless $self->{property_type};
+}
+
+sub serialize {
+    my ($self, $filehandle, $format) = @_;
+    my @table;
+    if ($self->{property_type} eq 'String') {
+        @table = sort keys %{$self->{table}};
+    } else {
+        @table = sort {$a <=> $b} keys %{$self->{table}};
+    }
+    for my $key (@table) {
+        print STDERR "$key @{$self->{table}->{$key}}\n";
+        print $filehandle "$key @{$self->{table}->{$key}}\n";
+    }
+}
+
+sub de_serialize {
+    my ($self, $filehandle, $format) = @_;
+    while (<$filehandle>) {
+        next if /^#/;
+        my @tokens = split /\s+/;
+        next unless @tokens > 3;
+        $tokens[4] = 255 unless defined $tokens[4];
+        for (@tokens[1..4]) {
+            $_ =~ s/\D//g;
+        }
+        for (@tokens[1..4]) {
+            $_ = 0 if $_ < 0;
+            $_ = 255 if $_ > 255;
+        }
+        $self->{table}->{$tokens[0]} = [@tokens[1..4]];
+    }
 }
 
 sub property {
@@ -500,7 +495,8 @@ sub valid_property_type {
 sub color {
     my $self = shift;
     my $key = shift;
-    if (@_ > 3) {
+    if (@_) {
+        croak 'Usage: $color_lookup_table->color($key, @color); # @color = (red, green, blue, alpha)' if @_ < 4;
         $self->{table}->{$key} = [@_];
     }
     return @{$self->{table}->{$key}} if exists $self->{table}->{$key};
@@ -591,7 +587,32 @@ sub initialize {
     $self->SUPER::initialize(@_);
     my %params = @_;
     $self->{table} = [[0,0,0,0,255],[0,255,255,255,255]];
-    $self->{table} = Clone::clone($params{table}) if $params{table};
+    $self->{table} = Clone::clone($params{table}) if exists $params{table};
+}
+
+sub serialize {
+    my ($self, $filehandle, $format) = @_;
+    for my $bin_and_color (@{$self->{table}}) {
+        print $filehandle "@$bin_and_color\n";
+    }
+}
+
+sub de_serialize {
+    my ($self, $filehandle, $format) = @_;
+    while (<$filehandle>) {
+        next if /^#/;
+        my @tokens = split /\s+/;
+        next unless @tokens > 3;
+        $tokens[4] = 255 unless defined $tokens[4];
+        for (@tokens[1..4]) {
+            $_ =~ s/\D//g;
+        }
+        for (@tokens[1..4]) {
+            $_ = 0 if $_ < 0;
+            $_ = 255 if $_ > 255;
+        }
+        push @{$self->{table}}, \@tokens;
+    }
 }
 
 sub property {

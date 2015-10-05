@@ -1,5 +1,4 @@
 package Gtk2::Ex::Geo::Dialogs::Labeling;
-# @brief 
 
 use strict;
 use warnings;
@@ -7,121 +6,169 @@ use locale;
 use Carp;
 use Glib qw/TRUE FALSE/;
 
-# labels dialog
+use base qw(Gtk2::Ex::Geo::Dialog);
 
 sub open {
-    my($self, $gui) = @_;
+    my ($self) = @_;
+    my $context = $self->{model}->{style}->{layer}->name.'.'.$self->{model}->{style}->{property};
+    my $boot = $self->bootstrap('labeling_dialog', "Labels for $context.");
 
-    my $dialog = $self->bootstrap_dialog
-	($gui, 'labels_dialog', "Labels for ".$self->name,
-	 {
-	     labels_dialog => [delete_event => \&cancel_labels, [$self, $gui]],
-	     labels_font_button => [clicked => \&labels_font, [$self, $gui, 0]],
-	     labels_color_button => [clicked => \&labels_color, [$self, $gui, 0]],
-	     apply_labels_button => [clicked => \&apply_labels, [$self, $gui, 0]],
-	     cancel_labels_button => [clicked => \&cancel_labels, [$self, $gui]],
-	     ok_labels_button => [clicked => \&apply_labels, [$self, $gui, 1]],
-	 });
-
-    # backup
-
-    my $labeling = $self->{backup}->{labeling} = $self->labeling;
-    
-    # set up controllers
-
-    my $combo = $dialog->get_widget('labels_field_combobox');
-    my $model = $combo->get_model;
-    $model->clear;
-    my $i = 0;
-    my $active = 0;
-    $model->set ($model->append, 0, 'No Labels');
-    $active = $i if $labeling->{field} eq 'No Labels';
-    $i++;
-    while (my ($name, $field) = each %{$self->schema()->{Fields}}) {
-	$model->set ($model->append, 0, $name);
-	$active = $i if $labeling->{field} eq $name;
-	$i++;
-    }
-    $combo->set_active($active);
-
-    $combo = $dialog->get_widget('labels_placement_combobox');
-    $model = $combo->get_model;
-    $model->clear;
-    $i = 0;
-    $active = 0;
-    my $h = \%Gtk2::Ex::Geo::Layer::LABEL_PLACEMENT;
-    for my $e (sort {$h->{$a} <=> $h->{$b}} keys %$h) {
-	$model->set ($model->append, 0, $e);
-	$active = $i if $labeling->{placement} eq $e;
-	$i++;
-    }
-    $combo->set_active($active);
-
-    $dialog->get_widget('labels_font_label')->set_text($labeling->{font});
-    $dialog->get_widget('labels_color_label')->set_text("@{$labeling->{color}}");
-    $dialog->get_widget('labels_min_size_entry')->set_text($labeling->{min_size});
-    $dialog->get_widget('labels_incremental_checkbutton')->set_active($labeling->{incremental});
-    
-    return $dialog->get_widget('labels_dialog');
-}
-
-sub apply_labels {
-    my($self, $gui, $close) = @{$_[1]};
-    my $dialog = $self->{labels_dialog};
-
-    my $labeling = {};
-
-    my $combo = $dialog->get_widget('labels_field_combobox');
-    my $model = $combo->get_model;
-    my $iter = $model->get_iter_from_string($combo->get_active());
-    $labeling->{field} = $model->get_value($iter);
-
-    $combo = $dialog->get_widget('labels_placement_combobox');
-    $model = $combo->get_model;
-    $iter = $model->get_iter_from_string($combo->get_active());
-    $labeling->{placement} = $model->get_value($iter);
-
-    $labeling->{min_size} = $dialog->get_widget('labels_min_size_entry')->get_text;
-    $labeling->{font} = $dialog->get_widget('labels_font_label')->get_text;
-    @{$labeling->{color}} = split(/ /, $dialog->get_widget('labels_color_label')->get_text);
-    $labeling->{min_size} = $dialog->get_widget('labels_min_size_entry')->get_text;
-    $labeling->{incremental} = $dialog->get_widget('labels_incremental_checkbutton')->get_active();
-
-    $self->labeling($labeling);
-
-    $self->hide_dialog('labels_dialog') if $close;
-    $gui->set_layer($self);
-    $gui->{overlay}->render;
-}
-
-sub cancel_labels {
-    my($self, $gui);
-    for (@_) {
-	next unless ref eq 'ARRAY';
-	($self, $gui) = @{$_};
+    if ($boot) {
+        $self->property_name('boot');
+        $self->font_properties('boot');
+        $self->labeling_manager('boot');
+        $self->dialog_manager('boot');
     }
 
-    $self->labeling($self->{labeling_backup});
-    $self->hide_dialog('labels_dialog');
-    $gui->set_layer($self);
-    $gui->{overlay}->render;
-    1;
+    # reset view
+
+    $self->use_labels(defined $self->{model}->property);
+
 }
 
-sub labels_font {
-    my($self, $gui) = @{$_[1]};
+# view: setup and accessors ($self->{model} should not be used here)
+
+sub use_labels {
+    my ($self, $name, $x) = @_;
+    if (defined $name && $name eq 'boot') {
+        $self->get_widget('use_labels_checkbutton')->signal_connect(toggled => \&use_labels_changed, $self);
+    } elsif (defined $name && $name eq 'set up') {
+    }  elsif (defined $name && $name eq 'sensitive') {
+    } elsif (defined $name) {
+        $self->get_widget('use_labels_checkbutton')->set_active($name);
+    } else {
+        return $self->get_widget('use_labels_checkbutton')->get_active;
+    }
+}
+
+sub property_name {
+    my ($self, $name, $x) = @_;
+    if (defined $name && $name eq 'boot') {
+        $self->setup_combo('labels_field_combobox');
+        $self->get_widget('labels_field_combobox')->signal_connect(changed => \&property_name_changed, $self);
+    }  elsif (defined $name && $name eq 'sensitive') {
+        for my $w (qw/labels_field_combobox/) 
+        {
+            $self->get_widget($w)->set_sensitive($x);
+        }
+    } elsif (defined $name) {
+        $self->refill_combo('labels_field_combobox', $name, $x);
+    } else {
+        my $name = $self->get_value_from_combo('symbols_field_combobox');
+        return ($name);
+    }
+}
+
+sub font_properties {
+    my ($self, $name, $x) = @_;
+    if (defined $name && $name eq 'boot') {
+        $self->get_widget('labels_font_button')->signal_connect(clicked => \&select_font, $self);
+        $self->get_widget('labels_color_button')->signal_connect(clicked => \&select_font_color, $self);
+    } elsif (defined $name && $name eq 'sensitive') {
+        for my $w (qw/labels_font_label labels_font_button labels_color_label labels_color_button/) 
+        {
+            $self->get_widget($w)->set_sensitive($x);
+        }
+    } elsif (defined $name) {
+        $self->get_widget('labels_font_label')->set_text($name->{name});
+        $self->get_widget('labels_color_label')->set_text("@{$name->{color}}");
+    } else {
+        $x->{name}->{font} = $self->get_widget('labels_font_label')->get_text;
+        $x->{color} = [split / /, $self->get_widget('labels_color_label')->get_text];
+        return $x;
+    }
+}
+
+sub labeling_manager {
+    my ($self, $name, $x) = @_;
+    if (defined $name && $name eq 'boot') {
+        $self->setup_combo('labels_placement_combobox');
+        $self->refill_combo('labels_placement_combobox', [$self->{model}->placements], $self->{model}->placement);
+    } elsif (defined $name && $name eq 'sensitive') {
+        for my $w (qw/labels_placement_combobox labels_min_size_entry labels_incremental_checkbutton/) 
+        {
+            $self->get_widget($w)->set_sensitive($x);
+        }
+    } elsif (defined $name) {
+        $self->get_widget('labels_min_size_entry')->set_text($name->{min_size});
+        $self->get_widget('labels_incremental_checkbutton')->set_active($name->{incremental});
+    } else {
+        $x->{min_size} = $self->get_widget('labels_min_size_entry')->get_text;
+        $x->{incremental} = $self->get_widget('labels_incremental_checkbutton')->get_active;
+        return $x;
+    }
+}
+
+sub dialog_manager {
+    my ($self, $key, $value) = @_;
+    if (defined $key && $key eq 'boot') {
+        $self->get_widget('apply_labels_button')->signal_connect(clicked => \&apply, [$self, 0]);
+        $self->get_widget('cancel_labels_button')->signal_connect(clicked => \&Gtk2::Ex::Geo::Dialog::cancel, $self);
+        $self->get_widget('labeling_dialog')->signal_connect(delete_event => \&Gtk2::Ex::Geo::Dialog::cancel, $self);
+        $self->get_widget('ok_labels_button')->signal_connect(clicked => \&apply, [$self, 1]);
+    } elsif (defined $key && $key eq 'sensitive') {
+        for my $w (qw//) {
+            $self->get_widget($w)->set_sensitive($value);
+        }
+    }
+}
+
+# controller: callbacks for edits
+
+sub use_labels_changed {
+    my ($checkbutton, $self) = @_;
+    $self->property_name(sensitive => $checkbutton->get_active);
+    $self->font_properties(sensitive => $checkbutton->get_active);
+    $self->labeling_manager(sensitive => $checkbutton->get_active);
+    if ($checkbutton->get_active) {
+        my $property_name = $self->{model}->property();
+        my @properties = ();
+        my $properties = $self->{model}->{style}->{layer}->schema()->{Properties};
+        for my $name (sort keys %$properties) {
+            my $property = $properties->{$name};
+            next unless $property->{Type};
+            my $ok = $self->{model}->valid_property_type($property->{Type});
+            next unless $ok;
+            push @properties, $name;
+        }
+        $self->property_name(\@properties, $property_name);
+    }
+}
+
+sub property_name_changed {
+    my ($combo, $self) = @_;
+    my $property_name = $self->property_name;
+    if (defined $property_name && $property_name ne '') {
+        my $properties = $self->{model}->{style}->{layer}->schema()->{Properties};
+        $self->{model}->property($property_name, $properties->{$property_name}->{Type});
+    } else {
+        $self->{model}->property(undef);
+    }
+}
+
+sub apply {
+    my ($self, $close) = @{$_[1]};
+    $self->{model}->property();
+    $self->{model}->font_properties($self->font_properties);
+    $self->{model}->labeling_options($self->labeling_manager);
+    $self->SUPER::apply($close);
+}
+
+sub select_font {
+    my($button, $self) = @_;
     my $font_chooser = Gtk2::FontSelectionDialog->new ("Select font for the labels");
-    my $font_name = $self->{labels_dialog}->get_widget('labels_font_label')->get_text;
-    $font_chooser->set_font_name($font_name);
+    my $font = $self->{model}->font_properties();
+    $font_chooser->set_font_name($font->{name});
     if ($font_chooser->run eq 'ok') {
-	$font_name = $font_chooser->get_font_name;
-	$self->{labels_dialog}->get_widget('labels_font_label')->set_text($font_name);
+	$font->{name} = $font_chooser->get_font_name;
+	$self->font_properties($font);
+        $self->{model}->font_properties($font);
     }
     $font_chooser->destroy;
 }
 
-sub labels_color {
-    my($self, $gui) = @{$_[1]};
+sub select_font_color {
+    my($button, $self) = @_;
     my @color = split(/ /, $self->{labels_dialog}->get_widget('labels_color_label')->get_text);
     my $color_chooser = Gtk2::ColorSelectionDialog->new('Choose color for the label font');
     my $s = $color_chooser->colorsel;    

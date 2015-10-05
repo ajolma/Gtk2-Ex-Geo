@@ -10,7 +10,7 @@ BEGIN {
     use_ok('Gtk2::Ex::Geo');
 };
 
-#exit unless $ENV{GUI};
+exit unless $ENV{GUI};
 
 Gtk2->init;
 #Glib->install_exception_handler(\&Gtk2::Ex::Geo::exception_handler);

@@ -47,30 +47,24 @@ use locale;
 use Scalar::Util qw(blessed);
 use Carp;
 use Glib qw /TRUE FALSE/;
-use Gtk2::Ex::Geo::Dialogs;
-use Gtk2::Ex::Geo::Dialogs::Rules;
+#use Gtk2::Ex::Geo::Rule;
+use Gtk2::Ex::Geo::Symbolizer;
+use Gtk2::Ex::Geo::ColorPalette;
+use Gtk2::Ex::Geo::Labeling;
+use Gtk2::Ex::Geo::Dialog;
+#use Gtk2::Ex::Geo::Dialogs::Rules;
 use Gtk2::Ex::Geo::Dialogs::Symbolizing;
 use Gtk2::Ex::Geo::Dialogs::Coloring;
 use Gtk2::Ex::Geo::Dialogs::Labeling;
+use Gtk2::Ex::Geo::Dialogs;
 
-use vars qw/%SYMBOLS %LABEL_PLACEMENTS/;
+use vars qw//;
 
 BEGIN {
      use Exporter 'import';
-    our %EXPORT_TAGS = ( 'all' => [ qw(%SYMBOLS %LABEL_PLACEMENTS) ] );
+    our %EXPORT_TAGS = ( 'all' => [ qw() ] );
     our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 }
-
-%LABEL_PLACEMENTS = ( 'Center' => 0, 
-                      'Center left' => 1, 
-                      'Center right' => 2, 
-                      'Top left' => 3, 
-                      'Top center' => 4, 
-                      'Top right' => 5, 
-                      'Bottom left' => 6, 
-                      'Bottom center' => 7, 
-                      'Bottom right' => 8,
-    );
 
 sub new {
     my $class = shift;
@@ -83,13 +77,18 @@ sub new {
 
 sub defaults {
     my $self = shift;
-    my $color_model = Gtk2::Ex::Geo::ColorPalette->new( style => $self );
+    my $coloring = Gtk2::Ex::Geo::ColorPalette->new( style => $self );
     my $color_dialog = Gtk2::Ex::Geo::Dialogs::Coloring->new(glue => $self->{glue},
-                                                             model => $color_model);
-
-    my $symbol_model = Gtk2::Ex::Geo::Symbolizer->new( style => $self );
+                                                             model => $coloring);
+    
+    my $symbolizing = Gtk2::Ex::Geo::Symbolizer->new( style => $self );
     my $symbol_dialog = Gtk2::Ex::Geo::Dialogs::Symbolizing->new(glue => $self->{glue},
-                                                                 model => $symbol_model);
+                                                                 model => $symbolizing);
+    
+    my $labeling = Gtk2::Ex::Geo::Labeling->new( style => $self );
+    my $labeling_dialog = Gtk2::Ex::Geo::Dialogs::Labeling->new(glue => $self->{glue},
+                                                                model => $labeling);
+
     return  {
         # coloring
         color_dialog => $color_dialog,
@@ -101,15 +100,7 @@ sub defaults {
         symbol_dialog => $symbol_dialog,
         
         # labeling
-        label_property => undef,
-        label_placement => 'Center',
-        label_font => 'Sans 12',
-        label_color => [0, 0, 0, 255],
-        label_min_size => 0,
-        incremental_labels => 0,
-        label_vert_nudge => 0.3,
-        label_horiz_nudge_left => 6,
-        label_horiz_nudge_right => 10
+        label_dialog => $labeling_dialog,
     };
 }
 
@@ -162,159 +153,6 @@ sub restore_from {
     }
 }
 
-sub color_property {
-    my($self, $property_name) = @_;
-    if (defined $property_name) {
-        my $s = $self->{layer}->schema;
-        if ($s->{Properties}->{$property_name}) {
-            $self->{color_property} = $property_name;
-        } else {
-            croak "Layer ", $self->{layer}->name, " does not have property called: '$property_name'.";
-        }
-    }
-    return $self->{color_property};
-}
-
-=pod
-
-=head2 palette_type()
-
-Get or set the palette type for this layer.
-
-=cut
-
-sub palette {
-    my($self, $palette) = @_;
-    $self->{palette} = $palette if defined $palette;
-    return $self->{palette};
-}
-
-sub color_table {
-    my($self, $color_table) = @_;
-    unless (defined $color_table) 
-    {
-        $self->{color_table} = [] unless $self->{color_table};
-        return $self->{color_table};
-    }
-    if (ref($color_table) eq 'ARRAY') 
-    {
-        $self->{color_table} = [];
-        for (@$color_table) {
-            push @{$self->{color_table}}, [@$_];
-        }
-    } elsif (ref($color_table)) 
-    {
-        $self->{color_table} = [];
-        for my $i (0..$color_table->GetCount-1) {
-            my @color = $color_table->GetColorEntryAsRGB($i);
-            push @{$self->{color_table}}, [$i, @color];
-        }
-    } else 
-    {
-        open(my $fh, '<', $color_table) or croak "can't read from $color_table: $!";
-        $self->{color_table} = [];
-        while (<$fh>) {
-            next if /^#/;
-            my @tokens = split /\s+/;
-            next unless @tokens > 3;
-            $tokens[4] = 255 unless defined $tokens[4];
-            #print STDERR "@tokens\n";
-            for (@tokens[1..4]) {
-                $_ =~ s/\D//g;
-            }
-            #print STDERR "@tokens\n";
-            for (@tokens[1..4]) {
-                $_ = 0 if $_ < 0;
-                $_ = 255 if $_ > 255;
-            }
-            #print STDERR "@tokens\n";
-            push @{$self->{color_table}}, \@tokens;
-        }
-        CORE::close($fh);
-    }
-}
-
-sub save_color_table {
-    my($self, $filename) = @_;
-    open(my $fh, '>', $filename) or croak "can't write to $filename: $!";
-    for my $color (@{$self->{color_table}}) {
-        print $fh "@$color\n";
-    }
-    CORE::close($fh);
-}
-
-sub color_bins {
-    my($self, $color_bins) = @_;
-    unless (defined $color_bins) {
-        $self->{color_bins} = [] unless $self->{color_bins};
-        return $self->{color_bins};
-    }
-    if (ref($color_bins) eq 'ARRAY') {
-        $self->{color_bins} = [];
-        for (@$color_bins) {
-            push @{$self->{color_bins}}, [@$_];
-        }
-    } else {
-        open(my $fh, '<', $color_bins) or croak "can't read from $color_bins: $!";
-        $self->{color_bins} = [];
-        while (<$fh>) {
-            next if /^#/;
-            my @tokens = split /\s+/;
-            next unless @tokens > 3;
-            $tokens[4] = 255 unless defined $tokens[4];
-            for (@tokens[1..4]) {
-                $_ =~ s/\D//g;
-                $_ = 0 if $_ < 0;
-                $_ = 255 if $_ > 255;
-            }
-            push @{$self->{color_bins}}, \@tokens;
-        }
-        CORE::close($fh);
-    }
-}
-
-sub save_color_bins {
-    my($self, $filename) = @_;
-    open(my $fh, '>', $filename) or croak "can't write to $filename: $!";
-    for my $color (@{$self->{color_bins}}) {
-        print $fh "@$color\n";
-    }
-    CORE::close($fh);
-}
-
-sub remove_color {
-    my($self, $index) = @_;
-    if ($self->{palette_type} eq 'Color table') {
-        splice @{$self->{color_table}}, $index, 1;
-    } else {
-        splice @{$self->{color_bins}}, $index, 1;
-    }
-}
-
-sub color_from_palette {
-    my $self = shift;
-    my $index = shift unless $self->{palette_type} eq 'Single color';
-    my @color = @_;
-    if (@color) {
-        if ($self->{palette_type} eq 'Color table') {
-            $self->{color_table}[$index] = \@color;
-        } elsif ($self->{palette_type} eq 'Color bins') {
-            $self->{color_bins}[$index] = \@color;
-        } else {
-            $self->{color} = \@color;
-        }
-    } else {
-        if ($self->{palette_type} eq 'Color table') {
-            @color = @{$self->{color_table}[$index]};
-        } elsif ($self->{palette_type} eq 'Color bins') {
-            @color = @{$self->{color_bins}[$index]};
-        } else {
-            @color = @{$self->{color}};
-        }
-    }
-    return @color;
-}
-
 sub include_border {
     my $self = shift;
     $self->{include_border} = shift if @_;
@@ -325,110 +163,6 @@ sub border_color {
     my $self = shift;
     $self->{border_color} = [@_] if @_;
     return @{$self->{border_color}};
-}
-
-=pod
-
-=head2 symbols()
-
-Package subroutine.
-
-The list of symbol types that this class supports. The list is used
-in the symbol dialog box.
-
-=cut
-
-sub symbols {
-    return sort {$SYMBOLS{$a} <=> $SYMBOLS{$b}} keys %SYMBOLS;
-}
-
-=pod
-
-=head2 label_placements()
-
-Package subroutine.
-
-The list of valid label placements that this class supports. The list is used
-in the symbol dialog box.
-
-=cut
-
-sub label_placements {
-    return sort {$LABEL_PLACEMENTS{$a} <=> $LABEL_PLACEMENTS{$b}} keys %LABEL_PLACEMENTS;
-}
-
-=pod
-
-=head2 symbol_property($property)
-
-Get or set the property that is used to compute the symbol for this layer.
-
-=cut
-
-sub symbol_property {
-    my($self, $property_name) = @_;
-    if (defined $property_name) {
-        if (exists $self->schema->{Propertys}->{$property_name}) {
-            $self->{symbol_property} = $property_name;
-        } else {
-            croak "Layer ".$self->name()." does not have property with name: $property_name";
-        }
-    }
-    return $self->{symbol_property};
-}
-
-=pod
-
-=head2 symbol()
-
-Get or set the symbol.
-
-=cut
-
-sub symbol {
-    my($self, $symbol) = @_;
-    $self->{symbol} = $symbol if defined $symbol;
-    return $self->{symbol};
-}
-
-=pod
-
-=head2 symbol_size()
-
-Get or set the (fixed) symbol size for this layer.
-
-=cut
-
-sub symbol_size {
-    my($self, $size) = @_;
-    $self->{symbol_size} = defined $size ? $size+0 : $self->{symbol_size};
-}
-
-sub symbol_property_value_range {
-    my($self, $min, $max) = @_;
-    $self->{symbol_property_value_range} = [$min+0, $max+0] if defined $max;
-    return @{$self->{symbol_property_value_range}};
-}
-
-sub labeling {
-    my($self, $labeling) = @_;
-    if ($labeling) {
-        $self->{label_property} = $labeling->{property};
-        $self->{label_placement} = $labeling->{placement};
-        $self->{label_font} = $labeling->{font};
-        @{$self->{label_color}} =@{$labeling->{color}};
-        $self->{label_min_size} = $labeling->{min_size};
-        $self->{incremental_labels} = $labeling->{incremental};
-    } else {
-        $labeling = {};
-        $labeling->{property} = $self->{label_property};
-        $labeling->{placement} = $self->{label_placement};
-        $labeling->{font} = $self->{label_font};
-        @{$labeling->{color}} = @{$self->{label_color}};
-        $labeling->{min_size} = $self->{label_min_size};
-        $labeling->{incremental} = $self->{incremental_labels};
-    }
-    return $labeling;
 }
 
 1;

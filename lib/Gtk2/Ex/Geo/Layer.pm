@@ -41,7 +41,6 @@ use Gtk2::Ex::Geo::Style;
 use Gtk2::Ex::Geo::ColorPalette;
 use Gtk2::Ex::Geo::Symbolizer;
 use Gtk2::Ex::Geo::Dialogs;
-use Gtk2::Ex::Geo::Dialogs::Rules;
 use Gtk2::Ex::Geo::Dialogs::Symbolizing;
 use Gtk2::Ex::Geo::Dialogs::Coloring;
 use Gtk2::Ex::Geo::Dialogs::Labeling;
@@ -569,10 +568,6 @@ sub open_features_dialog {
     my($self, $gui, $soft_open) = @_;
 }
 
-sub open_rules_dialog {
-    Gtk2::Ex::Geo::Dialogs::Rules::open(@_);
-}
-
 =pod
 
 =head2 open_symbolizing_dialog($glue)
@@ -610,8 +605,10 @@ sub open_coloring_dialog {
 
 sub open_labeling_dialog {
     my($self, $property, $glue) = @_;
-    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(layer => $self, property => $property) unless $self->{styles}->{$property};
-    Gtk2::Ex::Geo::Dialogs::Labeling::open($self->{styles}->{$property});
+    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(glue => $glue,
+                                                             layer => $self, 
+                                                             property => $property) unless $self->{styles}->{$property};
+    $self->{styles}->{$property}->{label_dialog}->open;
 }
 
 1;

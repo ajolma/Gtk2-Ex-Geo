@@ -38,12 +38,6 @@ our @ISA = qw( Gtk2::Ex::Geo::StyleElement );
 
 use vars qw//;
 
-sub order {
-}
-
-sub readable_class_name {
-}
-
 sub new {
     my $class = shift;
     my %params = @_;
@@ -63,17 +57,6 @@ sub new {
     bless $self => (ref($class) or $class);
     $self->initialize(@_);
     return $self;
-}
-
-sub initialize {
-    my $self = shift;
-    my %params = @_;
-    $self->{property_name} = undef;# unless $self->{property_name};
-    $self->{property_name} = $params{property_name};
-    $self->{property_type} = undef;# unless $self->{property_type};
-    $self->{property_type} = $params{property_type};
-    $self->{style} = undef;# unless $self->{style};
-    $self->{style} = $params{style};
 }
 
 sub shape {
@@ -107,9 +90,9 @@ sub initialize {
     $self->SUPER::initialize(@_);
     my %params = @_;
     $self->{shape} = 'Square';
-    $self->{shape} = $params{shape} if $params{shape};
+    $self->{shape} = $params{shape} if exists $params{shape};
     $self->{size} = 5;
-    $self->{size} = $params{size} if $params{size};
+    $self->{size} = $params{size} if exists $params{size};
     $self->{property_name} = undef;
     $self->{property_type} = undef;
 }

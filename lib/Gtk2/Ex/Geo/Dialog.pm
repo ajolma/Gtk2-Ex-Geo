@@ -61,38 +61,19 @@ introspection dialog.
 
 sub bootstrap {
     my($self, $name, $title, $connects, $combos) = @_;
-    my $boot = 0;
+    my $boot = not exists $self->{name};
+    print STDERR "bootstrap: $self,$name,$self->{name},$boot\n";
     my $dialog_box;
-    unless ($self->{name}) {
+    if ($boot) {
         $self->{name} = $name;
         $self->{glade} = $self->{glue}->get_dialog($name);
-        if ($connects) {
-            for my $n (keys %$connects) {
-                my $w = $self->get_widget($n);
-                $w->signal_connect(@{$connects->{$n}}) if defined $w;
-            }
-        }
-        if ($combos) {
-            for my $n (@$combos) {
-                my $combo = $self->get_widget($n);
-                next unless defined $combo;
-                unless ($combo->isa('Gtk2::ComboBoxEntry')) {
-                    my $renderer = Gtk2::CellRendererText->new;
-                    $combo->pack_start($renderer, TRUE);
-                    $combo->add_attribute($renderer, text => 0);
-                }
-                my $model = Gtk2::ListStore->new('Glib::String');
-                $combo->set_model($model);
-                $combo->set_text_column(0) if $combo->isa('Gtk2::ComboBoxEntry');
-            }
-        }
-        $boot = 1;
         $dialog_box = $self->get_widget($name);
         $dialog_box->set_position('center');
     } else {
         $dialog_box = $self->get_widget($name);
         $dialog_box->move(@{$self->{position}}) unless $dialog_box->get('visible');
     }
+    $self->{model_backup} = $self->{model}->clone();
     $dialog_box->set_title($title);
     $dialog_box->show_all;
     $dialog_box->present;
