@@ -20,6 +20,8 @@ use warnings;
 use locale;
 use Carp;
 
+use vars qw/$folder/;
+
 BEGIN {
     use Exporter 'import';
     our @EXPORT = qw();
@@ -60,6 +62,27 @@ sub get_dialog {
     my $glade = Gtk2::GladeXML->new_from_buffer("@buf");
     return unless $glade->get_widget($dialog_name);
     return $glade;
+}
+
+sub file_chooser {
+    my($title, $action, $entry) = @_;
+    my $file_chooser =
+	Gtk2::FileChooserDialog->new ($title, undef, $action,
+				      'gtk-cancel' => 'cancel',
+				      'gtk-ok' => 'ok');
+    $file_chooser->set_current_folder($folder) if $folder;
+    my $filename;
+    if ($file_chooser->run eq 'ok') {
+	$folder = $file_chooser->get_current_folder();
+	$filename = $file_chooser->get_filename;
+	#$filename =~ s/^file:\/\///;
+	#$filename =~ s/^\/// if $filename =~ /^\/\w:/; # hack for windows
+	$entry->set_text($filename) if $entry;
+    }
+    $file_chooser->destroy;
+    #$filename = filename_unescape($filename);
+    #print STDERR "$filename\n";
+    return $filename;
 }
 
 1;

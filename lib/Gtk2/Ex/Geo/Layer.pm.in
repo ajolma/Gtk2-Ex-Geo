@@ -141,8 +141,9 @@ package Gtk2::Ex::Geo::Dialogs.
 =cut
 
 sub registration {
-    my($glue) = @_;
-    my $dialogs = Gtk2::Ex::Geo::Dialogs->new();
+    my @glade_interface = <Gtk2::Ex::Geo::Dialogs::DATA>;
+    my $dialogs = Gtk2::Ex::Geo::DialogMaster->new(glade_interface => \@glade_interface);
+    #my $dialogs = Gtk2::Ex::Geo::Dialogs->new();
     return { dialogs => $dialogs };
 }
 
@@ -612,3 +613,4 @@ sub open_labeling_dialog {
 }
 
 1;
+__DATA__

@@ -136,7 +136,7 @@ sub postamble {
     my $ret = '';
     my $lib = 'lib/Gtk2/Ex/Geo/';
     $lib = "lib/Gtk2/Ex/Geo/";
-    for ('Glue', 'Dialogs') {
+    for ('Glue', 'Layer') {
 	$ret .= "\n$lib$_.pm: $lib$_.pm.in $lib$_.glade\n";
 	if ($^O eq 'MSWin32') {
 	} else {

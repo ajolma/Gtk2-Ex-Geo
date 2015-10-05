@@ -127,7 +127,7 @@ sub new {
     ($self->{resources}, $self->{resources_file}) = $self->open_resources($params{resources});
 
     my @glade_interface = <Gtk2::Ex::Geo::Glue::DATA>;
-    register_dialogs($self, Gtk2::Ex::Geo::DialogMaster->new(glade_interface => \@glade_interface));  
+    register_dialogs($self, Gtk2::Ex::Geo::DialogMaster->new(glade_interface => \@glade_interface));
 
     return $self;
 }

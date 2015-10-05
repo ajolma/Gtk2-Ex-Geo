@@ -62,7 +62,7 @@ introspection dialog.
 sub bootstrap {
     my($self, $name, $title, $connects, $combos) = @_;
     my $boot = not exists $self->{name};
-    print STDERR "bootstrap: $self,$name,$self->{name},$boot\n";
+    #print STDERR "bootstrap: $self,$name,$self->{name},$boot\n";
     my $dialog_box;
     if ($boot) {
         $self->{name} = $name;
@@ -173,6 +173,16 @@ sub get_value_from_combo {
     my $iter = $model->get_iter_from_string($a);
     croak "Can't convert $a to iter in combobox $combo." unless $iter;
     return $model->get_value($iter);
+}
+
+sub set_combo_to {
+    my($combo, $value) = @{pop()};
+    my($model, $path, $iter) = @_;
+    my($x) = $model->get($iter);
+    if ($x eq $value) {
+	$combo->set_active_iter($iter);
+	return 1;
+    }
 }
 
 sub get_selected_from_selection {
