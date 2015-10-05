@@ -1,4 +1,4 @@
-package Gtk2::Ex::Geo::Dialogs::Labeling;
+package Gtk2::Ex::Geo::Dialog::Labeling;
 
 use strict;
 use warnings;

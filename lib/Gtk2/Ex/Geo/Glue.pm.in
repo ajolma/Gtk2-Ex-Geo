@@ -317,6 +317,16 @@ sub _set_interaction_mode {
     $self->{overlay}->{rubberband_mode} = lc($mode);
 }
 
+sub set_combo_to {
+    my($combo, $value) = @{pop()};
+    my($model, $path, $iter) = @_;
+    my($x) = $model->get($iter);
+    if ($x eq $value) {
+	$combo->set_active_iter($iter);
+	return 1;
+    }
+}
+
 sub set_interaction_mode {
     my($self, $mode) = @_;
     my $model = $self->{mode_button}->get_model;

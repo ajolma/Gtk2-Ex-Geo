@@ -38,11 +38,12 @@ use Carp;
 use Class::Inspector;
 use Glib qw /TRUE FALSE/;
 use Gtk2::Ex::Geo::Style;
-use Gtk2::Ex::Geo::ColorPalette;
-use Gtk2::Ex::Geo::Symbolizer;
-use Gtk2::Ex::Geo::Dialogs::Symbolizing;
-use Gtk2::Ex::Geo::Dialogs::Coloring;
-use Gtk2::Ex::Geo::Dialogs::Labeling;
+use Gtk2::Ex::Geo::StyleElement::ColorPalette;
+use Gtk2::Ex::Geo::StyleElement::Symbolizer;
+use Gtk2::Ex::Geo::StyleElement::Labeling;
+use Gtk2::Ex::Geo::Dialog::Symbolizing;
+use Gtk2::Ex::Geo::Dialog::Coloring;
+use Gtk2::Ex::Geo::Dialog::Labeling;
 
 use vars qw/%GEOMETRY_TYPES %PALETTE_TYPES %SYMBOLIZER_TYPES/;
 
@@ -140,7 +141,7 @@ package Gtk2::Ex::Geo::Dialogs.
 =cut
 
 sub registration {
-    my @glade_interface = <Gtk2::Ex::Geo::Dialogs::DATA>;
+    my @glade_interface = <DATA>;
     my $dialogs = Gtk2::Ex::Geo::DialogMaster->new(glade_interface => \@glade_interface);
     #my $dialogs = Gtk2::Ex::Geo::Dialogs->new();
     return { dialogs => $dialogs };

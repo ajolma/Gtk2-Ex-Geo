@@ -48,13 +48,13 @@ use Scalar::Util qw(blessed);
 use Carp;
 use Glib qw /TRUE FALSE/;
 #use Gtk2::Ex::Geo::Rule;
-use Gtk2::Ex::Geo::Symbolizer;
-use Gtk2::Ex::Geo::ColorPalette;
-use Gtk2::Ex::Geo::Labeling;
+use Gtk2::Ex::Geo::StyleElement::Symbolizer;
+use Gtk2::Ex::Geo::StyleElement::ColorPalette;
+use Gtk2::Ex::Geo::StyleElement::Labeling;
 use Gtk2::Ex::Geo::Dialog;
-use Gtk2::Ex::Geo::Dialogs::Symbolizing;
-use Gtk2::Ex::Geo::Dialogs::Coloring;
-use Gtk2::Ex::Geo::Dialogs::Labeling;
+use Gtk2::Ex::Geo::Dialog::Symbolizing;
+use Gtk2::Ex::Geo::Dialog::Coloring;
+use Gtk2::Ex::Geo::Dialog::Labeling;
 
 use vars qw//;
 
@@ -76,17 +76,17 @@ sub new {
 sub defaults {
     my $self = shift;
     my $coloring = Gtk2::Ex::Geo::ColorPalette->new( style => $self );
-    my $color_dialog = Gtk2::Ex::Geo::Dialogs::Coloring->new(glue => $self->{glue},
-                                                             model => $coloring);
+    my $color_dialog = Gtk2::Ex::Geo::Dialog::Coloring->new(glue => $self->{glue},
+                                                            model => $coloring);
     
     my $symbolizing = Gtk2::Ex::Geo::Symbolizer->new( style => $self );
-    my $symbol_dialog = Gtk2::Ex::Geo::Dialogs::Symbolizing->new(glue => $self->{glue},
-                                                                 model => $symbolizing);
+    my $symbol_dialog = Gtk2::Ex::Geo::Dialog::Symbolizing->new(glue => $self->{glue},
+                                                                model => $symbolizing);
     
     my $labeling = Gtk2::Ex::Geo::Labeling->new( style => $self );
-    my $labeling_dialog = Gtk2::Ex::Geo::Dialogs::Labeling->new(glue => $self->{glue},
-                                                                model => $labeling);
-
+    my $labeling_dialog = Gtk2::Ex::Geo::Dialog::Labeling->new(glue => $self->{glue},
+                                                               model => $labeling);
+    
     return  {
         # coloring
         color_dialog => $color_dialog,
