@@ -38,14 +38,14 @@ use Carp;
 use Class::Inspector;
 use Glib qw /TRUE FALSE/;
 use Gtk2::Ex::Geo::Style;
-use Gtk2::Ex::Geo::StyleElement::ColorPalette;
+use Gtk2::Ex::Geo::StyleElement::Colorer;
 use Gtk2::Ex::Geo::StyleElement::Symbolizer;
-use Gtk2::Ex::Geo::StyleElement::Labeling;
+use Gtk2::Ex::Geo::StyleElement::Labeler;
 use Gtk2::Ex::Geo::Dialog::Symbolizing;
 use Gtk2::Ex::Geo::Dialog::Coloring;
 use Gtk2::Ex::Geo::Dialog::Labeling;
 
-use vars qw/%GEOMETRY_TYPES %PALETTE_TYPES %SYMBOLIZER_TYPES/;
+use vars qw/%GEOMETRY_TYPES %COLORER_TYPES %SYMBOLIZER_TYPES/;
 
 BEGIN {
     use Exporter 'import';
@@ -58,23 +58,23 @@ BEGIN {
             $GEOMETRY_TYPES{$type} = 1;
         }
     }
-    unless (%PALETTE_TYPES) {
-        my $name = Gtk2::Ex::Geo::ColorPalette->readable_class_name;
-        my $order = Gtk2::Ex::Geo::ColorPalette->order;
-        $PALETTE_TYPES{$name} = $order if $name;
-        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::ColorPalette' );
+    unless (%COLORER_TYPES) {
+        my $name = Gtk2::Ex::Geo::StyleElement::Colorer->readable_class_name;
+        my $order = Gtk2::Ex::Geo::StyleElement::Colorer->order;
+        $COLORER_TYPES{$name} = $order if $name;
+        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::StyleElement::Colorer' );
         for my $class (@$subclass_names) {
             my $name = eval $class.'->readable_class_name';
             my $order = eval $class.'->order';
             next unless $name;
-            $PALETTE_TYPES{$name} = $order;
+            $COLORER_TYPES{$name} = $order;
         }
     }
     unless (%SYMBOLIZER_TYPES) {
-        my $name = Gtk2::Ex::Geo::Symbolizer->readable_class_name;
-        my $order = Gtk2::Ex::Geo::Symbolizer->order;
+        my $name = Gtk2::Ex::Geo::StyleElement::Symbolizer->readable_class_name;
+        my $order = Gtk2::Ex::Geo::StyleElement::Symbolizer->order;
         $SYMBOLIZER_TYPES{$name} = $order if $name;
-        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::Symbolizer' );
+        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::StyleElement::Symbolizer' );
         for my $class (@$subclass_names) {
             my $name = eval $class.'->readable_class_name';
             my $order = eval $class.'->order';
@@ -521,17 +521,17 @@ sub inspect_data {
 
 =pod
 
-=head2 palette_types()
+=head2 colorer_types()
 
 Package subroutine.
 
-The list of palette types that this class supports. The list is used
+The list of colorer types that this class supports. The list is used
 in the coloring dialog box.
 
 =cut
 
-sub palette_types {
-    return sort {$PALETTE_TYPES{$a} <=> $PALETTE_TYPES{$b}} keys %PALETTE_TYPES;
+sub colorer_types {
+    return sort {$COLORER_TYPES{$a} <=> $COLORER_TYPES{$b}} keys %COLORER_TYPES;
 }
 
 sub symbolizer_types {

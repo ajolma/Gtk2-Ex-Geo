@@ -35,7 +35,7 @@ sub open {
     }
 
     $self->refill_combo('palette_type_combobox',
-                        [$self->{model}->{style}->{layer}->palette_types],
+                        [$self->{model}->{style}->{layer}->colorer_types],
                         $self->{model}->readable_class_name);
     
 }
@@ -194,9 +194,9 @@ sub palette_type_changed {
     my $palette_type = $self->get_value_from_combo($combo);
     if (!$palette->readable_class_name || $palette->readable_class_name ne $palette_type) {
         my $style = $palette->{style};
-        $palette = Gtk2::Ex::Geo::ColorPalette->new( self => $palette,
-                                                     readable_class_name => $palette_type,
-                                                     style => $style );
+        $palette = Gtk2::Ex::Geo::StyleElement::Colorer->new( self => $palette,
+                                                              readable_class_name => $palette_type,
+                                                              style => $style );
         my $treeview = $self->get_widget('coloring_treeview');
         $palette->set_color_view($treeview);
     }

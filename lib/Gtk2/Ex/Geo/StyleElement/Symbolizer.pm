@@ -2,13 +2,13 @@
 
 =head1 NAME
 
-Gtk2::Ex::Geo::Symbolizer - A class for value(s) -> symbol converter
+Gtk2::Ex::Geo::StyleElement::Symbolizer - A class for value(s) -> symbol converter
 
 This module is a part of the Gtk2::Ex::Geo toolkit.
 
 =head1 SYNOPSIS
 
-    my $palette = Gtk2::Ex::Geo::Symbolizer->new( );
+    my $palette = Gtk2::Ex::Geo::StyleElement::Symbolizer->new( );
 
 =head1 DESCRIPTION
 
@@ -22,7 +22,7 @@ for a Gtk2::Ex::Geo::Dialogs::Symbolizing view/controller (dialog).
 
 =cut
 
-package Gtk2::Ex::Geo::Symbolizer;
+package Gtk2::Ex::Geo::StyleElement::Symbolizer;
 
 use strict;
 use warnings;
@@ -38,27 +38,6 @@ our @ISA = qw( Gtk2::Ex::Geo::StyleElement );
 
 use vars qw//;
 
-sub new {
-    my $class = shift;
-    my %params = @_;
-    my $self = $params{self} ? $params{self} : {};
-    if ($params{readable_class_name}) {
-        $class = undef;
-        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::Symbolizer' );
-        for my $subclass (@$subclass_names) {
-            my $name = eval $subclass.'->readable_class_name';
-            if ($name && $name eq $params{readable_class_name}) {
-                $class = $subclass;
-                last;
-            }
-        }
-        croak "Unknown symbolizer class: $params{readable_class_name}." unless $class;
-    }
-    bless $self => (ref($class) or $class);
-    $self->initialize(@_);
-    return $self;
-}
-
 sub shape {
 }
 
@@ -71,11 +50,11 @@ sub value_range {
 sub property_value_at {
 }
 
-package Gtk2::Ex::Geo::Symbolizer::Simple;
+package Gtk2::Ex::Geo::StyleElement::Symbolizer::Simple;
 use locale;
 use Carp;
 
-our @ISA = qw( Gtk2::Ex::Geo::Symbolizer );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Symbolizer );
 
 sub order {
     return 1;

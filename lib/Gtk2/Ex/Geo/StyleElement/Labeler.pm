@@ -2,24 +2,24 @@
 
 =head1 NAME
 
-Gtk2::Ex::Geo::Labeling - A class for defining the labeling of a feature
+Gtk2::Ex::Geo::Labeler - A class for defining the labeling of a feature
 
 This module is a part of the Gtk2::Ex::Geo toolkit.
 
 =head1 SYNOPSIS
 
-    my $labeling = Gtk2::Ex::Geo::Labeling->new( );
+    my $labeling = Gtk2::Ex::Geo::Labeler->new( );
 
 =head1 DESCRIPTION
 
-Gtk2::Ex::Geo::Labeling is used as a part of a feature style.
+Gtk2::Ex::Geo::Labeler is used as a part of a feature style.
 
-In the GUI framework Gtk2::Ex::Geo::Labeling can be used as a model
-for a Gtk2::Ex::Geo::Dialogs::Labeling view/controller (dialog).
+In the GUI framework Gtk2::Ex::Geo::Labeler can be used as a model for
+a Gtk2::Ex::Geo::Dialogs::Labeling view/controller (dialog).
 
 =cut
 
-package Gtk2::Ex::Geo::Labeling;
+package Gtk2::Ex::Geo::StyleElement::Labeler;
 
 use strict;
 use warnings;
@@ -33,27 +33,6 @@ use Glib qw/TRUE FALSE/;
 
 our @ISA = qw( Gtk2::Ex::Geo::StyleElement );
 
-sub new {
-    my $class = shift;
-    my %params = @_;
-    my $self = $params{self} ? $params{self} : {};
-    if ($params{readable_class_name}) {
-        $class = undef;
-        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::Labeling' );
-        for my $subclass (@$subclass_names) {
-            my $name = eval $subclass.'->readable_class_name';
-            if ($name && $name eq $params{readable_class_name}) {
-                $class = $subclass;
-                last;
-            }
-        }
-        croak "Unknown labeling class: $params{readable_class_name}." unless $class;
-    }
-    bless $self => (ref($class) or $class);
-    $self->initialize(@_);
-    return $self;
-}
-
 sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
@@ -62,7 +41,7 @@ sub initialize {
     $self->{font_name} = $params{font_name} if exists $params{font_name};
     $self->{font_size} = 12;
     $self->{font_size} = $params{font_size} if exists $params{font_size};
-    $self->{font_color} = Gtk2::Ex::Geo::ColorPalette::SingleColor->new( style => $self->{style} );
+    $self->{font_color} = Gtk2::Ex::Geo::StyleElement::Colorer::SingleColor->new( style => $self->{style} );
     $self->{font_color} = $params{font_color} if exists $params{font_color};
     $self->{property_name} = undef;
     $self->{property_type} = undef;
@@ -87,11 +66,11 @@ sub placement {
 sub placements {
 }
 
-package Gtk2::Ex::Geo::Labeling::ForPoints;
+package Gtk2::Ex::Geo::Labeler::ForPoints;
 use locale;
 use Carp;
 
-our @ISA = qw( Gtk2::Ex::Geo::Labeling );
+our @ISA = qw( Gtk2::Ex::Geo::Labeler );
 
 sub order {
     return 1;

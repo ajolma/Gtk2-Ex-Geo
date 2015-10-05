@@ -57,9 +57,9 @@ our %pm_files = (
     'lib/Gtk2/Ex/Geo/Layer.pm'        => '$(INST_LIBDIR)/Geo/Layer.pm',
     'lib/Gtk2/Ex/Geo/Style.pm'        => '$(INST_LIBDIR)/Geo/Style.pm',
     'lib/Gtk2/Ex/Geo/StyleElement.pm' => '$(INST_LIBDIR)/Geo/StyleElement.pm',
-    'lib/Gtk2/Ex/Geo/StyleElement/ColorPalette.pm' => '$(INST_LIBDIR)/Geo/StyleElement/ColorPalette.pm',
+    'lib/Gtk2/Ex/Geo/StyleElement/Colorer.pm' => '$(INST_LIBDIR)/Geo/StyleElement/Colorer.pm',
     'lib/Gtk2/Ex/Geo/StyleElement/Symbolizer.pm'   => '$(INST_LIBDIR)/Geo/StyleElement/Symbolizer.pm',
-    'lib/Gtk2/Ex/Geo/StyleElement/Labeling.pm'     => '$(INST_LIBDIR)/Geo/StyleElement/Labeling.pm',
+    'lib/Gtk2/Ex/Geo/StyleElement/Labeler.pm'     => '$(INST_LIBDIR)/Geo/StyleElement/Labeler.pm',
     'lib/Gtk2/Ex/Geo.pm'              => '$(INST_LIBDIR)/Geo.pm',
     );
 
