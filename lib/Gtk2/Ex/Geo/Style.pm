@@ -52,11 +52,9 @@ use Gtk2::Ex::Geo::Symbolizer;
 use Gtk2::Ex::Geo::ColorPalette;
 use Gtk2::Ex::Geo::Labeling;
 use Gtk2::Ex::Geo::Dialog;
-#use Gtk2::Ex::Geo::Dialogs::Rules;
 use Gtk2::Ex::Geo::Dialogs::Symbolizing;
 use Gtk2::Ex::Geo::Dialogs::Coloring;
 use Gtk2::Ex::Geo::Dialogs::Labeling;
-use Gtk2::Ex::Geo::Dialogs;
 
 use vars qw//;
 

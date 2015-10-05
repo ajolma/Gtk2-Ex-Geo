@@ -40,7 +40,6 @@ use Glib qw /TRUE FALSE/;
 use Gtk2::Ex::Geo::Style;
 use Gtk2::Ex::Geo::ColorPalette;
 use Gtk2::Ex::Geo::Symbolizer;
-use Gtk2::Ex::Geo::Dialogs;
 use Gtk2::Ex::Geo::Dialogs::Symbolizing;
 use Gtk2::Ex::Geo::Dialogs::Coloring;
 use Gtk2::Ex::Geo::Dialogs::Labeling;
