@@ -46,23 +46,6 @@ use warnings;
 use locale;
 use Scalar::Util qw(blessed);
 use Carp;
-use Glib qw /TRUE FALSE/;
-use Gtk2::Ex::Geo::StyleElement::Shape;
-use Gtk2::Ex::Geo::StyleElement::Size;
-use Gtk2::Ex::Geo::StyleElement::Color;
-use Gtk2::Ex::Geo::StyleElement::Labeler;
-use Gtk2::Ex::Geo::Dialog;
-use Gtk2::Ex::Geo::Dialog::Symbolizing;
-use Gtk2::Ex::Geo::Dialog::Coloring;
-use Gtk2::Ex::Geo::Dialog::Labeling;
-
-use vars qw//;
-
-BEGIN {
-     use Exporter 'import';
-    our %EXPORT_TAGS = ( 'all' => [ qw() ] );
-    our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-}
 
 sub new {
     my $class = shift;
@@ -83,21 +66,6 @@ sub initialize {
 
     croak "Symbolizer initializer missing layer or property." unless $self->{layer} && $self->{property};
 
-    $self->{color} = Gtk2::Ex::Geo::StyleElement::Color->new( symbolizer => $self );
-    $self->{coloring_dialog} = Gtk2::Ex::Geo::Dialog::Coloring->new(glue => $self->{glue},
-                                                                    model => $self->{color});
-    
-    $self->{symbolizer} = Gtk2::Ex::Geo::StyleElement::Symbolizer->new( symbolizer => $self );
-    $self->{symbolizing_dialog} = Gtk2::Ex::Geo::Dialog::Symbolizing->new(glue => $self->{glue},
-                                                                          model => $self->{symbolizer});
-    
-    $self->{labeler} = Gtk2::Ex::Geo::StyleElement::Labeler->new( symbolizer => $self );
-    $self->{labeling_dialog} = Gtk2::Ex::Geo::Dialog::Labeling->new(glue => $self->{glue},
-                                                                    model => $self->{labeler});
-    
-    $self->{include_border} = undef;        
-    $self->{border_color} = [];
-    
 }
 
 sub clone {
@@ -139,11 +107,7 @@ use Carp;
 use Gtk2::Ex::Geo::StyleElement::Shape;
 use Gtk2::Ex::Geo::StyleElement::Size;
 use Gtk2::Ex::Geo::StyleElement::Color;
-use Gtk2::Ex::Geo::StyleElement::Labeler;
-use Gtk2::Ex::Geo::Dialog;
-use Gtk2::Ex::Geo::Dialog::Symbolizing;
-use Gtk2::Ex::Geo::Dialog::Coloring;
-use Gtk2::Ex::Geo::Dialog::Labeling;
+use Gtk2::Ex::Geo::StyleElement::Label;
 
 our @ISA = qw/Gtk2::Ex::Geo::Symbolizer/;
 
@@ -151,11 +115,7 @@ sub initialize {
     my $self = shift;
     my %params = @_;
 
-    $self->{glue} = $params{glue};
-    $self->{layer} = $params{layer};
-    $self->{property} = $params{property};
-
-    croak "Symbolizer initializer missing layer or property." unless $self->{layer} && $self->{property};
+    $self->SUPER::initialize(@_);
 
     $self->{shape} = Gtk2::Ex::Geo::StyleElement::Shape->new( symbolizer => $self );
     $self->{size} = Gtk2::Ex::Geo::StyleElement::Size->new( symbolizer => $self );
@@ -166,12 +126,90 @@ sub initialize {
                   color => $self->{color} };
     bless $model => 'Gtk2::Ex::Geo::Model';
 
-    $self->{view} = Gtk2::Ex::Geo::Dialog::Symbolizing->new( glue => $self->{glue},
+    $self->{view} = Gtk2::Ex::Geo::Dialog::PointSymbolizer->new( glue => $self->{glue},
                                                              layer => $self->{layer},
                                                              property => $self->{property},
                                                              model => $model );
     
-    $self->{labeler} = Gtk2::Ex::Geo::StyleElement::Labeler->new( symbolizer => $self );
+    $self->{label} = Gtk2::Ex::Geo::StyleElement::Label::ForPoints->new( symbolizer => $self );
+    $self->{labeling_dialog} = Gtk2::Ex::Geo::Dialog::Labeling->new(glue => $self->{glue},
+                                                                    model => $self->{labeler});
+    
+    $self->{include_border} = undef;        
+    $self->{border_color} = [];
+    
+}
+
+package Gtk2::Ex::Geo::Symbolizer::Curve;
+use strict;
+use warnings;
+use locale;
+use Scalar::Util qw(blessed);
+use Carp;
+use Gtk2::Ex::Geo::StyleElement::Shape;
+use Gtk2::Ex::Geo::StyleElement::Size;
+use Gtk2::Ex::Geo::StyleElement::Color;
+use Gtk2::Ex::Geo::StyleElement::Label;
+
+our @ISA = qw/Gtk2::Ex::Geo::Symbolizer/;
+
+sub initialize {
+    my $self = shift;
+    my %params = @_;
+
+    $self->SUPER::initialize(@_);
+
+    $self->{color} = Gtk2::Ex::Geo::StyleElement::Color->new( symbolizer => $self );
+
+    my $model = { color => $self->{color} };
+    bless $model => 'Gtk2::Ex::Geo::Model';
+
+    $self->{view} = Gtk2::Ex::Geo::Dialog::LineSymbolizer->new( glue => $self->{glue},
+                                                             layer => $self->{layer},
+                                                             property => $self->{property},
+                                                             model => $model );
+    
+    $self->{label} = Gtk2::Ex::Geo::StyleElement::Label::ForCurves->new( symbolizer => $self );
+    $self->{labeling_dialog} = Gtk2::Ex::Geo::Dialog::Labeling->new(glue => $self->{glue},
+                                                                    model => $self->{labeler});
+    
+    $self->{include_border} = undef;        
+    $self->{border_color} = [];
+    
+}
+
+package Gtk2::Ex::Geo::Symbolizer::Surface;
+use strict;
+use warnings;
+use locale;
+use Scalar::Util qw(blessed);
+use Carp;
+use Gtk2::Ex::Geo::StyleElement::Shape;
+use Gtk2::Ex::Geo::StyleElement::Size;
+use Gtk2::Ex::Geo::StyleElement::Color;
+use Gtk2::Ex::Geo::StyleElement::Label;
+
+our @ISA = qw/Gtk2::Ex::Geo::Symbolizer/;
+
+sub initialize {
+    my $self = shift;
+    my %params = @_;
+
+    $self->SUPER::initialize(@_);
+
+    $self->{shape} = Gtk2::Ex::Geo::StyleElement::Shape->new( symbolizer => $self );
+    $self->{size} = Gtk2::Ex::Geo::StyleElement::Size->new( symbolizer => $self );
+    $self->{color} = Gtk2::Ex::Geo::StyleElement::Color->new( symbolizer => $self );
+
+    my $model = { color => $self->{color} };
+    bless $model => 'Gtk2::Ex::Geo::Model';
+
+    $self->{view} = Gtk2::Ex::Geo::Dialog::LineSymbolizer->new( glue => $self->{glue},
+                                                             layer => $self->{layer},
+                                                             property => $self->{property},
+                                                             model => $model );
+    
+    $self->{label} = Gtk2::Ex::Geo::StyleElement::Label::ForSurfaces->new( symbolizer => $self );
     $self->{labeling_dialog} = Gtk2::Ex::Geo::Dialog::Labeling->new(glue => $self->{glue},
                                                                     model => $self->{labeler});
     

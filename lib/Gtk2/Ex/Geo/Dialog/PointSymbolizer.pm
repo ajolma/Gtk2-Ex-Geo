@@ -1,4 +1,4 @@
-package Gtk2::Ex::Geo::Dialog::Symbolizing;
+package Gtk2::Ex::Geo::Dialog::PointSymbolizer;
 
 use strict;
 use warnings;

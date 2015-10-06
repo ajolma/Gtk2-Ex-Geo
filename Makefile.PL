@@ -49,7 +49,7 @@ our %pm_files = (
     'lib/Gtk2/Ex/Geo/Dialog.pm'       => '$(INST_LIBDIR)/Geo/Dialog.pm',
     'lib/Gtk2/Ex/Geo/Dialog/Coloring.pm'    => '$(INST_LIBDIR)/Geo/Dialog/Coloring.pm',
     'lib/Gtk2/Ex/Geo/Dialog/Labeling.pm'    => '$(INST_LIBDIR)/Geo/Dialog/Labeling.pm',
-    'lib/Gtk2/Ex/Geo/Dialog/Symbolizing.pm' => '$(INST_LIBDIR)/Geo/Dialog/Symbolizing.pm',
+    'lib/Gtk2/Ex/Geo/Dialog/PointSymbolizer.pm' => '$(INST_LIBDIR)/Geo/Dialog/PointSymbolizer.pm',
     'lib/Gtk2/Ex/Geo/Overlay.pm'      => '$(INST_LIBDIR)/Geo/Overlay.pm',
     'lib/Gtk2/Ex/Geo/Glue.pm'         => '$(INST_LIBDIR)/Geo/Glue.pm',
     'lib/Gtk2/Ex/Geo/TreeDumper.pm'   => '$(INST_LIBDIR)/Geo/TreeDumper.pm',
@@ -60,8 +60,7 @@ our %pm_files = (
     'lib/Gtk2/Ex/Geo/StyleElement/Color.pm' => '$(INST_LIBDIR)/Geo/StyleElement/Color.pm',
     'lib/Gtk2/Ex/Geo/StyleElement/Shape.pm' => '$(INST_LIBDIR)/Geo/StyleElement/Shape.pm',
     'lib/Gtk2/Ex/Geo/StyleElement/Size.pm' => '$(INST_LIBDIR)/Geo/StyleElement/Size.pm',
-    'lib/Gtk2/Ex/Geo/StyleElement/Symbolizer.pm'   => '$(INST_LIBDIR)/Geo/StyleElement/Symbolizer.pm',
-    'lib/Gtk2/Ex/Geo/StyleElement/Labeler.pm'     => '$(INST_LIBDIR)/Geo/StyleElement/Labeler.pm',
+    'lib/Gtk2/Ex/Geo/StyleElement/Label.pm'     => '$(INST_LIBDIR)/Geo/StyleElement/Label.pm',
     'lib/Gtk2/Ex/Geo.pm'              => '$(INST_LIBDIR)/Geo.pm',
     );
 

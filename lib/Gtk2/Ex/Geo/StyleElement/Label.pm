@@ -2,24 +2,24 @@
 
 =head1 NAME
 
-Gtk2::Ex::Geo::Labeler - A class for defining the labeling of a feature
+Gtk2::Ex::Geo::Label - A class for defining the labeling of a feature
 
 This module is a part of the Gtk2::Ex::Geo toolkit.
 
 =head1 SYNOPSIS
 
-    my $labeling = Gtk2::Ex::Geo::Labeler->new( );
+    my $labeling = Gtk2::Ex::Geo::Label->new( );
 
 =head1 DESCRIPTION
 
-Gtk2::Ex::Geo::Labeler is used as a part of a feature style.
+Gtk2::Ex::Geo::Label is used as a part of a feature style.
 
-In the GUI framework Gtk2::Ex::Geo::Labeler can be used as a model for
+In the GUI framework Gtk2::Ex::Geo::Label can be used as a model for
 a Gtk2::Ex::Geo::Dialogs::Labeling view/controller (dialog).
 
 =cut
 
-package Gtk2::Ex::Geo::StyleElement::Labeler;
+package Gtk2::Ex::Geo::StyleElement::Label;
 
 use strict;
 use warnings;
@@ -66,11 +66,11 @@ sub placement {
 sub placements {
 }
 
-package Gtk2::Ex::Geo::Labeler::ForPoints;
+package Gtk2::Ex::Geo::StyleElement::Label::ForPoints;
 use locale;
 use Carp;
 
-our @ISA = qw( Gtk2::Ex::Geo::Labeler );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Label );
 
 sub order {
     return 1;

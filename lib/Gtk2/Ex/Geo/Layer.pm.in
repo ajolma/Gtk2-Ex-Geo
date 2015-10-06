@@ -37,12 +37,13 @@ use Scalar::Util qw(blessed);
 use Carp;
 use Class::Inspector;
 use Glib qw /TRUE FALSE/;
-use Gtk2::Ex::Geo::Style;
-use Gtk2::Ex::Geo::StyleElement::Color;
-use Gtk2::Ex::Geo::Dialog::Coloring;
+use Gtk2::Ex::Geo::Symbolizer;
 use Gtk2::Ex::Geo::StyleElement::Shape;
-use Gtk2::Ex::Geo::Dialog::Symbolizing;
-use Gtk2::Ex::Geo::StyleElement::Labeler;
+use Gtk2::Ex::Geo::StyleElement::Size;
+use Gtk2::Ex::Geo::StyleElement::Color;
+use Gtk2::Ex::Geo::StyleElement::Label;
+use Gtk2::Ex::Geo::Dialog::PointSymbolizer;
+use Gtk2::Ex::Geo::Dialog::Coloring;
 use Gtk2::Ex::Geo::Dialog::Labeling;
 
 use vars qw/%GEOMETRY_TYPES %SHAPE_TYPES %SIZE_TYPES %COLOR_TYPES/;
@@ -596,7 +597,7 @@ sub open_features_dialog {
 
 sub open_symbolizing_dialog {
     my($self, $property, $glue) = @_;
-    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style::Point->new(glue => $glue,
+    $self->{styles}->{$property} = Gtk2::Ex::Geo::Symbolizer::Point->new(glue => $glue,
                                                                     layer => $self, 
                                                                     property => $property) unless $self->{styles}->{$property};
     $self->{styles}->{$property}->{view}->open;
@@ -611,7 +612,7 @@ sub open_symbolizing_dialog {
 sub open_coloring_dialog {
     my($self, $property, $glue) = @_;
     my $styles = $self->{styles};
-    $styles->{$property} = Gtk2::Ex::Geo::Style->new(glue => $glue,
+    $styles->{$property} = Gtk2::Ex::Geo::Symbolizer->new(glue => $glue,
                                                      layer => $self, 
                                                      property => $property) unless $styles->{$property};
     $styles->{$property}->{coloring_dialog}->open;
@@ -625,7 +626,7 @@ sub open_coloring_dialog {
 
 sub open_labeling_dialog {
     my($self, $property, $glue) = @_;
-    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(glue => $glue,
+    $self->{styles}->{$property} = Gtk2::Ex::Geo::Symbolizer->new(glue => $glue,
                                                              layer => $self, 
                                                              property => $property) unless $self->{styles}->{$property};
     $self->{styles}->{$property}->{labeling_dialog}->open;
