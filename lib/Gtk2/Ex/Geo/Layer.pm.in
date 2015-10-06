@@ -38,14 +38,14 @@ use Carp;
 use Class::Inspector;
 use Glib qw /TRUE FALSE/;
 use Gtk2::Ex::Geo::Style;
-use Gtk2::Ex::Geo::StyleElement::Colorer;
-use Gtk2::Ex::Geo::StyleElement::Symbolizer;
-use Gtk2::Ex::Geo::StyleElement::Labeler;
-use Gtk2::Ex::Geo::Dialog::Symbolizing;
+use Gtk2::Ex::Geo::StyleElement::Color;
 use Gtk2::Ex::Geo::Dialog::Coloring;
+use Gtk2::Ex::Geo::StyleElement::Shape;
+use Gtk2::Ex::Geo::Dialog::Symbolizing;
+use Gtk2::Ex::Geo::StyleElement::Labeler;
 use Gtk2::Ex::Geo::Dialog::Labeling;
 
-use vars qw/%GEOMETRY_TYPES %COLORER_TYPES %SYMBOLIZER_TYPES/;
+use vars qw/%GEOMETRY_TYPES %SHAPE_TYPES %SIZE_TYPES %COLOR_TYPES/;
 
 BEGIN {
     use Exporter 'import';
@@ -58,28 +58,40 @@ BEGIN {
             $GEOMETRY_TYPES{$type} = 1;
         }
     }
-    unless (%COLORER_TYPES) {
-        my $name = Gtk2::Ex::Geo::StyleElement::Colorer->readable_class_name;
-        my $order = Gtk2::Ex::Geo::StyleElement::Colorer->order;
-        $COLORER_TYPES{$name} = $order if $name;
-        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::StyleElement::Colorer' );
+    unless (%SHAPE_TYPES) {
+        my $name = Gtk2::Ex::Geo::StyleElement::Shape->readable_class_name;
+        my $order = Gtk2::Ex::Geo::StyleElement::Shape->order;
+        $SHAPE_TYPES{$name} = $order if $name;
+        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::StyleElement::Shape' );
         for my $class (@$subclass_names) {
             my $name = eval $class.'->readable_class_name';
             my $order = eval $class.'->order';
             next unless $name;
-            $COLORER_TYPES{$name} = $order;
+            $SHAPE_TYPES{$name} = $order;
         }
     }
-    unless (%SYMBOLIZER_TYPES) {
-        my $name = Gtk2::Ex::Geo::StyleElement::Symbolizer->readable_class_name;
-        my $order = Gtk2::Ex::Geo::StyleElement::Symbolizer->order;
-        $SYMBOLIZER_TYPES{$name} = $order if $name;
-        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::StyleElement::Symbolizer' );
+    unless (%SIZE_TYPES) {
+        my $name = Gtk2::Ex::Geo::StyleElement::Size->readable_class_name;
+        my $order = Gtk2::Ex::Geo::StyleElement::Size->order;
+        $SIZE_TYPES{$name} = $order if $name;
+        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::StyleElement::Size' );
         for my $class (@$subclass_names) {
             my $name = eval $class.'->readable_class_name';
             my $order = eval $class.'->order';
             next unless $name;
-            $SYMBOLIZER_TYPES{$name} = $order;
+            $SIZE_TYPES{$name} = $order;
+        }
+    }
+    unless (%COLOR_TYPES) {
+        my $name = Gtk2::Ex::Geo::StyleElement::Color->readable_class_name;
+        my $order = Gtk2::Ex::Geo::StyleElement::Color->order;
+        $COLOR_TYPES{$name} = $order if $name;
+        my $subclass_names = Class::Inspector->subclasses( 'Gtk2::Ex::Geo::StyleElement::Color' );
+        for my $class (@$subclass_names) {
+            my $name = eval $class.'->readable_class_name';
+            my $order = eval $class.'->order';
+            next unless $name;
+            $COLOR_TYPES{$name} = $order;
         }
     }
 }
@@ -523,22 +535,26 @@ sub inspect_data {
 
 =pod
 
-=head2 colorer_types()
+=head2 color_types()
 
 Package subroutine.
 
-The list of colorer types that this layer class supports. The list is
-used in the coloring dialog box and the selected colorer will be
-available as $self->{styles}->{$property}->{colorer} in rendering.
+The list of coloring types that this layer class supports. The list is
+used in the coloring dialog box and the selected coloring method will
+be available as $self->{styles}->{$property}->{color} in rendering.
 
 =cut
 
-sub colorer_types {
-    return sort {$COLORER_TYPES{$a} <=> $COLORER_TYPES{$b}} keys %COLORER_TYPES;
+sub shape_types {
+    return sort {$SHAPE_TYPES{$a} <=> $SHAPE_TYPES{$b}} keys %SHAPE_TYPES;
 }
 
-sub symbolizer_types {
-    return sort {$SYMBOLIZER_TYPES{$a} <=> $SYMBOLIZER_TYPES{$b}} keys %SYMBOLIZER_TYPES;
+sub size_types {
+    return sort {$SIZE_TYPES{$a} <=> $SIZE_TYPES{$b}} keys %SIZE_TYPES;
+}
+
+sub color_types {
+    return sort {$COLOR_TYPES{$a} <=> $COLOR_TYPES{$b}} keys %COLOR_TYPES;
 }
 
 =pod
@@ -580,10 +596,10 @@ sub open_features_dialog {
 
 sub open_symbolizing_dialog {
     my($self, $property, $glue) = @_;
-    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style->new(glue => $glue,
-                                                             layer => $self, 
-                                                             property => $property) unless $self->{styles}->{$property};
-    $self->{styles}->{$property}->{symbolizing_dialog}->open;
+    $self->{styles}->{$property} = Gtk2::Ex::Geo::Style::Point->new(glue => $glue,
+                                                                    layer => $self, 
+                                                                    property => $property) unless $self->{styles}->{$property};
+    $self->{styles}->{$property}->{view}->open;
 }
 
 =pod

@@ -41,7 +41,7 @@ sub initialize {
     $self->{font_name} = $params{font_name} if exists $params{font_name};
     $self->{font_size} = 12;
     $self->{font_size} = $params{font_size} if exists $params{font_size};
-    $self->{font_color} = Gtk2::Ex::Geo::StyleElement::Colorer::SingleColor->new( style => $self->{style} );
+    $self->{font_color} = Gtk2::Ex::Geo::StyleElement::Color::SingleColor->new( symbolizer => $self->{symbolizer} );
     $self->{font_color} = $params{font_color} if exists $params{font_color};
     $self->{property_name} = undef;
     $self->{property_type} = undef;

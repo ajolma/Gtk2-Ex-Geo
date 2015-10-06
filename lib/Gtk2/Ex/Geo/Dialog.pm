@@ -20,6 +20,8 @@ sub initialize {
     my $self = shift;
     my %params = @_;
     $self->{glue} = $params{glue};
+    $self->{layer} = $params{layer};
+    $self->{property} = $params{property};
     $self->{model} = $params{model};
 }
 

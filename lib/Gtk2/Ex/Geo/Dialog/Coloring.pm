@@ -6,7 +6,7 @@ use locale;
 use Carp;
 use Graphics::ColorUtils qw /:all/;
 use Glib qw/TRUE FALSE/;
-use Gtk2::Ex::Geo::Style;
+use Gtk2::Ex::Geo::Symbolizer;
 
 use base qw(Gtk2::Ex::Geo::Dialog);
 
@@ -19,7 +19,7 @@ $COLOR_CELL_SIZE = 20;
 sub open {
     my ($self) = @_;
 
-    my $context = $self->{model}->{style}->{layer}->name.'.'.$self->{model}->{style}->{property};
+    my $context = $self->{model}->{symbolizer}->{layer}->name.'.'.$self->{model}->{symbolizer}->{property};
 
     my $boot = $self->bootstrap('coloring_dialog', "Coloring for $context.");
     if ($boot) {
@@ -34,7 +34,7 @@ sub open {
         $self->dialog_manager('boot');
     }
 
-    $self->palette_type([$self->{model}->{style}->{layer}->colorer_types],
+    $self->palette_type([$self->{model}->{symbolizer}->{layer}->color_types],
                         $self->{model}->readable_class_name);
     
 }
@@ -194,17 +194,17 @@ sub palette_type_changed {
     
     my $palette_type = $self->get_value_from_combo($combo);
     if (!$palette->readable_class_name || $palette->readable_class_name ne $palette_type) {
-        my $style = $palette->{style};
-        $palette = Gtk2::Ex::Geo::StyleElement::Colorer->new( self => $palette,
-                                                              readable_class_name => $palette_type,
-                                                              style => $style );
+        my $symbolizer = $palette->{symbolizer};
+        $palette = Gtk2::Ex::Geo::StyleElement::Color->new( self => $palette,
+                                                            readable_class_name => $palette_type,
+                                                            symbolizer => $symbolizer );
         my $treeview = $self->get_widget('coloring_treeview');
-        $palette->set_color_view($treeview);
+        $palette->set_view($treeview);
     }
 
     my $property_name = $palette->property();
     my @properties;
-    my $properties = $palette->{style}->{layer}->schema()->{Properties};
+    my $properties = $palette->{symbolizer}->{layer}->schema()->{Properties};
     for my $name (sort keys %$properties) {
         my $property = $properties->{$name};
         next unless $property->{Type};
@@ -223,7 +223,7 @@ sub palette_type_changed {
 
     $palette->prepare_model;
 
-    my @color = $palette->{style}->border_color;
+    my @color = $palette->{symbolizer}->border_color;
     $self->border_color(@color > 0, \@color);
 
     $self->color_editor(sensitive => 0);
@@ -254,7 +254,7 @@ sub palette_type_changed {
         $self->palette_manager(sensitive => 1);
     }
 
-    if ($palette->{style}->include_border) {
+    if ($palette->{symbolizer}->include_border) {
         $self->border_color(sensitive => 1);
     }
 
@@ -265,7 +265,7 @@ sub property_name_changed {
     my $palette = $self->{model};
     my $property_name = $self->property_name;
     if (defined $property_name && $property_name ne '') {
-        my $properties = $palette->{style}->{layer}->schema()->{Properties};
+        my $properties = $palette->{symbolizer}->{layer}->schema()->{Properties};
         $palette->property($property_name, $properties->{$property_name}->{Type});
     } else {
         $palette->property(undef);
@@ -298,7 +298,7 @@ sub apply {
     # border color is still a bit to do, it *should* be implemented as a 2nd style
     my ($add, $color) = $self->border_color;
     @$color = () unless $add;
-    $self->{model}->{style}->border_color(@$color);
+    $self->{model}->{symbolizer}->border_color(@$color);
     $self->SUPER::apply($close);
 }
 
@@ -325,7 +325,7 @@ sub copy_palette {
     for my $layer (@{$self->{glue}->{overlay}->{layers}}) {
         my $properties = $layer->schema()->{Properties};
         for my $name (sort keys %$properties) {
-            next if $layer eq $palette->{style}->{layer} && $name eq $palette->property;
+            next if $layer eq $palette->{symbolizer}->{layer} && $name eq $palette->property;
             push @properties, [$layer->name(), $name];
             $model->set($model->append(undef), 0, $layer->name(), 1, $name);
         }
@@ -369,7 +369,7 @@ sub save_palette {
 sub edit_color {
     my ($button, $self) = @_;
     my $palette = $self->{model};
-    my $selection = $palette->{color_view}->get_selection;
+    my $selection = $palette->{view}->get_selection;
     my @selected = $selection->get_selected_rows;
     return unless @selected;
     my $i = $selected[0]->to_string;
@@ -404,7 +404,7 @@ sub edit_color {
 sub delete_color {
     my ($button, $self) = @_;
     my $palette = $self->{model};
-    my $selection = $palette->{color_view}->get_selection;
+    my $selection = $palette->{view}->get_selection;
     my @selected = $selection->get_selected_rows;
     return unless @selected;
     my @to_remove;
@@ -489,7 +489,7 @@ sub fill_property_value_range {
     my @range;
     my $property = $palette->property;
     eval {
-	@range = $palette->{style}->{layer}->value_range($property);
+	@range = $palette->{symbolizer}->{layer}->value_range($property);
     };
     if ($@) {
 	$self->{glue}->message("$@");

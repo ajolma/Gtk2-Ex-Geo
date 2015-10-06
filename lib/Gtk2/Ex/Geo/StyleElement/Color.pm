@@ -2,31 +2,31 @@
 
 =head1 NAME
 
-Gtk2::Ex::Geo::StyleElement::Colorer - A class for value(s) -> color converter
+Gtk2::Ex::Geo::StyleElement::Color - A class for value(s) -> color converter
 
 This module is a part of the Gtk2::Ex::Geo toolkit.
 
 =head1 SYNOPSIS
 
-    my $palette = Gtk2::Ex::Geo::StyleElement::Colorer::Table->new( file_name => 'palette.clr' );
+    my $palette = Gtk2::Ex::Geo::StyleElement::Color::Table->new( file_name => 'palette.clr' );
     my $style = Gtk2::Ex::Geo::Style->new( color_table => $palette );
     $raster_layer->assign_style($style, 'cell value');
 
 or
 
-    my $palette = Gtk2::Ex::Geo::StyleElement::Colorer::ShadesOfGray( min_value => 10, max_value => 300 );
+    my $palette = Gtk2::Ex::Geo::StyleElement::Color::ShadesOfGray( min_value => 10, max_value => 300 );
     my @gray = $palette->color(245);
 
 =head1 DESCRIPTION
 
-Gtk2::Ex::Geo::StyleElement::Colorer is a tree of classes, which can convert a
+Gtk2::Ex::Geo::StyleElement::Color is a tree of classes, which can convert a
 property value (or property values) into a color. The simplest color
 palette is a single color, while a complex palette may use several
 property values to compute a color.
 
 =cut
 
-package Gtk2::Ex::Geo::StyleElement::Colorer;
+package Gtk2::Ex::Geo::StyleElement::Color;
 
 use strict;
 use warnings;
@@ -59,6 +59,9 @@ sub output_is_hue {
 sub value_range {
 }
 
+sub hue_range {
+}
+
 sub color { # get or set, if set, the last four params are the color
 }
 
@@ -71,38 +74,12 @@ sub remove_color_at {
 sub property_value_at { # property value at index for table like palettes
 }
 
-sub set_color_view {
-    my ($self, $view) = @_;
-    $self->{color_view} = $view;
-    $self->{model} = undef;
-    my $model = $self->{color_view}->get_model;
-    if ($model) {
-        for my $col ($self->{color_view}->get_columns) {
-            $self->{color_view}->remove_column($col);
-        }
-        $model->clear;
-    }
-}
-
-sub prepare_model {
-    my ($self) = @_;
-    return unless $self->{color_view};
-    my $model = $self->{color_view}->get_model;
-    $model->clear if $model;
-    for my $col ($self->{color_view}->get_columns) {
-        $self->{color_view}->remove_column($col);
-    }
-}
-
-sub update_model {
-}
-
-sub set_color_to_model {
+sub set_style_to_model {
     my ($self, $iter, $value, @color) = @_;
     my @set = ($iter);
     my $j = 0;
     push @set, ($j++, $value) if defined $value;
-    my $size = $Gtk2::Ex::Geo::StyleElement::Colorer::COLOR_CELL_SIZE;
+    my $size = $Gtk2::Ex::Geo::StyleElement::Color::COLOR_CELL_SIZE;
     my $pb = Gtk2::Gdk::Pixbuf->new('rgb', 0, 8, $size, $size);
     $pb->fill($color[0] << 24 | $color[1] << 16 | $color[2] << 8);
     push @set, ($j++, $pb);
@@ -115,11 +92,11 @@ sub set_color_to_model {
 sub view_changed {
 }
 
-package Gtk2::Ex::Geo::StyleElement::Colorer::SingleColor;
+package Gtk2::Ex::Geo::StyleElement::Color::SingleColor;
 use locale;
 use Carp;
 
-our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Colorer );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Color );
 
 sub order {
     return 1;
@@ -144,30 +121,31 @@ sub color {
     @{$self->{color}} = splice(@_, -4, 4) if @_ > 3;
     return @{$self->{color}};
 }
+*style = *color;
 
 sub prepare_model {
     my ($self) = @_;
-    return unless $self->{color_view};
+    return unless $self->{view};
     $self->SUPER::prepare_model;
 
     my $model = Gtk2::TreeStore->new(qw/Gtk2::Gdk::Pixbuf Glib::Int Glib::Int Glib::Int Glib::Int/);
-    $self->{color_view}->set_model($model);
+    $self->{view}->set_model($model);
 
-    my $size = $Gtk2::Ex::Geo::StyleElement::Colorer::COLOR_CELL_SIZE;
+    my $size = $Gtk2::Ex::Geo::StyleElement::Color::COLOR_CELL_SIZE;
     my $i = 0;
     my $cell = Gtk2::CellRendererPixbuf->new;
     $cell->set_fixed_size($size-2, $size-2);
     my $column = Gtk2::TreeViewColumn->new_with_attributes('Color', $cell, pixbuf => $i++);
-    $self->{color_view}->append_column($column);
+    $self->{view}->append_column($column);
 
     for my $c ('Red','Green','Blue','Alpha') {
 	$cell = Gtk2::CellRendererText->new;
 	$cell->set(editable => 1);
 	$cell->signal_connect(edited => \&view_changed, [$self, $i-1]);
 	$column = Gtk2::TreeViewColumn->new_with_attributes($c, $cell, text => $i++);
-	$self->{color_view}->append_column($column);
+	$self->{view}->append_column($column);
     }
-    $self->{color_view}->get_selection->set_mode('multiple');
+    $self->{view}->get_selection->set_mode('multiple');
 
     $self->{model} = $model;
     $self->update_model;
@@ -178,7 +156,7 @@ sub update_model {
     return unless $self->{model};
     $self->{model}->clear;
     my $iter = $self->{model}->append(undef);
-    $self->set_color_to_model($iter, undef, @{$self->{color}});
+    $self->set_style_to_model($iter, undef, @{$self->{color}});
 }
 
 sub view_changed {
@@ -190,11 +168,11 @@ sub view_changed {
     $self->update_model;
 }
 
-package Gtk2::Ex::Geo::StyleElement::Colorer::ValueRange;
+package Gtk2::Ex::Geo::StyleElement::Color::ValueRange;
 use locale;
 use Carp;
 
-our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Colorer );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Color );
 
 sub initialize {
     my $self = shift;
@@ -228,25 +206,25 @@ sub value_range {
 
 sub prepare_model {
     my ($self) = @_;
-    return unless $self->{color_view};
+    return unless $self->{view};
     $self->SUPER::prepare_model;
 
     my $type = $self->property_type_for_GTK;
     return unless $type;
     my $model = Gtk2::TreeStore->new('Gtk2::Gdk::Pixbuf', 'Glib::'.$type);
-    $self->{color_view}->set_model($model);
+    $self->{view}->set_model($model);
 
-    my $size = $Gtk2::Ex::Geo::StyleElement::Colorer::COLOR_CELL_SIZE;
+    my $size = $Gtk2::Ex::Geo::StyleElement::Color::COLOR_CELL_SIZE;
     my $i = 0;
     my $cell = Gtk2::CellRendererPixbuf->new;
     $cell->set_fixed_size($size-2, $size-2);
     my $column = Gtk2::TreeViewColumn->new_with_attributes('color', $cell, pixbuf => $i++);
-    $self->{color_view}->append_column($column);
+    $self->{view}->append_column($column);
 
     $cell = Gtk2::CellRendererText->new;
     $cell->set(editable => 0);
     $column = Gtk2::TreeViewColumn->new_with_attributes('value', $cell, text => $i++);
-    $self->{color_view}->append_column($column);
+    $self->{view}->append_column($column);
 
     $self->{model} = $model;
     $self->update_model;
@@ -261,7 +239,7 @@ sub update_model {
     my $delta = ($max-$min)/14;
     return if $delta <= 0;
     my $x = $max;
-    my $size = $Gtk2::Ex::Geo::StyleElement::Colorer::COLOR_CELL_SIZE;
+    my $size = $Gtk2::Ex::Geo::StyleElement::Color::COLOR_CELL_SIZE;
     for my $i (1..15) {
 	my $iter = $self->{model}->append(undef);
 	my @set = ($iter);
@@ -279,11 +257,11 @@ sub update_model {
     }
 }
 
-package Gtk2::Ex::Geo::StyleElement::Colorer::ShadesOfGray;
+package Gtk2::Ex::Geo::StyleElement::Color::ShadesOfGray;
 use locale;
 use Graphics::ColorUtils qw /:all/;
 
-our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Colorer::ValueRange );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Color::ValueRange );
 
 sub order {
     return 2;
@@ -305,12 +283,13 @@ sub color {
     my @color = hsv2rgb($h, $s, $v);
     return @color;
 }
+*style = *color;
 
-package Gtk2::Ex::Geo::StyleElement::Colorer::HueRegion;
+package Gtk2::Ex::Geo::StyleElement::Color::HueRegion;
 use locale;
 use Graphics::ColorUtils qw /:all/;
 
-our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Colorer::ValueRange );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Color::ValueRange );
 
 sub order {
     return 3;
@@ -355,6 +334,7 @@ sub color {
     my @color = hsv2rgb($h, $s, $v);
     return @color;
 }
+*style = *color;
 
 sub hue_range {
     my $self = shift;
@@ -362,11 +342,11 @@ sub hue_range {
     return ($self->{min_hue}, $self->{max_hue}, $self->{hue_increment});
 }
 
-package Gtk2::Ex::Geo::StyleElement::Colorer::Table;
+package Gtk2::Ex::Geo::StyleElement::Color::Table;
 use locale;
 use Carp;
 
-our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Colorer );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Color );
 
 sub is_table_like {
     return 1;
@@ -374,35 +354,35 @@ sub is_table_like {
 
 sub prepare_model {
     my ($self) = @_;
-    return unless $self->{color_view};
+    return unless $self->{view};
     $self->SUPER::prepare_model;
 
     my $type = $self->property_type_for_GTK;
     return unless $type;
     my $model = Gtk2::TreeStore->new("Glib::$type","Gtk2::Gdk::Pixbuf","Glib::Int","Glib::Int","Glib::Int","Glib::Int");
-    $self->{color_view}->set_model($model);
+    $self->{view}->set_model($model);
 
-    my $size = $Gtk2::Ex::Geo::StyleElement::Colorer::COLOR_CELL_SIZE;
+    my $size = $Gtk2::Ex::Geo::StyleElement::Color::COLOR_CELL_SIZE;
     my $i = 0;
     my $cell = Gtk2::CellRendererText->new;
     $cell->set(editable => 1);
     $cell->signal_connect(edited => \&view_changed, [$self, $i]);
     my $column = Gtk2::TreeViewColumn->new_with_attributes($self->column_header, $cell, text => $i++);
-    $self->{color_view}->append_column($column);
+    $self->{view}->append_column($column);
 
     $cell = Gtk2::CellRendererPixbuf->new;
     $cell->set_fixed_size($size-2, $size-2);
     $column = Gtk2::TreeViewColumn->new_with_attributes('Color', $cell, pixbuf => $i++);
-    $self->{color_view}->append_column($column);
+    $self->{view}->append_column($column);
 
     for my $c ('Red','Green','Blue','Alpha') {
 	$cell = Gtk2::CellRendererText->new;
 	$cell->set(editable => 1);
 	$cell->signal_connect(edited => \&view_changed, [$self, $i-1]);
 	$column = Gtk2::TreeViewColumn->new_with_attributes($c, $cell, text => $i++);
-	$self->{color_view}->append_column($column);
+	$self->{view}->append_column($column);
     }
-    $self->{color_view}->get_selection->set_mode('multiple');
+    $self->{view}->get_selection->set_mode('multiple');
 
     $self->{model} = $model;
     $self->update_model;
@@ -424,11 +404,11 @@ sub view_changed {
     $self->update_model;
 }
 
-package Gtk2::Ex::Geo::StyleElement::Colorer::Table::Lookup;
+package Gtk2::Ex::Geo::StyleElement::Color::Table::Lookup;
 use locale;
 use Carp;
 
-our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Colorer::Table );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Color::Table Gtk2::Ex::Geo::StyleElement::Lookup );
 
 sub order {
     return 4;
@@ -461,7 +441,7 @@ sub serialize {
     }
 }
 
-sub de_serialize {
+sub deserialize {
     my ($self, $filehandle, $format) = @_;
     while (<$filehandle>) {
         next if /^#/;
@@ -501,6 +481,7 @@ sub color {
     }
     return @{$self->{table}->{$key}} if exists $self->{table}->{$key};
 }
+*style = *color;
 
 sub new_property_value {
     my $self = shift;
@@ -548,31 +529,12 @@ sub column_header {
     return 'Key';
 }
 
-sub update_model {
-    my ($self) = @_;
-    return unless $self->{model};
-    $self->{model}->clear;
-    if ($self->{property_type} eq 'String') {
-        for my $key (sort keys %{$self->{table}}) {
-            my $iter = $self->{model}->append(undef);
-            my @color = $self->color($key);
-            $self->set_color_to_model($iter, $key, @color);
-        }
-    } else {
-        for my $key (sort {$a <=> $b} keys %{$self->{table}}) {
-            my $iter = $self->{model}->append(undef);
-            my @color = $self->color($key);
-            $self->set_color_to_model($iter, $key, @color);
-        }
-    }
-}
-
-package Gtk2::Ex::Geo::StyleElement::Colorer::Table::Bins;
+package Gtk2::Ex::Geo::StyleElement::Color::Table::Bins;
 use locale;
 use Carp;
 use bigrat;
 
-our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Colorer::Table );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Color::Table Gtk2::Ex::Geo::StyleElement::Bins );
 
 sub order {
     return 5;
@@ -597,7 +559,7 @@ sub serialize {
     }
 }
 
-sub de_serialize {
+sub deserialize {
     my ($self, $filehandle, $format) = @_;
     while (<$filehandle>) {
         next if /^#/;
@@ -632,18 +594,6 @@ sub property_type_for_GTK {
     return 'String';
 }
 
-sub index {
-    my ($self, $value) = @_;
-    my $table = $self->{table};
-    return 0 if $value <= $table->[0]->[0];
-    my $index = 1;
-    while ($index < $#$table) {
-        return $index if $value <= $table->[$index]->[0];
-        $index++;
-    }
-    return $index;
-}
-
 sub color {
     my $self = shift;
     my $value = shift;
@@ -654,27 +604,11 @@ sub color {
     }
     return @{$self->{table}->[$index]}[1..4];
 }
+*style = *color;
 
 sub new_property_value {
     my $self = shift;
     return $self->{table}->[0]->[0]-1;
-}
-
-sub organize {
-    my $self = shift;
-    my @sort;
-    my $n = @{$self->{table}}-1;
-    for (my $i = 0; $i < $n; $i++) {
-        push @sort, [$self->{table}->[$i]->[0], $i];
-    }
-    my $last = $self->{table}->[$n];
-    @sort = sort {$a->[0]<=>$b->[0]} @sort;
-    my @new;
-    for my $value_and_index (@sort) {
-        push @new, $self->{table}->[$value_and_index->[1]];
-    }
-    push @new, $last;
-    $self->{table} = \@new;
 }
 
 sub add_color {
@@ -715,25 +649,11 @@ sub column_header {
     return 'Bin';
 }
 
-sub update_model {
-    my ($self) = @_;
-    return unless $self->{model};
-    $self->{model}->clear;
-    my $i = 0;
-    my $n = @{$self->{table}};
-    for my $value_and_color (@{$self->{table}}) {
-        my $iter = $self->{model}->append(undef);
-        $value_and_color->[0] = 'inf' if $i == $n-1;
-        $self->set_color_to_model($iter, @$value_and_color);
-        $i++;
-    }
-}
-
-package Gtk2::Ex::Geo::StyleElement::Colorer::ValueRange::RedChannel;
+package Gtk2::Ex::Geo::StyleElement::Color::ValueRange::RedChannel;
 use locale;
 use Carp;
 
-our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Colorer::ValueRange );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Color::ValueRange );
 
 sub order {
     return 6;
@@ -750,12 +670,13 @@ sub color {
     my $r = int(($value - $min)/($max - $min) * 255 + 0.5);
     return ($r, 0, 0);
 }
+*style = *color;
 
-package Gtk2::Ex::Geo::StyleElement::Colorer::ValueRange::GreenChannel;
+package Gtk2::Ex::Geo::StyleElement::Color::ValueRange::GreenChannel;
 use locale;
 use Carp;
 
-our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Colorer::ValueRange );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Color::ValueRange );
 
 sub order {
     return 7;
@@ -772,12 +693,13 @@ sub color {
     my $g = int(($value - $min)/($max - $min) * 255 + 0.5);
     return (0, $g, 0);
 }
+*style = *color;
 
-package Gtk2::Ex::Geo::StyleElement::Colorer::ValueRange::BlueChannel;
+package Gtk2::Ex::Geo::StyleElement::Color::ValueRange::BlueChannel;
 use locale;
 use Carp;
 
-our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Colorer::ValueRange );
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Color::ValueRange );
 
 sub order {
     return 8;
@@ -794,5 +716,6 @@ sub color {
     my $b = int(($value - $min)/($max - $min) * 255 + 0.5);
     return (0, 0, $b);
 }
+*style = *color;
 
 1;

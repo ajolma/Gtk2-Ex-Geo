@@ -10,7 +10,7 @@ use base qw(Gtk2::Ex::Geo::Dialog);
 
 sub open {
     my ($self) = @_;
-    my $context = $self->{model}->{style}->{layer}->name.'.'.$self->{model}->{style}->{property};
+    my $context = $self->{model}->{symbolizer}->{layer}->name.'.'.$self->{model}->{symbolizer}->{property};
     my $boot = $self->bootstrap('labeling_dialog', "Labels for $context.");
 
     if ($boot) {
@@ -123,7 +123,7 @@ sub use_labels_changed {
     if ($checkbutton->get_active) {
         my $property_name = $self->{model}->property();
         my @properties = ();
-        my $properties = $self->{model}->{style}->{layer}->schema()->{Properties};
+        my $properties = $self->{model}->{symbolizer}->{layer}->schema()->{Properties};
         for my $name (sort keys %$properties) {
             my $property = $properties->{$name};
             next unless $property->{Type};
@@ -139,7 +139,7 @@ sub property_name_changed {
     my ($combo, $self) = @_;
     my $property_name = $self->property_name;
     if (defined $property_name && $property_name ne '') {
-        my $properties = $self->{model}->{style}->{layer}->schema()->{Properties};
+        my $properties = $self->{model}->{symbolizer}->{layer}->schema()->{Properties};
         $self->{model}->property($property_name, $properties->{$property_name}->{Type});
     } else {
         $self->{model}->property(undef);
