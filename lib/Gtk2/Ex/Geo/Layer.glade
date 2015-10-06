@@ -1059,6 +1059,7 @@ another layer.</property>
               <widget class="GtkHBox" id="hbox20">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="spacing">5</property>
                 <child>
                   <widget class="GtkLabel" id="label11">
                     <property name="visible">True</property>
@@ -1094,6 +1095,20 @@ another layer.</property>
                     <property name="expand">False</property>
                     <property name="fill">False</property>
                     <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <widget class="GtkButton" id="button23">
+                    <property name="label" translatable="yes">Delete this symbolizer</property>
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="use_action_appearance">False</property>
+                  </widget>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">3</property>
                   </packing>
                 </child>
                 <child>

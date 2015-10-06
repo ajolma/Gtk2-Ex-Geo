@@ -42,9 +42,7 @@ use Gtk2::Ex::Geo::StyleElement::Shape;
 use Gtk2::Ex::Geo::StyleElement::Size;
 use Gtk2::Ex::Geo::StyleElement::Color;
 use Gtk2::Ex::Geo::StyleElement::Label;
-use Gtk2::Ex::Geo::Dialog::PointSymbolizer;
-use Gtk2::Ex::Geo::Dialog::Coloring;
-use Gtk2::Ex::Geo::Dialog::Labeling;
+use Gtk2::Ex::Geo::Dialog::Symbolizer;
 
 use vars qw/%GEOMETRY_TYPES %SHAPE_TYPES %SIZE_TYPES %COLOR_TYPES/;
 
@@ -191,8 +189,6 @@ properties, and eventually respective dialog calls.
 sub menu_items {
     my($self) = @_;
     my @symbolizing_submenu;
-    my @coloring_submenu;
-    my @labeling_submenu;
     my $properties = $self->schema()->{Properties};
     for my $name (sort keys %$properties) {
         next unless $GEOMETRY_TYPES{$properties->{$name}->{Type}};
@@ -201,16 +197,6 @@ sub menu_items {
         push @symbolizing_submenu, sub {
             my($self, $gui) = @{$_[1]};
             $self->open_symbolizing_dialog($name, $gui);
-        };
-        push @coloring_submenu, $item;
-        push @coloring_submenu, sub {
-            my($self, $gui) = @{$_[1]};
-            $self->open_coloring_dialog($name, $gui);
-        };
-        push @labeling_submenu, $item;
-        push @labeling_submenu, sub {
-            my($self, $gui) = @{$_[1]};
-            $self->open_labeling_dialog($name, $gui);
         };
     }
     my @items;
@@ -222,8 +208,6 @@ sub menu_items {
             $self->open_features_dialog($gui, 1);
         });
     push @items, ('_Symbolizing...' => \@symbolizing_submenu) if @symbolizing_submenu;
-    push @items, ('_Coloring...' => \@coloring_submenu) if @coloring_submenu;
-    push @items, ('_Labeling...' => \@labeling_submenu) if @labeling_submenu;
     push @items, (
         '_Inspect...' => sub {
             my($self, $gui) = @{$_[1]};
@@ -597,39 +581,11 @@ sub open_features_dialog {
 
 sub open_symbolizing_dialog {
     my($self, $property, $glue) = @_;
+    # depending on the property type
     $self->{styles}->{$property} = Gtk2::Ex::Geo::Symbolizer::Point->new(glue => $glue,
-                                                                    layer => $self, 
-                                                                    property => $property) unless $self->{styles}->{$property};
+                                                                         layer => $self, 
+                                                                         property => $property) unless $self->{styles}->{$property};
     $self->{styles}->{$property}->{view}->open;
-}
-
-=pod
-
-=head2 open_coloring_dialog($glue)
-
-=cut
-
-sub open_coloring_dialog {
-    my($self, $property, $glue) = @_;
-    my $styles = $self->{styles};
-    $styles->{$property} = Gtk2::Ex::Geo::Symbolizer->new(glue => $glue,
-                                                     layer => $self, 
-                                                     property => $property) unless $styles->{$property};
-    $styles->{$property}->{coloring_dialog}->open;
-}
-
-=pod
-
-=head2 open_labeling_dialog($glue)
-
-=cut
-
-sub open_labeling_dialog {
-    my($self, $property, $glue) = @_;
-    $self->{styles}->{$property} = Gtk2::Ex::Geo::Symbolizer->new(glue => $glue,
-                                                             layer => $self, 
-                                                             property => $property) unless $self->{styles}->{$property};
-    $self->{styles}->{$property}->{labeling_dialog}->open;
 }
 
 1;

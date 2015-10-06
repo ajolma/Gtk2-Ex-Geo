@@ -22,6 +22,7 @@ sub initialize {
     $self->{glue} = $params{glue};
     $self->{layer} = $params{layer};
     $self->{property} = $params{property};
+    $self->{symbolizer} = $params{symbolizer};
     $self->{model} = $params{model};
 }
 

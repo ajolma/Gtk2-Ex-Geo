@@ -1,22 +1,22 @@
-package Gtk2::Ex::Geo::Dialog::PointSymbolizer;
+package Gtk2::Ex::Geo::Dialog::Symbolizer;
 
 use strict;
 use warnings;
 use locale;
 use Carp;
-use Glib qw/TRUE FALSE/;
+use Class::Inspector;
 
 use base qw(Gtk2::Ex::Geo::Dialog);
 
-## @method open_symbols_dialog($gui)
-# @brief Open the symbols dialog for this layer.
 sub open {
     my ($self) = @_;
 
     my $context = $self->{layer}->name.".".$self->{property};
 
-    my $boot = $self->bootstrap('point_symbolizer_dialog', "Symbolizer for $context.");
+    my $boot = $self->bootstrap('symbolizer_dialog', "Symbolizer for $context.");
     if ($boot) {
+        $self->symbolizer_type('boot');
+        $self->symbolizer_list('boot');
         $self->shape_type('boot');
         $self->size_type('boot');
         $self->color_type('boot');
@@ -31,6 +31,21 @@ sub open {
         $self->dialog_manager('boot');
     }
 
+    my @types;
+    my $type = $self->{layer}->schema()->{Properties}->{$self->{property}}->{Type};
+    if ($type eq 'Point') {
+        push @types, 'Point';
+    } elsif ($type eq 'LineString') {
+        push @types, 'Point';
+        push @types, 'Line';
+    } elsif ($type eq 'Polygon') {
+        push @types, 'Point';
+        push @types, 'Polygon';
+    }
+    $self->symbolizer_type(\@types, $self->{symbolizer}->type);
+
+    $self->symbolizer_list([1], 1);
+
     $self->shape_type([$self->{layer}->shape_types], $self->{model}->{shape}->readable_class_name);
     $self->size_type([$self->{layer}->size_types], $self->{model}->{size}->readable_class_name);
     $self->color_type([$self->{layer}->color_types], $self->{model}->{color}->readable_class_name);
@@ -38,6 +53,32 @@ sub open {
 }
 
 # view: setup and accessors ($self->{model} should not be used here)
+
+sub symbolizer_type {
+    my ($self, $name, $x) = @_;
+    if (defined $name && $name eq 'boot') {
+        $self->setup_combo('combobox7');
+        $self->get_widget('combobox7')->signal_connect(changed => \&symbolizer_type_changed, $self);
+    } elsif (defined $name) {
+        $self->refill_combo('combobox7', $name, $x);
+    } else {
+        return $self->get_value_from_combo('combobox7');
+    }
+}
+
+sub symbolizer_list {
+    my ($self, $name, $x) = @_;
+    if (defined $name && $name eq 'boot') {
+        $self->setup_combo('combobox6');
+        $self->get_widget('combobox6')->signal_connect(changed => \&symbolizer_number_changed, $self);
+        $self->get_widget('button22')->signal_connect(clicked => \&add_symbolizer, $self);
+        $self->get_widget('button23')->signal_connect(clicked => \&delete_symbolizer, $self);
+    } elsif (defined $name) {
+        $self->refill_combo('combobox6', $name, $x);
+    } else {
+        return $self->get_value_from_combo('combobox6');
+    }
+}
 
 sub shape_type {
     my ($self, $name, $x) = @_;
@@ -237,7 +278,7 @@ sub dialog_manager {
     if (defined $key && $key eq 'boot') {
         $self->get_widget('symbols_apply_button')->signal_connect(clicked => \&apply, [$self, 0]);
         $self->get_widget('symbols_cancel_button')->signal_connect(clicked => \&Gtk2::Ex::Geo::Dialog::cancel, $self);
-        $self->get_widget('point_symbolizer_dialog')->signal_connect(delete_event => \&Gtk2::Ex::Geo::Dialog::cancel, $self);
+        $self->get_widget('symbolizer_dialog')->signal_connect(delete_event => \&Gtk2::Ex::Geo::Dialog::cancel, $self);
         $self->get_widget('symbols_ok_button')->signal_connect(clicked => \&apply, [$self, 1]);
     } elsif (defined $key && $key eq 'sensitive') {
         for my $w (qw//) {

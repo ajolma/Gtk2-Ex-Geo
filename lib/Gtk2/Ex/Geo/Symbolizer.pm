@@ -66,36 +66,9 @@ sub initialize {
 
     croak "Symbolizer initializer missing layer or property." unless $self->{layer} && $self->{property};
 
-}
+    $self->{next} = undef; # linked list of symbolizers
+    $self->{prev} = undef; # linked list of symbolizers
 
-sub clone {
-    my ($self) = @_;
-    my %params;
-    my $defaults = $self->defaults;
-    for my $property (keys %$defaults) {
-        $params{$property} = $self->{$property};
-    }
-    my $clone = $self->new(%params);
-}
-
-sub restore_from {
-    my ($self, $another_symbolizer) = @_;
-    my $defaults = $self->defaults;
-    for my $property (keys %$defaults) {
-        $self->{$property} = $another_symbolizer->{$property};
-    }
-}
-
-sub include_border {
-    my $self = shift;
-    $self->{include_border} = shift if @_;
-    return $self->{include_border};
-}
-
-sub border_color {
-    my $self = shift;
-    $self->{border_color} = [@_] if @_;
-    return @{$self->{border_color}};
 }
 
 package Gtk2::Ex::Geo::Symbolizer::Point;
@@ -123,24 +96,25 @@ sub initialize {
 
     my $model = { shape => $self->{shape},
                   size => $self->{size},
-                  color => $self->{color} };
+                  color => $self->{color},
+                  border_color => undef,
+                  label => undef
+    };
     bless $model => 'Gtk2::Ex::Geo::Model';
 
-    $self->{view} = Gtk2::Ex::Geo::Dialog::PointSymbolizer->new( glue => $self->{glue},
-                                                             layer => $self->{layer},
-                                                             property => $self->{property},
-                                                             model => $model );
-    
-    $self->{label} = Gtk2::Ex::Geo::StyleElement::Label::ForPoints->new( symbolizer => $self );
-    $self->{labeling_dialog} = Gtk2::Ex::Geo::Dialog::Labeling->new(glue => $self->{glue},
-                                                                    model => $self->{labeler});
-    
-    $self->{include_border} = undef;        
-    $self->{border_color} = [];
+    $self->{view} = Gtk2::Ex::Geo::Dialog::Symbolizer->new( glue => $self->{glue},
+                                                            layer => $self->{layer},
+                                                            property => $self->{property},
+                                                            symbolizer => $self,
+                                                            model => $model );
     
 }
 
-package Gtk2::Ex::Geo::Symbolizer::Curve;
+sub type {
+    return 'Point';
+}
+
+package Gtk2::Ex::Geo::Symbolizer::Line;
 use strict;
 use warnings;
 use locale;
@@ -164,12 +138,12 @@ sub initialize {
     my $model = { color => $self->{color} };
     bless $model => 'Gtk2::Ex::Geo::Model';
 
-    $self->{view} = Gtk2::Ex::Geo::Dialog::LineSymbolizer->new( glue => $self->{glue},
+    $self->{view} = Gtk2::Ex::Geo::Dialog::Symbolizer->new( glue => $self->{glue},
                                                              layer => $self->{layer},
                                                              property => $self->{property},
                                                              model => $model );
     
-    $self->{label} = Gtk2::Ex::Geo::StyleElement::Label::ForCurves->new( symbolizer => $self );
+    $self->{label} = Gtk2::Ex::Geo::StyleElement::Label::ForLines->new( symbolizer => $self );
     $self->{labeling_dialog} = Gtk2::Ex::Geo::Dialog::Labeling->new(glue => $self->{glue},
                                                                     model => $self->{labeler});
     
@@ -178,7 +152,11 @@ sub initialize {
     
 }
 
-package Gtk2::Ex::Geo::Symbolizer::Surface;
+sub type {
+    return 'Line';
+}
+
+package Gtk2::Ex::Geo::Symbolizer::Polygon;
 use strict;
 use warnings;
 use locale;
@@ -204,18 +182,22 @@ sub initialize {
     my $model = { color => $self->{color} };
     bless $model => 'Gtk2::Ex::Geo::Model';
 
-    $self->{view} = Gtk2::Ex::Geo::Dialog::LineSymbolizer->new( glue => $self->{glue},
+    $self->{view} = Gtk2::Ex::Geo::Dialog::Symbolizer->new( glue => $self->{glue},
                                                              layer => $self->{layer},
                                                              property => $self->{property},
                                                              model => $model );
     
-    $self->{label} = Gtk2::Ex::Geo::StyleElement::Label::ForSurfaces->new( symbolizer => $self );
+    $self->{label} = Gtk2::Ex::Geo::StyleElement::Label::ForPolygons->new( symbolizer => $self );
     $self->{labeling_dialog} = Gtk2::Ex::Geo::Dialog::Labeling->new(glue => $self->{glue},
                                                                     model => $self->{labeler});
     
     $self->{include_border} = undef;        
     $self->{border_color} = [];
     
+}
+
+sub type {
+    return 'Polygon';
 }
 
 1;

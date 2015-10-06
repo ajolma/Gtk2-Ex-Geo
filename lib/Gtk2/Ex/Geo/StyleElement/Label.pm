@@ -97,3 +97,53 @@ sub placements {
              'Top left', 'Top center', 'Top right', 
              'Bottom left', 'Bottom center', 'Bottom right' );
 }
+
+package Gtk2::Ex::Geo::StyleElement::Label::ForLines;
+use locale;
+use Carp;
+
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Label );
+
+sub order {
+    return 1;
+}
+
+sub readable_class_name {
+    return 'Simple';
+}
+
+sub initialize {
+    my $self = shift;
+    $self->SUPER::initialize(@_);
+    my %params = @_;
+}
+
+sub placements {
+    return (  );
+}
+
+package Gtk2::Ex::Geo::StyleElement::Label::ForPolygons;
+use locale;
+use Carp;
+
+our @ISA = qw( Gtk2::Ex::Geo::StyleElement::Label );
+
+sub order {
+    return 1;
+}
+
+sub readable_class_name {
+    return 'Simple';
+}
+
+sub initialize {
+    my $self = shift;
+    $self->SUPER::initialize(@_);
+    my %params = @_;
+}
+
+sub placements {
+    return (  );
+}
+
+1;
